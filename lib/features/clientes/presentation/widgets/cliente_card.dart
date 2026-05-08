@@ -14,6 +14,7 @@ class ClienteCard extends StatelessWidget {
     required this.cidade,
     required this.placas,
     this.onTap,
+    this.onLongPress,
   });
 
   final String nome;
@@ -23,6 +24,7 @@ class ClienteCard extends StatelessWidget {
   final String cidade;
   final List<String> placas;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   String get _initials {
     final parts = nome.trim().split(' ');
@@ -34,6 +36,7 @@ class ClienteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
