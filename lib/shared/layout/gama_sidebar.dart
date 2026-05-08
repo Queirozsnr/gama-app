@@ -6,6 +6,7 @@ import '../../core/utils/jwt_decoder.dart';
 import '../../features/auth/domain/auth_state.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
 import '../widgets/gama_avatar.dart';
+import '../widgets/gama_snack_bar.dart';
 
 class GamaSidebar extends ConsumerWidget {
   const GamaSidebar({super.key});
@@ -69,7 +70,7 @@ class GamaSidebar extends ConsumerWidget {
           const SizedBox(height: 8),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               children: [
                 for (final section in _sections) ...[
                   Padding(
@@ -77,7 +78,7 @@ class GamaSidebar extends ConsumerWidget {
                     child: Text(
                       section.label,
                       style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
                         letterSpacing: 0.5,
@@ -96,7 +97,7 @@ class GamaSidebar extends ConsumerWidget {
           ),
           const Divider(height: 1),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Column(
               children: [
                 _SidebarNavItem(
@@ -187,129 +188,204 @@ class _GroupCard extends ConsumerStatefulWidget {
 }
 
 class _GroupCardState extends ConsumerState<_GroupCard> {
+  final _layerLink = LayerLink();
+  OverlayEntry? _overlay;
   int? _loadingId;
+
+  @override
+  void dispose() {
+    _overlay?.remove();
+    super.dispose();
+  }
+
+  void _hide() {
+    _overlay?.remove();
+    _overlay = null;
+  }
+
+  void _show() {
+    _overlay = OverlayEntry(builder: (_) => _DropdownOverlay(
+      layerLink: _layerLink,
+      groups: widget.groups,
+      currentGroupId: widget.currentGroupId,
+      loadingId: _loadingId,
+      onSelect: _switchGroup,
+      onDismiss: _hide,
+    ));
+    Overlay.of(context).insert(_overlay!);
+  }
 
   Future<void> _switchGroup(int grupoId) async {
     if (grupoId == widget.currentGroupId) {
-      Navigator.of(context).pop();
+      _hide();
       return;
     }
     setState(() => _loadingId = grupoId);
+    _overlay?.markNeedsBuild();
     try {
       await ref.read(authNotifierProvider.notifier).selectGroup(grupoId);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) _hide();
     } catch (e) {
       if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        _hide();
+        GamaSnackBar.error(context, e.toString());
       }
     } finally {
       if (mounted) setState(() => _loadingId = null);
     }
   }
 
-  void _showSwitcher() {
-    if (widget.groups.length <= 1) return;
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setModalState) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GestureDetector(
+        onTap: _show,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
             children: [
-              const Text(
-                'Trocar oficina',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+              GamaAvatar(initials: widget.initials, size: 32),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Text(
+                      'PLANO PRO',
+                      style: TextStyle(fontSize: 10, color: AppColors.primary),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              for (final group in widget.groups) ...[
-                _GroupOption(
-                  group: group,
-                  isCurrent: group.id == widget.currentGroupId,
-                  isLoading: _loadingId == group.id,
-                  isDisabled: _loadingId != null,
-                  onTap: () {
-                    setModalState(() {});
-                    _switchGroup(group.id);
-                  },
-                ),
-                if (group != widget.groups.last) const Divider(height: 1),
-              ],
+              const Icon(Icons.expand_more, size: 16, color: AppColors.textSecondary),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+class _DropdownOverlay extends StatelessWidget {
+  const _DropdownOverlay({
+    required this.layerLink,
+    required this.groups,
+    required this.currentGroupId,
+    required this.loadingId,
+    required this.onSelect,
+    required this.onDismiss,
+  });
+
+  final LayerLink layerLink;
+  final List<GrupoItem> groups;
+  final int? currentGroupId;
+  final int? loadingId;
+  final void Function(int) onSelect;
+  final VoidCallback onDismiss;
+
+  String _initials(String nome) {
+    final parts = nome.trim().split(' ');
+    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}';
+    return nome.substring(0, nome.length.clamp(0, 2));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final canSwitch = widget.groups.length > 1;
-
-    return GestureDetector(
-      onTap: canSwitch ? _showSwitcher : null,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(10),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: onDismiss,
+            behavior: HitTestBehavior.translucent,
+          ),
         ),
-        child: Row(
-          children: [
-            GamaAvatar(initials: widget.initials, size: 32),
-            const SizedBox(width: 8),
-            Expanded(
+        CompositedTransformFollower(
+          link: layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 58),
+          child: Material(
+            elevation: 12,
+            borderRadius: BorderRadius.circular(12),
+            shadowColor: Colors.black26,
+            child: Container(
+              width: 216,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.name,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                    child: Text(
+                      'SUAS OFICINAS',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const Text(
-                    'PLANO PRO',
-                    style: TextStyle(fontSize: 10, color: AppColors.primary),
+                  for (final g in groups)
+                    _DropdownItem(
+                      initials: _initials(g.nome),
+                      nome: g.nome,
+                      isCurrent: g.id == currentGroupId,
+                      isLoading: loadingId == g.id,
+                      isDisabled: loadingId != null,
+                      onTap: () => onSelect(g.id),
+                    ),
+                  const Divider(height: 1),
+                  _DropdownAction(
+                    icon: Icons.settings_outlined,
+                    label: 'Gerenciar oficinas',
+                    color: AppColors.textSecondary,
+                    isLast: true,
+                    onTap: () {
+                      onDismiss();
+                      context.go('/gerenciar-oficinas');
+                    },
                   ),
                 ],
               ),
             ),
-            if (canSwitch)
-              const Icon(Icons.expand_more, size: 16, color: AppColors.textSecondary),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
 
-class _GroupOption extends StatelessWidget {
-  const _GroupOption({
-    required this.group,
+class _DropdownItem extends StatelessWidget {
+  const _DropdownItem({
+    required this.initials,
+    required this.nome,
     required this.isCurrent,
     required this.isLoading,
     required this.isDisabled,
     required this.onTap,
   });
 
-  final GrupoItem group;
+  final String initials;
+  final String nome;
   final bool isCurrent;
   final bool isLoading;
   final bool isDisabled;
@@ -317,27 +393,78 @@ class _GroupOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      leading: GamaAvatar(initials: group.nome.substring(0, 2), size: 36),
-      title: Text(
-        group.nome,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-          color: AppColors.textPrimary,
+    return InkWell(
+      onTap: isDisabled ? null : onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            GamaAvatar(initials: initials, size: 32),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                nome,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
+                  color: AppColors.textPrimary,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (isLoading)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else if (isCurrent)
+              const Icon(Icons.check, size: 16, color: AppColors.primary),
+          ],
         ),
       ),
-      trailing: isLoading
-          ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : isCurrent
-              ? const Icon(Icons.check, size: 18, color: AppColors.primary)
-              : null,
-      onTap: isDisabled ? null : onTap,
+    );
+  }
+}
+
+class _DropdownAction extends StatelessWidget {
+  const _DropdownAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.isLast = false,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isLast;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: isLast
+          ? const BorderRadius.vertical(bottom: Radius.circular(12))
+          : BorderRadius.zero,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: TextStyle(fontSize: 13, color: color),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -366,7 +493,7 @@ class _SidebarNavItem extends StatelessWidget {
           children: [
             Icon(
               item.icon,
-              size: 18,
+              size: 20,
               color: isActive ? AppColors.primary : AppColors.textSecondary,
             ),
             const SizedBox(width: 10),
@@ -374,7 +501,7 @@ class _SidebarNavItem extends StatelessWidget {
               child: Text(
                 item.label,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                   color: isActive ? AppColors.primary : AppColors.textPrimary,
                 ),
@@ -401,7 +528,7 @@ class _UserProfile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      margin: const EdgeInsets.fromLTRB(14, 4, 14, 14),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.1),
@@ -418,7 +545,7 @@ class _UserProfile extends StatelessWidget {
                 Text(
                   name,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),

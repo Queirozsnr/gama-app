@@ -12,6 +12,7 @@ import '../../features/veiculos/presentation/veiculos_screen.dart';
 import '../../features/estoque/presentation/estoque_screen.dart';
 import '../../features/funcionarios/presentation/funcionarios_screen.dart';
 import '../../features/pagamentos/presentation/pagamentos_screen.dart';
+import '../../features/oficinas/presentation/gerenciar_oficinas_screen.dart';
 import '../../shared/layout/gama_scaffold.dart';
 
 abstract final class AppRoutes {
@@ -24,7 +25,8 @@ abstract final class AppRoutes {
   static const veiculos       = '/veiculos';
   static const estoque        = '/estoque';
   static const funcionarios   = '/funcionarios';
-  static const pagamentos     = '/pagamentos';
+  static const pagamentos        = '/pagamentos';
+  static const gerenciarOficinas = '/gerenciar-oficinas';
 }
 
 const _pageTitles = <String, String>{
@@ -34,7 +36,8 @@ const _pageTitles = <String, String>{
   AppRoutes.veiculos:      'Veículos',
   AppRoutes.estoque:       'Estoque',
   AppRoutes.funcionarios:  'Funcionários',
-  AppRoutes.pagamentos:    'Pagamentos',
+  AppRoutes.pagamentos:        'Pagamentos',
+  AppRoutes.gerenciarOficinas: 'Gerenciar Oficinas',
 };
 
 class _RouterNotifier extends ChangeNotifier {
@@ -54,7 +57,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final loc = state.matchedLocation;
 
       if (authAsync.isLoading) {
-        return loc == AppRoutes.splash ? null : AppRoutes.splash;
+        if (loc == AppRoutes.splash) return null;
+        final encoded = Uri.encodeComponent(state.uri.toString());
+        return '${AppRoutes.splash}?from=$encoded';
       }
 
       final auth = authAsync.valueOrNull;
@@ -62,7 +67,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isPending = auth?.pendingGroupSelection ?? false;
 
       if (isPending && loc != AppRoutes.selectGroup) return AppRoutes.selectGroup;
-      if (isAuthenticated && (loc == AppRoutes.login || loc == AppRoutes.splash)) return AppRoutes.home;
+      if (isAuthenticated && (loc == AppRoutes.login || loc == AppRoutes.splash)) {
+        final from = state.uri.queryParameters['from'];
+        final target = (from != null && from.isNotEmpty) ? Uri.decodeComponent(from) : AppRoutes.home;
+        return target;
+      }
       if (!isAuthenticated && !isPending && loc != AppRoutes.login) return AppRoutes.login;
       return null;
     },
@@ -85,7 +94,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: AppRoutes.veiculos,      builder: (_, _) => const VeiculosScreen()),
           GoRoute(path: AppRoutes.estoque,       builder: (_, _) => const EstoqueScreen()),
           GoRoute(path: AppRoutes.funcionarios,  builder: (_, _) => const FuncionariosScreen()),
-          GoRoute(path: AppRoutes.pagamentos,    builder: (_, _) => const PagamentosScreen()),
+          GoRoute(path: AppRoutes.pagamentos,        builder: (_, _) => const PagamentosScreen()),
+          GoRoute(path: AppRoutes.gerenciarOficinas, builder: (_, _) => const GerenciarOficinasScreen()),
         ],
       ),
     ],

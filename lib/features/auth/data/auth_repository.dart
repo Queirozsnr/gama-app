@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/storage/secure_storage_provider.dart';
 import '../domain/auth_response.dart';
+import '../domain/auth_state.dart';
 import 'auth_remote_data_source.dart';
 
 class AuthRepository {
@@ -29,6 +30,11 @@ class AuthRepository {
     );
     await _storage.write(key: kTokenStorageKey, value: response.token);
     return response;
+  }
+
+  Future<List<GrupoItem>> fetchGroups() async {
+    final raw = await _dataSource.fetchGroups();
+    return raw.map((e) => GrupoItem.fromJson(e)).toList();
   }
 
   Future<void> logout() async {

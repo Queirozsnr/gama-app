@@ -40,7 +40,7 @@ class _GamaScaffoldState extends State<GamaScaffold> {
         key: _scaffoldKey,
         body: Row(
           children: [
-            const SizedBox(width: 240, child: GamaSidebar()),
+            const SizedBox(width: 260, child: GamaSidebar()),
             Expanded(
               child: Column(
                 children: [
@@ -56,7 +56,7 @@ class _GamaScaffoldState extends State<GamaScaffold> {
 
     return Scaffold(
       key: _scaffoldKey,
-      drawer: const Drawer(width: 240, child: SafeArea(child: GamaSidebar())),
+      drawer: const Drawer(width: 260, child: SafeArea(child: GamaSidebar())),
       body: SafeArea(
         child: Column(
           children: [

@@ -17,4 +17,14 @@ abstract final class JwtDecoder {
 
   static String? cargo(String token) =>
       _claims(token)['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] as String?;
+
+  static int? userId(String token) {
+    final v = _claims(token)['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+    return v != null ? int.tryParse(v.toString()) : null;
+  }
+
+  static int? grupoOficinaId(String token) {
+    final v = _claims(token)['grupoOficinaId'];
+    return v != null ? int.tryParse(v.toString()) : null;
+  }
 }

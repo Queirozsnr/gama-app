@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/jwt_decoder.dart';
 import '../data/auth_repository.dart';
 import '../domain/auth_state.dart';
 
@@ -8,12 +9,18 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   Future<AuthState> build() async {
     final token = await ref.read(authRepositoryProvider).getStoredToken();
     if (token != null) {
-      return AuthState(token: token, isAuthenticated: true);
+      final groups = await _fetchGroups();
+      return AuthState(
+        token: token,
+        userId: JwtDecoder.userId(token),
+        grupoOficinaId: JwtDecoder.grupoOficinaId(token),
+        isAuthenticated: true,
+        availableGroups: groups,
+      );
     }
     return AuthState.initial();
   }
 
-  // Lança String com a mensagem de erro — a tela gerencia isLoading/erro localmente
   Future<void> login(String email, String senha) async {
     try {
       final response = await ref.read(authRepositoryProvider).login(email, senha);
@@ -29,11 +36,13 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         return;
       }
 
+      final groups = await _fetchGroups();
       state = AsyncData(AuthState(
         token: response.token,
         userId: response.userId,
         grupoOficinaId: response.grupoOficinaId,
         isAuthenticated: true,
+        availableGroups: groups,
       ));
     } on DioException catch (e) {
       final data = e.response?.data;
@@ -71,6 +80,14 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   Future<void> logout() async {
     await ref.read(authRepositoryProvider).logout();
     state = AsyncData(AuthState.initial());
+  }
+
+  Future<List<GrupoItem>> _fetchGroups() async {
+    try {
+      return await ref.read(authRepositoryProvider).fetchGroups();
+    } catch (_) {
+      return [];
+    }
   }
 }
 

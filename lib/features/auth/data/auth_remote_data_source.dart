@@ -20,6 +20,11 @@ class AuthRemoteDataSource {
     );
     return SelectGroupResponse.fromJson(response.data as Map<String, dynamic>);
   }
+
+  Future<List<Map<String, dynamic>>> fetchGroups() async {
+    final response = await _dio.get('/auth/grupos');
+    return (response.data as List).cast<Map<String, dynamic>>();
+  }
 }
 
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>(
