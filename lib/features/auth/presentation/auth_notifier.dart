@@ -46,19 +46,20 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   }
 
   Future<void> selectGroup(int grupoOficinaId) async {
-    final userId = state.value?.userId;
-    if (userId == null) return;
+    final current = state.value;
+    if (current?.userId == null) return;
 
     try {
       final response = await ref
           .read(authRepositoryProvider)
-          .selectGroup(userId, grupoOficinaId);
+          .selectGroup(current!.userId!, grupoOficinaId);
 
       state = AsyncData(AuthState(
         token: response.token,
         userId: response.userId,
         grupoOficinaId: response.grupoOficinaId,
         isAuthenticated: true,
+        availableGroups: current.availableGroups,
       ));
     } on DioException catch (_) {
       throw 'Erro ao selecionar grupo.';

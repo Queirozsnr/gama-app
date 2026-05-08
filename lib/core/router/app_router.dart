@@ -6,13 +6,36 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/select_group_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/splash/splash_screen.dart';
+import '../../features/ordens_servico/presentation/ordens_servico_screen.dart';
+import '../../features/clientes/presentation/clientes_screen.dart';
+import '../../features/veiculos/presentation/veiculos_screen.dart';
+import '../../features/estoque/presentation/estoque_screen.dart';
+import '../../features/funcionarios/presentation/funcionarios_screen.dart';
+import '../../features/pagamentos/presentation/pagamentos_screen.dart';
+import '../../shared/layout/gama_scaffold.dart';
 
 abstract final class AppRoutes {
-  static const splash      = '/';
-  static const login       = '/login';
-  static const selectGroup = '/select-group';
-  static const home        = '/home';
+  static const splash         = '/';
+  static const login          = '/login';
+  static const selectGroup    = '/select-group';
+  static const home           = '/home';
+  static const ordensServico  = '/ordens-servico';
+  static const clientes       = '/clientes';
+  static const veiculos       = '/veiculos';
+  static const estoque        = '/estoque';
+  static const funcionarios   = '/funcionarios';
+  static const pagamentos     = '/pagamentos';
 }
+
+const _pageTitles = <String, String>{
+  AppRoutes.home:          'Dashboard',
+  AppRoutes.ordensServico: 'Ordens de Serviço',
+  AppRoutes.clientes:      'Clientes',
+  AppRoutes.veiculos:      'Veículos',
+  AppRoutes.estoque:       'Estoque',
+  AppRoutes.funcionarios:  'Funcionários',
+  AppRoutes.pagamentos:    'Pagamentos',
+};
 
 class _RouterNotifier extends ChangeNotifier {
   _RouterNotifier(Ref ref) {
@@ -47,7 +70,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.splash,      builder: (_, _) => const SplashScreen()),
       GoRoute(path: AppRoutes.login,       builder: (_, _) => const LoginScreen()),
       GoRoute(path: AppRoutes.selectGroup, builder: (_, _) => const SelectGroupScreen()),
-      GoRoute(path: AppRoutes.home,        builder: (_, _) => const HomeScreen()),
+      ShellRoute(
+        builder: (context, state, child) {
+          final location = GoRouterState.of(context).matchedLocation;
+          return GamaScaffold(
+            pageTitle: _pageTitles[location],
+            body: child,
+          );
+        },
+        routes: [
+          GoRoute(path: AppRoutes.home,         builder: (_, _) => const HomeScreen()),
+          GoRoute(path: AppRoutes.ordensServico, builder: (_, _) => const OrdensServicoScreen()),
+          GoRoute(path: AppRoutes.clientes,      builder: (_, _) => const ClientesScreen()),
+          GoRoute(path: AppRoutes.veiculos,      builder: (_, _) => const VeiculosScreen()),
+          GoRoute(path: AppRoutes.estoque,       builder: (_, _) => const EstoqueScreen()),
+          GoRoute(path: AppRoutes.funcionarios,  builder: (_, _) => const FuncionariosScreen()),
+          GoRoute(path: AppRoutes.pagamentos,    builder: (_, _) => const PagamentosScreen()),
+        ],
+      ),
     ],
   );
 });

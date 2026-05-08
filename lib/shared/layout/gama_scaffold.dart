@@ -27,14 +27,6 @@ class _GamaScaffoldState extends State<GamaScaffold> {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width >= 800;
 
-    const sidebar = GamaSidebar(
-      groupName: 'AutoCenter',
-      groupInitials: 'AV',
-      userName: 'Usuário',
-      userInitials: 'U',
-      userRole: '',
-    );
-
     final topBar = GamaTopBar(
       isDesktop: isDesktop,
       onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
@@ -48,8 +40,7 @@ class _GamaScaffoldState extends State<GamaScaffold> {
         key: _scaffoldKey,
         body: Row(
           children: [
-            SizedBox(width: 220, child: sidebar),
-            const VerticalDivider(width: 1),
+            const SizedBox(width: 240, child: GamaSidebar()),
             Expanded(
               child: Column(
                 children: [
@@ -65,7 +56,7 @@ class _GamaScaffoldState extends State<GamaScaffold> {
 
     return Scaffold(
       key: _scaffoldKey,
-      drawer: const Drawer(width: 240, child: SafeArea(child: sidebar)),
+      drawer: const Drawer(width: 240, child: SafeArea(child: GamaSidebar())),
       body: SafeArea(
         child: Column(
           children: [
