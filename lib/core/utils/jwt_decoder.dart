@@ -27,4 +27,9 @@ abstract final class JwtDecoder {
     final v = _claims(token)['grupoOficinaId'];
     return v != null ? int.tryParse(v.toString()) : null;
   }
+
+  static int? oficinaId(String token) {
+    final v = _claims(token)['oficinaId'];
+    return v != null ? int.tryParse(v.toString()) : null;
+  }
 }

@@ -24,7 +24,9 @@ mixin _$LoginResponse {
   String? get token => throw _privateConstructorUsedError;
   int? get userId => throw _privateConstructorUsedError;
   int? get grupoOficinaId => throw _privateConstructorUsedError;
+  int? get oficinaId => throw _privateConstructorUsedError;
   List<GrupoItem>? get selecioneGrupo => throw _privateConstructorUsedError;
+  List<OficinaItem>? get selecioneOficina => throw _privateConstructorUsedError;
 
   /// Serializes this LoginResponse to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -47,7 +49,9 @@ abstract class $LoginResponseCopyWith<$Res> {
     String? token,
     int? userId,
     int? grupoOficinaId,
+    int? oficinaId,
     List<GrupoItem>? selecioneGrupo,
+    List<OficinaItem>? selecioneOficina,
   });
 }
 
@@ -69,7 +73,9 @@ class _$LoginResponseCopyWithImpl<$Res, $Val extends LoginResponse>
     Object? token = freezed,
     Object? userId = freezed,
     Object? grupoOficinaId = freezed,
+    Object? oficinaId = freezed,
     Object? selecioneGrupo = freezed,
+    Object? selecioneOficina = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -85,10 +91,18 @@ class _$LoginResponseCopyWithImpl<$Res, $Val extends LoginResponse>
                 ? _value.grupoOficinaId
                 : grupoOficinaId // ignore: cast_nullable_to_non_nullable
                       as int?,
+            oficinaId: freezed == oficinaId
+                ? _value.oficinaId
+                : oficinaId // ignore: cast_nullable_to_non_nullable
+                      as int?,
             selecioneGrupo: freezed == selecioneGrupo
                 ? _value.selecioneGrupo
                 : selecioneGrupo // ignore: cast_nullable_to_non_nullable
                       as List<GrupoItem>?,
+            selecioneOficina: freezed == selecioneOficina
+                ? _value.selecioneOficina
+                : selecioneOficina // ignore: cast_nullable_to_non_nullable
+                      as List<OficinaItem>?,
           )
           as $Val,
     );
@@ -108,7 +122,9 @@ abstract class _$$LoginResponseImplCopyWith<$Res>
     String? token,
     int? userId,
     int? grupoOficinaId,
+    int? oficinaId,
     List<GrupoItem>? selecioneGrupo,
+    List<OficinaItem>? selecioneOficina,
   });
 }
 
@@ -129,7 +145,9 @@ class __$$LoginResponseImplCopyWithImpl<$Res>
     Object? token = freezed,
     Object? userId = freezed,
     Object? grupoOficinaId = freezed,
+    Object? oficinaId = freezed,
     Object? selecioneGrupo = freezed,
+    Object? selecioneOficina = freezed,
   }) {
     return _then(
       _$LoginResponseImpl(
@@ -145,10 +163,18 @@ class __$$LoginResponseImplCopyWithImpl<$Res>
             ? _value.grupoOficinaId
             : grupoOficinaId // ignore: cast_nullable_to_non_nullable
                   as int?,
+        oficinaId: freezed == oficinaId
+            ? _value.oficinaId
+            : oficinaId // ignore: cast_nullable_to_non_nullable
+                  as int?,
         selecioneGrupo: freezed == selecioneGrupo
             ? _value._selecioneGrupo
             : selecioneGrupo // ignore: cast_nullable_to_non_nullable
                   as List<GrupoItem>?,
+        selecioneOficina: freezed == selecioneOficina
+            ? _value._selecioneOficina
+            : selecioneOficina // ignore: cast_nullable_to_non_nullable
+                  as List<OficinaItem>?,
       ),
     );
   }
@@ -161,8 +187,11 @@ class _$LoginResponseImpl implements _LoginResponse {
     this.token,
     this.userId,
     this.grupoOficinaId,
+    this.oficinaId,
     final List<GrupoItem>? selecioneGrupo,
-  }) : _selecioneGrupo = selecioneGrupo;
+    final List<OficinaItem>? selecioneOficina,
+  }) : _selecioneGrupo = selecioneGrupo,
+       _selecioneOficina = selecioneOficina;
 
   factory _$LoginResponseImpl.fromJson(Map<String, dynamic> json) =>
       _$$LoginResponseImplFromJson(json);
@@ -173,6 +202,8 @@ class _$LoginResponseImpl implements _LoginResponse {
   final int? userId;
   @override
   final int? grupoOficinaId;
+  @override
+  final int? oficinaId;
   final List<GrupoItem>? _selecioneGrupo;
   @override
   List<GrupoItem>? get selecioneGrupo {
@@ -183,9 +214,20 @@ class _$LoginResponseImpl implements _LoginResponse {
     return EqualUnmodifiableListView(value);
   }
 
+  final List<OficinaItem>? _selecioneOficina;
+  @override
+  List<OficinaItem>? get selecioneOficina {
+    final value = _selecioneOficina;
+    if (value == null) return null;
+    if (_selecioneOficina is EqualUnmodifiableListView)
+      return _selecioneOficina;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   String toString() {
-    return 'LoginResponse(token: $token, userId: $userId, grupoOficinaId: $grupoOficinaId, selecioneGrupo: $selecioneGrupo)';
+    return 'LoginResponse(token: $token, userId: $userId, grupoOficinaId: $grupoOficinaId, oficinaId: $oficinaId, selecioneGrupo: $selecioneGrupo, selecioneOficina: $selecioneOficina)';
   }
 
   @override
@@ -197,9 +239,15 @@ class _$LoginResponseImpl implements _LoginResponse {
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.grupoOficinaId, grupoOficinaId) ||
                 other.grupoOficinaId == grupoOficinaId) &&
+            (identical(other.oficinaId, oficinaId) ||
+                other.oficinaId == oficinaId) &&
             const DeepCollectionEquality().equals(
               other._selecioneGrupo,
               _selecioneGrupo,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._selecioneOficina,
+              _selecioneOficina,
             ));
   }
 
@@ -210,7 +258,9 @@ class _$LoginResponseImpl implements _LoginResponse {
     token,
     userId,
     grupoOficinaId,
+    oficinaId,
     const DeepCollectionEquality().hash(_selecioneGrupo),
+    const DeepCollectionEquality().hash(_selecioneOficina),
   );
 
   /// Create a copy of LoginResponse
@@ -232,7 +282,9 @@ abstract class _LoginResponse implements LoginResponse {
     final String? token,
     final int? userId,
     final int? grupoOficinaId,
+    final int? oficinaId,
     final List<GrupoItem>? selecioneGrupo,
+    final List<OficinaItem>? selecioneOficina,
   }) = _$LoginResponseImpl;
 
   factory _LoginResponse.fromJson(Map<String, dynamic> json) =
@@ -245,212 +297,17 @@ abstract class _LoginResponse implements LoginResponse {
   @override
   int? get grupoOficinaId;
   @override
+  int? get oficinaId;
+  @override
   List<GrupoItem>? get selecioneGrupo;
+  @override
+  List<OficinaItem>? get selecioneOficina;
 
   /// Create a copy of LoginResponse
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$LoginResponseImplCopyWith<_$LoginResponseImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-SelectGroupResponse _$SelectGroupResponseFromJson(Map<String, dynamic> json) {
-  return _SelectGroupResponse.fromJson(json);
-}
-
-/// @nodoc
-mixin _$SelectGroupResponse {
-  String get token => throw _privateConstructorUsedError;
-  int get userId => throw _privateConstructorUsedError;
-  int get grupoOficinaId => throw _privateConstructorUsedError;
-
-  /// Serializes this SelectGroupResponse to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of SelectGroupResponse
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $SelectGroupResponseCopyWith<SelectGroupResponse> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $SelectGroupResponseCopyWith<$Res> {
-  factory $SelectGroupResponseCopyWith(
-    SelectGroupResponse value,
-    $Res Function(SelectGroupResponse) then,
-  ) = _$SelectGroupResponseCopyWithImpl<$Res, SelectGroupResponse>;
-  @useResult
-  $Res call({String token, int userId, int grupoOficinaId});
-}
-
-/// @nodoc
-class _$SelectGroupResponseCopyWithImpl<$Res, $Val extends SelectGroupResponse>
-    implements $SelectGroupResponseCopyWith<$Res> {
-  _$SelectGroupResponseCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of SelectGroupResponse
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? token = null,
-    Object? userId = null,
-    Object? grupoOficinaId = null,
-  }) {
-    return _then(
-      _value.copyWith(
-            token: null == token
-                ? _value.token
-                : token // ignore: cast_nullable_to_non_nullable
-                      as String,
-            userId: null == userId
-                ? _value.userId
-                : userId // ignore: cast_nullable_to_non_nullable
-                      as int,
-            grupoOficinaId: null == grupoOficinaId
-                ? _value.grupoOficinaId
-                : grupoOficinaId // ignore: cast_nullable_to_non_nullable
-                      as int,
-          )
-          as $Val,
-    );
-  }
-}
-
-/// @nodoc
-abstract class _$$SelectGroupResponseImplCopyWith<$Res>
-    implements $SelectGroupResponseCopyWith<$Res> {
-  factory _$$SelectGroupResponseImplCopyWith(
-    _$SelectGroupResponseImpl value,
-    $Res Function(_$SelectGroupResponseImpl) then,
-  ) = __$$SelectGroupResponseImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String token, int userId, int grupoOficinaId});
-}
-
-/// @nodoc
-class __$$SelectGroupResponseImplCopyWithImpl<$Res>
-    extends _$SelectGroupResponseCopyWithImpl<$Res, _$SelectGroupResponseImpl>
-    implements _$$SelectGroupResponseImplCopyWith<$Res> {
-  __$$SelectGroupResponseImplCopyWithImpl(
-    _$SelectGroupResponseImpl _value,
-    $Res Function(_$SelectGroupResponseImpl) _then,
-  ) : super(_value, _then);
-
-  /// Create a copy of SelectGroupResponse
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? token = null,
-    Object? userId = null,
-    Object? grupoOficinaId = null,
-  }) {
-    return _then(
-      _$SelectGroupResponseImpl(
-        token: null == token
-            ? _value.token
-            : token // ignore: cast_nullable_to_non_nullable
-                  as String,
-        userId: null == userId
-            ? _value.userId
-            : userId // ignore: cast_nullable_to_non_nullable
-                  as int,
-        grupoOficinaId: null == grupoOficinaId
-            ? _value.grupoOficinaId
-            : grupoOficinaId // ignore: cast_nullable_to_non_nullable
-                  as int,
-      ),
-    );
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$SelectGroupResponseImpl implements _SelectGroupResponse {
-  const _$SelectGroupResponseImpl({
-    required this.token,
-    required this.userId,
-    required this.grupoOficinaId,
-  });
-
-  factory _$SelectGroupResponseImpl.fromJson(Map<String, dynamic> json) =>
-      _$$SelectGroupResponseImplFromJson(json);
-
-  @override
-  final String token;
-  @override
-  final int userId;
-  @override
-  final int grupoOficinaId;
-
-  @override
-  String toString() {
-    return 'SelectGroupResponse(token: $token, userId: $userId, grupoOficinaId: $grupoOficinaId)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$SelectGroupResponseImpl &&
-            (identical(other.token, token) || other.token == token) &&
-            (identical(other.userId, userId) || other.userId == userId) &&
-            (identical(other.grupoOficinaId, grupoOficinaId) ||
-                other.grupoOficinaId == grupoOficinaId));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, token, userId, grupoOficinaId);
-
-  /// Create a copy of SelectGroupResponse
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$SelectGroupResponseImplCopyWith<_$SelectGroupResponseImpl> get copyWith =>
-      __$$SelectGroupResponseImplCopyWithImpl<_$SelectGroupResponseImpl>(
-        this,
-        _$identity,
-      );
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$SelectGroupResponseImplToJson(this);
-  }
-}
-
-abstract class _SelectGroupResponse implements SelectGroupResponse {
-  const factory _SelectGroupResponse({
-    required final String token,
-    required final int userId,
-    required final int grupoOficinaId,
-  }) = _$SelectGroupResponseImpl;
-
-  factory _SelectGroupResponse.fromJson(Map<String, dynamic> json) =
-      _$SelectGroupResponseImpl.fromJson;
-
-  @override
-  String get token;
-  @override
-  int get userId;
-  @override
-  int get grupoOficinaId;
-
-  /// Create a copy of SelectGroupResponse
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$SelectGroupResponseImplCopyWith<_$SelectGroupResponseImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -795,4 +652,164 @@ abstract class _SelectGroupRequest implements SelectGroupRequest {
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$SelectGroupRequestImplCopyWith<_$SelectGroupRequestImpl> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+SelectOficinaRequest _$SelectOficinaRequestFromJson(Map<String, dynamic> json) {
+  return _SelectOficinaRequest.fromJson(json);
+}
+
+/// @nodoc
+mixin _$SelectOficinaRequest {
+  int get oficinaId => throw _privateConstructorUsedError;
+
+  /// Serializes this SelectOficinaRequest to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of SelectOficinaRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $SelectOficinaRequestCopyWith<SelectOficinaRequest> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $SelectOficinaRequestCopyWith<$Res> {
+  factory $SelectOficinaRequestCopyWith(
+    SelectOficinaRequest value,
+    $Res Function(SelectOficinaRequest) then,
+  ) = _$SelectOficinaRequestCopyWithImpl<$Res, SelectOficinaRequest>;
+  @useResult
+  $Res call({int oficinaId});
+}
+
+/// @nodoc
+class _$SelectOficinaRequestCopyWithImpl<
+  $Res,
+  $Val extends SelectOficinaRequest
+>
+    implements $SelectOficinaRequestCopyWith<$Res> {
+  _$SelectOficinaRequestCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of SelectOficinaRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? oficinaId = null}) {
+    return _then(
+      _value.copyWith(
+            oficinaId: null == oficinaId
+                ? _value.oficinaId
+                : oficinaId // ignore: cast_nullable_to_non_nullable
+                      as int,
+          )
+          as $Val,
+    );
+  }
+}
+
+/// @nodoc
+abstract class _$$SelectOficinaRequestImplCopyWith<$Res>
+    implements $SelectOficinaRequestCopyWith<$Res> {
+  factory _$$SelectOficinaRequestImplCopyWith(
+    _$SelectOficinaRequestImpl value,
+    $Res Function(_$SelectOficinaRequestImpl) then,
+  ) = __$$SelectOficinaRequestImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({int oficinaId});
+}
+
+/// @nodoc
+class __$$SelectOficinaRequestImplCopyWithImpl<$Res>
+    extends _$SelectOficinaRequestCopyWithImpl<$Res, _$SelectOficinaRequestImpl>
+    implements _$$SelectOficinaRequestImplCopyWith<$Res> {
+  __$$SelectOficinaRequestImplCopyWithImpl(
+    _$SelectOficinaRequestImpl _value,
+    $Res Function(_$SelectOficinaRequestImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of SelectOficinaRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? oficinaId = null}) {
+    return _then(
+      _$SelectOficinaRequestImpl(
+        oficinaId: null == oficinaId
+            ? _value.oficinaId
+            : oficinaId // ignore: cast_nullable_to_non_nullable
+                  as int,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$SelectOficinaRequestImpl implements _SelectOficinaRequest {
+  const _$SelectOficinaRequestImpl({required this.oficinaId});
+
+  factory _$SelectOficinaRequestImpl.fromJson(Map<String, dynamic> json) =>
+      _$$SelectOficinaRequestImplFromJson(json);
+
+  @override
+  final int oficinaId;
+
+  @override
+  String toString() {
+    return 'SelectOficinaRequest(oficinaId: $oficinaId)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SelectOficinaRequestImpl &&
+            (identical(other.oficinaId, oficinaId) ||
+                other.oficinaId == oficinaId));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, oficinaId);
+
+  /// Create a copy of SelectOficinaRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$SelectOficinaRequestImplCopyWith<_$SelectOficinaRequestImpl>
+  get copyWith =>
+      __$$SelectOficinaRequestImplCopyWithImpl<_$SelectOficinaRequestImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$SelectOficinaRequestImplToJson(this);
+  }
+}
+
+abstract class _SelectOficinaRequest implements SelectOficinaRequest {
+  const factory _SelectOficinaRequest({required final int oficinaId}) =
+      _$SelectOficinaRequestImpl;
+
+  factory _SelectOficinaRequest.fromJson(Map<String, dynamic> json) =
+      _$SelectOficinaRequestImpl.fromJson;
+
+  @override
+  int get oficinaId;
+
+  /// Create a copy of SelectOficinaRequest
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$SelectOficinaRequestImplCopyWith<_$SelectOficinaRequestImpl>
+  get copyWith => throw _privateConstructorUsedError;
 }

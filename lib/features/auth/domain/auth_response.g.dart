@@ -11,8 +11,12 @@ _$LoginResponseImpl _$$LoginResponseImplFromJson(Map<String, dynamic> json) =>
       token: json['token'] as String?,
       userId: (json['userId'] as num?)?.toInt(),
       grupoOficinaId: (json['grupoOficinaId'] as num?)?.toInt(),
+      oficinaId: (json['oficinaId'] as num?)?.toInt(),
       selecioneGrupo: (json['selecioneGrupo'] as List<dynamic>?)
           ?.map((e) => GrupoItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      selecioneOficina: (json['selecioneOficina'] as List<dynamic>?)
+          ?.map((e) => OficinaItem.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
 
@@ -21,24 +25,10 @@ Map<String, dynamic> _$$LoginResponseImplToJson(_$LoginResponseImpl instance) =>
       'token': instance.token,
       'userId': instance.userId,
       'grupoOficinaId': instance.grupoOficinaId,
+      'oficinaId': instance.oficinaId,
       'selecioneGrupo': instance.selecioneGrupo,
+      'selecioneOficina': instance.selecioneOficina,
     };
-
-_$SelectGroupResponseImpl _$$SelectGroupResponseImplFromJson(
-  Map<String, dynamic> json,
-) => _$SelectGroupResponseImpl(
-  token: json['token'] as String,
-  userId: (json['userId'] as num).toInt(),
-  grupoOficinaId: (json['grupoOficinaId'] as num).toInt(),
-);
-
-Map<String, dynamic> _$$SelectGroupResponseImplToJson(
-  _$SelectGroupResponseImpl instance,
-) => <String, dynamic>{
-  'token': instance.token,
-  'userId': instance.userId,
-  'grupoOficinaId': instance.grupoOficinaId,
-};
 
 _$LoginRequestImpl _$$LoginRequestImplFromJson(Map<String, dynamic> json) =>
     _$LoginRequestImpl(
@@ -62,3 +52,11 @@ Map<String, dynamic> _$$SelectGroupRequestImplToJson(
   'userId': instance.userId,
   'grupoOficinaId': instance.grupoOficinaId,
 };
+
+_$SelectOficinaRequestImpl _$$SelectOficinaRequestImplFromJson(
+  Map<String, dynamic> json,
+) => _$SelectOficinaRequestImpl(oficinaId: (json['oficinaId'] as num).toInt());
+
+Map<String, dynamic> _$$SelectOficinaRequestImplToJson(
+  _$SelectOficinaRequestImpl instance,
+) => <String, dynamic>{'oficinaId': instance.oficinaId};

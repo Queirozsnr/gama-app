@@ -10,12 +10,15 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     final token = await ref.read(authRepositoryProvider).getStoredToken();
     if (token != null) {
       final groups = await _fetchGroups();
+      final oficinas = await _fetchOficinas();
       return AuthState(
         token: token,
         userId: JwtDecoder.userId(token),
         grupoOficinaId: JwtDecoder.grupoOficinaId(token),
+        oficinaId: JwtDecoder.oficinaId(token),
         isAuthenticated: true,
         availableGroups: groups,
+        availableOficinas: oficinas,
       );
     }
     return AuthState.initial();
@@ -29,27 +32,41 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         state = AsyncData(AuthState(
           userId: response.userId,
           pendingGroupSelection: true,
-          availableGroups: response.selecioneGrupo!
-              .map((g) => GrupoItem(id: g.id, nome: g.nome))
-              .toList(),
+          availableGroups: response.selecioneGrupo!,
+        ));
+        return;
+      }
+
+      if (response.selecioneOficina != null && response.selecioneOficina!.isNotEmpty) {
+        final groups = await _fetchGroups();
+        state = AsyncData(AuthState(
+          token: response.token,
+          userId: response.userId,
+          grupoOficinaId: response.grupoOficinaId,
+          pendingOficinaSelection: true,
+          availableGroups: groups,
+          availableOficinas: response.selecioneOficina!,
         ));
         return;
       }
 
       final groups = await _fetchGroups();
+      final oficinas = await _fetchOficinas();
       state = AsyncData(AuthState(
         token: response.token,
         userId: response.userId,
         grupoOficinaId: response.grupoOficinaId,
+        oficinaId: response.oficinaId,
         isAuthenticated: true,
         availableGroups: groups,
+        availableOficinas: oficinas,
       ));
     } on DioException catch (e) {
       final data = e.response?.data;
       throw (data is Map && data['error'] != null)
           ? data['error'] as String
           : 'Erro ao realizar login.';
-    } catch (e) {
+    } catch (_) {
       throw 'Erro inesperado.';
     }
   }
@@ -63,15 +80,52 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
           .read(authRepositoryProvider)
           .selectGroup(current!.userId!, grupoOficinaId);
 
+      if (response.selecioneOficina != null && response.selecioneOficina!.isNotEmpty) {
+        state = AsyncData(AuthState(
+          token: response.token,
+          userId: response.userId,
+          grupoOficinaId: response.grupoOficinaId,
+          pendingOficinaSelection: true,
+          availableGroups: current.availableGroups,
+          availableOficinas: response.selecioneOficina!,
+        ));
+        return;
+      }
+
+      final oficinas = await _fetchOficinas();
       state = AsyncData(AuthState(
         token: response.token,
         userId: response.userId,
         grupoOficinaId: response.grupoOficinaId,
+        oficinaId: response.oficinaId,
         isAuthenticated: true,
         availableGroups: current.availableGroups,
+        availableOficinas: oficinas,
       ));
     } on DioException catch (_) {
       throw 'Erro ao selecionar grupo.';
+    } catch (_) {
+      throw 'Erro inesperado.';
+    }
+  }
+
+  Future<void> selectOficina(int oficinaId) async {
+    final current = state.value;
+
+    try {
+      final response = await ref.read(authRepositoryProvider).selecionarOficina(oficinaId);
+
+      state = AsyncData(AuthState(
+        token: response.token,
+        userId: response.userId,
+        grupoOficinaId: response.grupoOficinaId,
+        oficinaId: response.oficinaId,
+        isAuthenticated: true,
+        availableGroups: current?.availableGroups ?? [],
+        availableOficinas: current?.availableOficinas ?? [],
+      ));
+    } on DioException catch (_) {
+      throw 'Erro ao selecionar oficina.';
     } catch (_) {
       throw 'Erro inesperado.';
     }
@@ -85,6 +139,14 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   Future<List<GrupoItem>> _fetchGroups() async {
     try {
       return await ref.read(authRepositoryProvider).fetchGroups();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<OficinaItem>> _fetchOficinas() async {
+    try {
+      return await ref.read(authRepositoryProvider).fetchOficinas();
     } catch (_) {
       return [];
     }

@@ -10,23 +10,13 @@ class LoginResponse with _$LoginResponse {
     String? token,
     int? userId,
     int? grupoOficinaId,
+    int? oficinaId,
     List<GrupoItem>? selecioneGrupo,
+    List<OficinaItem>? selecioneOficina,
   }) = _LoginResponse;
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) =>
       _$LoginResponseFromJson(json);
-}
-
-@freezed
-class SelectGroupResponse with _$SelectGroupResponse {
-  const factory SelectGroupResponse({
-    required String token,
-    required int userId,
-    required int grupoOficinaId,
-  }) = _SelectGroupResponse;
-
-  factory SelectGroupResponse.fromJson(Map<String, dynamic> json) =>
-      _$SelectGroupResponseFromJson(json);
 }
 
 @freezed
@@ -49,4 +39,14 @@ class SelectGroupRequest with _$SelectGroupRequest {
 
   factory SelectGroupRequest.fromJson(Map<String, dynamic> json) =>
       _$SelectGroupRequestFromJson(json);
+}
+
+@freezed
+class SelectOficinaRequest with _$SelectOficinaRequest {
+  const factory SelectOficinaRequest({
+    required int oficinaId,
+  }) = _SelectOficinaRequest;
+
+  factory SelectOficinaRequest.fromJson(Map<String, dynamic> json) =>
+      _$SelectOficinaRequestFromJson(json);
 }

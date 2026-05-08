@@ -14,3 +14,12 @@ _$GrupoItemImpl _$$GrupoItemImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$GrupoItemImplToJson(_$GrupoItemImpl instance) =>
     <String, dynamic>{'id': instance.id, 'nome': instance.nome};
+
+_$OficinaItemImpl _$$OficinaItemImplFromJson(Map<String, dynamic> json) =>
+    _$OficinaItemImpl(
+      id: (json['id'] as num).toInt(),
+      nome: json['nome'] as String,
+    );
+
+Map<String, dynamic> _$$OficinaItemImplToJson(_$OficinaItemImpl instance) =>
+    <String, dynamic>{'id': instance.id, 'nome': instance.nome};

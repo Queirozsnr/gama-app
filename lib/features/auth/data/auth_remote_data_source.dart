@@ -13,16 +13,23 @@ class AuthRemoteDataSource {
     return LoginResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<SelectGroupResponse> selectGroup(SelectGroupRequest request) async {
-    final response = await _dio.post(
-      '/auth/selecionar-grupo',
-      data: request.toJson(),
-    );
-    return SelectGroupResponse.fromJson(response.data as Map<String, dynamic>);
+  Future<LoginResponse> selectGroup(SelectGroupRequest request) async {
+    final response = await _dio.post('/auth/selecionar-grupo', data: request.toJson());
+    return LoginResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<LoginResponse> selecionarOficina(SelectOficinaRequest request) async {
+    final response = await _dio.post('/auth/selecionar-oficina', data: request.toJson());
+    return LoginResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<List<Map<String, dynamic>>> fetchGroups() async {
     final response = await _dio.get('/auth/grupos');
+    return (response.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchOficinas() async {
+    final response = await _dio.get('/auth/oficinas');
     return (response.data as List).cast<Map<String, dynamic>>();
   }
 }

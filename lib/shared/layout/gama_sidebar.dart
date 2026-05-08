@@ -41,6 +41,14 @@ class GamaSidebar extends ConsumerWidget {
     final groupName = currentGroup?.nome ?? 'Minha Oficina';
     final groupInitials = _initials(groupName);
 
+    final oficinas = auth?.availableOficinas ?? [];
+    final currentOficinaId = auth?.oficinaId;
+    final currentOficina = oficinas.cast<OficinaItem?>().firstWhere(
+      (o) => o?.id == currentOficinaId,
+      orElse: () => null,
+    );
+    final oficinaNome = currentOficina?.nome;
+
     final token = auth?.token ?? '';
     final userName = token.isNotEmpty ? (JwtDecoder.nome(token) ?? 'Usuário') : 'Usuário';
     final userCargo = token.isNotEmpty ? (JwtDecoder.cargo(token) ?? '') : '';
@@ -64,8 +72,11 @@ class GamaSidebar extends ConsumerWidget {
           _GroupCard(
             initials: groupInitials,
             name: groupName,
+            oficinaNome: oficinaNome,
             groups: groups,
             currentGroupId: currentGroupId,
+            oficinas: oficinas,
+            currentOficinaId: currentOficinaId,
           ),
           const SizedBox(height: 8),
           Expanded(
@@ -175,13 +186,19 @@ class _GroupCard extends ConsumerStatefulWidget {
     required this.initials,
     required this.name,
     required this.groups,
+    required this.oficinas,
+    this.oficinaNome,
     this.currentGroupId,
+    this.currentOficinaId,
   });
 
   final String initials;
   final String name;
+  final String? oficinaNome;
   final List<GrupoItem> groups;
+  final List<OficinaItem> oficinas;
   final int? currentGroupId;
+  final int? currentOficinaId;
 
   @override
   ConsumerState<_GroupCard> createState() => _GroupCardState();
@@ -190,7 +207,8 @@ class _GroupCard extends ConsumerStatefulWidget {
 class _GroupCardState extends ConsumerState<_GroupCard> {
   final _layerLink = LayerLink();
   OverlayEntry? _overlay;
-  int? _loadingId;
+  int? _loadingGrupoId;
+  int? _loadingOficinaId;
 
   @override
   void dispose() {
@@ -204,34 +222,51 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
   }
 
   void _show() {
+    final token = ref.read(authNotifierProvider).valueOrNull?.token ?? '';
+    final cargo = token.isNotEmpty ? JwtDecoder.cargo(token) : null;
+    final isGestor = cargo == 'Gestor';
+
     _overlay = OverlayEntry(builder: (_) => _DropdownOverlay(
       layerLink: _layerLink,
       groups: widget.groups,
+      oficinas: widget.oficinas,
       currentGroupId: widget.currentGroupId,
-      loadingId: _loadingId,
-      onSelect: _switchGroup,
+      currentOficinaId: widget.currentOficinaId,
+      loadingGrupoId: _loadingGrupoId,
+      loadingOficinaId: _loadingOficinaId,
+      showGerenciar: isGestor,
+      onSelectGrupo: _switchGroup,
+      onSelectOficina: _switchOficina,
       onDismiss: _hide,
     ));
     Overlay.of(context).insert(_overlay!);
   }
 
   Future<void> _switchGroup(int grupoId) async {
-    if (grupoId == widget.currentGroupId) {
-      _hide();
-      return;
-    }
-    setState(() => _loadingId = grupoId);
+    if (grupoId == widget.currentGroupId) { _hide(); return; }
+    setState(() => _loadingGrupoId = grupoId);
     _overlay?.markNeedsBuild();
     try {
       await ref.read(authNotifierProvider.notifier).selectGroup(grupoId);
       if (mounted) _hide();
     } catch (e) {
-      if (mounted) {
-        _hide();
-        GamaSnackBar.error(context, e.toString());
-      }
+      if (mounted) { _hide(); GamaSnackBar.error(context, e.toString()); }
     } finally {
-      if (mounted) setState(() => _loadingId = null);
+      if (mounted) setState(() => _loadingGrupoId = null);
+    }
+  }
+
+  Future<void> _switchOficina(int oficinaId) async {
+    if (oficinaId == widget.currentOficinaId) { _hide(); return; }
+    setState(() => _loadingOficinaId = oficinaId);
+    _overlay?.markNeedsBuild();
+    try {
+      await ref.read(authNotifierProvider.notifier).selectOficina(oficinaId);
+      if (mounted) _hide();
+    } catch (e) {
+      if (mounted) { _hide(); GamaSnackBar.error(context, e.toString()); }
+    } finally {
+      if (mounted) setState(() => _loadingOficinaId = null);
     }
   }
 
@@ -265,9 +300,10 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const Text(
-                      'PLANO PRO',
-                      style: TextStyle(fontSize: 10, color: AppColors.primary),
+                    Text(
+                      widget.oficinaNome ?? 'PLANO PRO',
+                      style: const TextStyle(fontSize: 10, color: AppColors.primary),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -285,20 +321,30 @@ class _DropdownOverlay extends StatelessWidget {
   const _DropdownOverlay({
     required this.layerLink,
     required this.groups,
+    required this.oficinas,
     required this.currentGroupId,
-    required this.loadingId,
-    required this.onSelect,
+    required this.currentOficinaId,
+    required this.loadingGrupoId,
+    required this.loadingOficinaId,
+    required this.showGerenciar,
+    required this.onSelectGrupo,
+    required this.onSelectOficina,
     required this.onDismiss,
   });
 
   final LayerLink layerLink;
   final List<GrupoItem> groups;
+  final List<OficinaItem> oficinas;
   final int? currentGroupId;
-  final int? loadingId;
-  final void Function(int) onSelect;
+  final int? currentOficinaId;
+  final int? loadingGrupoId;
+  final int? loadingOficinaId;
+  final bool showGerenciar;
+  final void Function(int) onSelectGrupo;
+  final void Function(int) onSelectOficina;
   final VoidCallback onDismiss;
 
-  String _initials(String nome) {
+  static String _initials(String nome) {
     final parts = nome.trim().split(' ');
     if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}';
     return nome.substring(0, nome.length.clamp(0, 2));
@@ -306,6 +352,8 @@ class _DropdownOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final anyLoading = loadingGrupoId != null || loadingOficinaId != null;
+
     return Stack(
       children: [
         Positioned.fill(
@@ -323,7 +371,7 @@ class _DropdownOverlay extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             shadowColor: Colors.black26,
             child: Container(
-              width: 216,
+              width: 232,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -332,44 +380,73 @@ class _DropdownOverlay extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-                    child: Text(
-                      'SUAS OFICINAS',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                        letterSpacing: 0.8,
+                  // Seção de unidades
+                  if (oficinas.isNotEmpty) ...[
+                    _SectionLabel('UNIDADES'),
+                    for (final o in oficinas)
+                      _DropdownItem(
+                        initials: _initials(o.nome),
+                        nome: o.nome,
+                        isCurrent: o.id == currentOficinaId,
+                        isLoading: loadingOficinaId == o.id,
+                        isDisabled: anyLoading,
+                        onTap: () => onSelectOficina(o.id),
                       ),
+                  ],
+                  // Seção de grupos (só se tiver mais de um)
+                  if (groups.length > 1) ...[
+                    if (oficinas.isNotEmpty) const Divider(height: 1),
+                    _SectionLabel('GRUPOS'),
+                    for (final g in groups)
+                      _DropdownItem(
+                        initials: _initials(g.nome),
+                        nome: g.nome,
+                        isCurrent: g.id == currentGroupId,
+                        isLoading: loadingGrupoId == g.id,
+                        isDisabled: anyLoading,
+                        onTap: () => onSelectGrupo(g.id),
+                      ),
+                  ],
+                  if (showGerenciar) ...[
+                    const Divider(height: 1),
+                    _DropdownAction(
+                      icon: Icons.settings_outlined,
+                      label: 'Gerenciar oficinas',
+                      color: AppColors.textSecondary,
+                      isLast: true,
+                      onTap: () {
+                        onDismiss();
+                        context.go('/gerenciar-oficinas');
+                      },
                     ),
-                  ),
-                  for (final g in groups)
-                    _DropdownItem(
-                      initials: _initials(g.nome),
-                      nome: g.nome,
-                      isCurrent: g.id == currentGroupId,
-                      isLoading: loadingId == g.id,
-                      isDisabled: loadingId != null,
-                      onTap: () => onSelect(g.id),
-                    ),
-                  const Divider(height: 1),
-                  _DropdownAction(
-                    icon: Icons.settings_outlined,
-                    label: 'Gerenciar oficinas',
-                    color: AppColors.textSecondary,
-                    isLast: true,
-                    onTap: () {
-                      onDismiss();
-                      context.go('/gerenciar-oficinas');
-                    },
-                  ),
+                  ],
                 ],
               ),
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textSecondary,
+          letterSpacing: 0.8,
+        ),
+      ),
     );
   }
 }

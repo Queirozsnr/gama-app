@@ -12,8 +12,16 @@ class AuthRepository {
   final FlutterSecureStorage _storage;
 
   Future<LoginResponse> login(String email, String senha) async {
-    final response = await _dataSource.login(
-      LoginRequest(email: email, senha: senha),
+    final response = await _dataSource.login(LoginRequest(email: email, senha: senha));
+    if (response.token != null) {
+      await _storage.write(key: kTokenStorageKey, value: response.token);
+    }
+    return response;
+  }
+
+  Future<LoginResponse> selectGroup(int userId, int grupoOficinaId) async {
+    final response = await _dataSource.selectGroup(
+      SelectGroupRequest(userId: userId, grupoOficinaId: grupoOficinaId),
     );
     if (response.token != null) {
       await _storage.write(key: kTokenStorageKey, value: response.token);
@@ -21,12 +29,9 @@ class AuthRepository {
     return response;
   }
 
-  Future<SelectGroupResponse> selectGroup(
-    int userId,
-    int grupoOficinaId,
-  ) async {
-    final response = await _dataSource.selectGroup(
-      SelectGroupRequest(userId: userId, grupoOficinaId: grupoOficinaId),
+  Future<LoginResponse> selecionarOficina(int oficinaId) async {
+    final response = await _dataSource.selecionarOficina(
+      SelectOficinaRequest(oficinaId: oficinaId),
     );
     await _storage.write(key: kTokenStorageKey, value: response.token);
     return response;
@@ -35,6 +40,11 @@ class AuthRepository {
   Future<List<GrupoItem>> fetchGroups() async {
     final raw = await _dataSource.fetchGroups();
     return raw.map((e) => GrupoItem.fromJson(e)).toList();
+  }
+
+  Future<List<OficinaItem>> fetchOficinas() async {
+    final raw = await _dataSource.fetchOficinas();
+    return raw.map((e) => OficinaItem.fromJson(e)).toList();
   }
 
   Future<void> logout() async {

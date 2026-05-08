@@ -181,14 +181,185 @@ abstract class _GrupoItem implements GrupoItem {
       throw _privateConstructorUsedError;
 }
 
+OficinaItem _$OficinaItemFromJson(Map<String, dynamic> json) {
+  return _OficinaItem.fromJson(json);
+}
+
+/// @nodoc
+mixin _$OficinaItem {
+  int get id => throw _privateConstructorUsedError;
+  String get nome => throw _privateConstructorUsedError;
+
+  /// Serializes this OficinaItem to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of OficinaItem
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $OficinaItemCopyWith<OficinaItem> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $OficinaItemCopyWith<$Res> {
+  factory $OficinaItemCopyWith(
+    OficinaItem value,
+    $Res Function(OficinaItem) then,
+  ) = _$OficinaItemCopyWithImpl<$Res, OficinaItem>;
+  @useResult
+  $Res call({int id, String nome});
+}
+
+/// @nodoc
+class _$OficinaItemCopyWithImpl<$Res, $Val extends OficinaItem>
+    implements $OficinaItemCopyWith<$Res> {
+  _$OficinaItemCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of OficinaItem
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? id = null, Object? nome = null}) {
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as int,
+            nome: null == nome
+                ? _value.nome
+                : nome // ignore: cast_nullable_to_non_nullable
+                      as String,
+          )
+          as $Val,
+    );
+  }
+}
+
+/// @nodoc
+abstract class _$$OficinaItemImplCopyWith<$Res>
+    implements $OficinaItemCopyWith<$Res> {
+  factory _$$OficinaItemImplCopyWith(
+    _$OficinaItemImpl value,
+    $Res Function(_$OficinaItemImpl) then,
+  ) = __$$OficinaItemImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({int id, String nome});
+}
+
+/// @nodoc
+class __$$OficinaItemImplCopyWithImpl<$Res>
+    extends _$OficinaItemCopyWithImpl<$Res, _$OficinaItemImpl>
+    implements _$$OficinaItemImplCopyWith<$Res> {
+  __$$OficinaItemImplCopyWithImpl(
+    _$OficinaItemImpl _value,
+    $Res Function(_$OficinaItemImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of OficinaItem
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? id = null, Object? nome = null}) {
+    return _then(
+      _$OficinaItemImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as int,
+        nome: null == nome
+            ? _value.nome
+            : nome // ignore: cast_nullable_to_non_nullable
+                  as String,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$OficinaItemImpl implements _OficinaItem {
+  const _$OficinaItemImpl({required this.id, required this.nome});
+
+  factory _$OficinaItemImpl.fromJson(Map<String, dynamic> json) =>
+      _$$OficinaItemImplFromJson(json);
+
+  @override
+  final int id;
+  @override
+  final String nome;
+
+  @override
+  String toString() {
+    return 'OficinaItem(id: $id, nome: $nome)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$OficinaItemImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.nome, nome) || other.nome == nome));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, nome);
+
+  /// Create a copy of OficinaItem
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$OficinaItemImplCopyWith<_$OficinaItemImpl> get copyWith =>
+      __$$OficinaItemImplCopyWithImpl<_$OficinaItemImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$OficinaItemImplToJson(this);
+  }
+}
+
+abstract class _OficinaItem implements OficinaItem {
+  const factory _OficinaItem({
+    required final int id,
+    required final String nome,
+  }) = _$OficinaItemImpl;
+
+  factory _OficinaItem.fromJson(Map<String, dynamic> json) =
+      _$OficinaItemImpl.fromJson;
+
+  @override
+  int get id;
+  @override
+  String get nome;
+
+  /// Create a copy of OficinaItem
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$OficinaItemImplCopyWith<_$OficinaItemImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 /// @nodoc
 mixin _$AuthState {
   String? get token => throw _privateConstructorUsedError;
   int? get userId => throw _privateConstructorUsedError;
   int? get grupoOficinaId => throw _privateConstructorUsedError;
+  int? get oficinaId => throw _privateConstructorUsedError;
   bool get isAuthenticated => throw _privateConstructorUsedError;
   bool get pendingGroupSelection => throw _privateConstructorUsedError;
+  bool get pendingOficinaSelection => throw _privateConstructorUsedError;
   List<GrupoItem> get availableGroups => throw _privateConstructorUsedError;
+  List<OficinaItem> get availableOficinas => throw _privateConstructorUsedError;
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.
@@ -206,9 +377,12 @@ abstract class $AuthStateCopyWith<$Res> {
     String? token,
     int? userId,
     int? grupoOficinaId,
+    int? oficinaId,
     bool isAuthenticated,
     bool pendingGroupSelection,
+    bool pendingOficinaSelection,
     List<GrupoItem> availableGroups,
+    List<OficinaItem> availableOficinas,
   });
 }
 
@@ -230,9 +404,12 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
     Object? token = freezed,
     Object? userId = freezed,
     Object? grupoOficinaId = freezed,
+    Object? oficinaId = freezed,
     Object? isAuthenticated = null,
     Object? pendingGroupSelection = null,
+    Object? pendingOficinaSelection = null,
     Object? availableGroups = null,
+    Object? availableOficinas = null,
   }) {
     return _then(
       _value.copyWith(
@@ -248,6 +425,10 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
                 ? _value.grupoOficinaId
                 : grupoOficinaId // ignore: cast_nullable_to_non_nullable
                       as int?,
+            oficinaId: freezed == oficinaId
+                ? _value.oficinaId
+                : oficinaId // ignore: cast_nullable_to_non_nullable
+                      as int?,
             isAuthenticated: null == isAuthenticated
                 ? _value.isAuthenticated
                 : isAuthenticated // ignore: cast_nullable_to_non_nullable
@@ -256,10 +437,18 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
                 ? _value.pendingGroupSelection
                 : pendingGroupSelection // ignore: cast_nullable_to_non_nullable
                       as bool,
+            pendingOficinaSelection: null == pendingOficinaSelection
+                ? _value.pendingOficinaSelection
+                : pendingOficinaSelection // ignore: cast_nullable_to_non_nullable
+                      as bool,
             availableGroups: null == availableGroups
                 ? _value.availableGroups
                 : availableGroups // ignore: cast_nullable_to_non_nullable
                       as List<GrupoItem>,
+            availableOficinas: null == availableOficinas
+                ? _value.availableOficinas
+                : availableOficinas // ignore: cast_nullable_to_non_nullable
+                      as List<OficinaItem>,
           )
           as $Val,
     );
@@ -279,9 +468,12 @@ abstract class _$$AuthStateImplCopyWith<$Res>
     String? token,
     int? userId,
     int? grupoOficinaId,
+    int? oficinaId,
     bool isAuthenticated,
     bool pendingGroupSelection,
+    bool pendingOficinaSelection,
     List<GrupoItem> availableGroups,
+    List<OficinaItem> availableOficinas,
   });
 }
 
@@ -302,9 +494,12 @@ class __$$AuthStateImplCopyWithImpl<$Res>
     Object? token = freezed,
     Object? userId = freezed,
     Object? grupoOficinaId = freezed,
+    Object? oficinaId = freezed,
     Object? isAuthenticated = null,
     Object? pendingGroupSelection = null,
+    Object? pendingOficinaSelection = null,
     Object? availableGroups = null,
+    Object? availableOficinas = null,
   }) {
     return _then(
       _$AuthStateImpl(
@@ -320,6 +515,10 @@ class __$$AuthStateImplCopyWithImpl<$Res>
             ? _value.grupoOficinaId
             : grupoOficinaId // ignore: cast_nullable_to_non_nullable
                   as int?,
+        oficinaId: freezed == oficinaId
+            ? _value.oficinaId
+            : oficinaId // ignore: cast_nullable_to_non_nullable
+                  as int?,
         isAuthenticated: null == isAuthenticated
             ? _value.isAuthenticated
             : isAuthenticated // ignore: cast_nullable_to_non_nullable
@@ -328,10 +527,18 @@ class __$$AuthStateImplCopyWithImpl<$Res>
             ? _value.pendingGroupSelection
             : pendingGroupSelection // ignore: cast_nullable_to_non_nullable
                   as bool,
+        pendingOficinaSelection: null == pendingOficinaSelection
+            ? _value.pendingOficinaSelection
+            : pendingOficinaSelection // ignore: cast_nullable_to_non_nullable
+                  as bool,
         availableGroups: null == availableGroups
             ? _value._availableGroups
             : availableGroups // ignore: cast_nullable_to_non_nullable
                   as List<GrupoItem>,
+        availableOficinas: null == availableOficinas
+            ? _value._availableOficinas
+            : availableOficinas // ignore: cast_nullable_to_non_nullable
+                  as List<OficinaItem>,
       ),
     );
   }
@@ -344,10 +551,14 @@ class _$AuthStateImpl implements _AuthState {
     this.token,
     this.userId,
     this.grupoOficinaId,
+    this.oficinaId,
     this.isAuthenticated = false,
     this.pendingGroupSelection = false,
+    this.pendingOficinaSelection = false,
     final List<GrupoItem> availableGroups = const [],
-  }) : _availableGroups = availableGroups;
+    final List<OficinaItem> availableOficinas = const [],
+  }) : _availableGroups = availableGroups,
+       _availableOficinas = availableOficinas;
 
   @override
   final String? token;
@@ -356,11 +567,16 @@ class _$AuthStateImpl implements _AuthState {
   @override
   final int? grupoOficinaId;
   @override
+  final int? oficinaId;
+  @override
   @JsonKey()
   final bool isAuthenticated;
   @override
   @JsonKey()
   final bool pendingGroupSelection;
+  @override
+  @JsonKey()
+  final bool pendingOficinaSelection;
   final List<GrupoItem> _availableGroups;
   @override
   @JsonKey()
@@ -370,9 +586,19 @@ class _$AuthStateImpl implements _AuthState {
     return EqualUnmodifiableListView(_availableGroups);
   }
 
+  final List<OficinaItem> _availableOficinas;
+  @override
+  @JsonKey()
+  List<OficinaItem> get availableOficinas {
+    if (_availableOficinas is EqualUnmodifiableListView)
+      return _availableOficinas;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_availableOficinas);
+  }
+
   @override
   String toString() {
-    return 'AuthState(token: $token, userId: $userId, grupoOficinaId: $grupoOficinaId, isAuthenticated: $isAuthenticated, pendingGroupSelection: $pendingGroupSelection, availableGroups: $availableGroups)';
+    return 'AuthState(token: $token, userId: $userId, grupoOficinaId: $grupoOficinaId, oficinaId: $oficinaId, isAuthenticated: $isAuthenticated, pendingGroupSelection: $pendingGroupSelection, pendingOficinaSelection: $pendingOficinaSelection, availableGroups: $availableGroups, availableOficinas: $availableOficinas)';
   }
 
   @override
@@ -384,13 +610,24 @@ class _$AuthStateImpl implements _AuthState {
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.grupoOficinaId, grupoOficinaId) ||
                 other.grupoOficinaId == grupoOficinaId) &&
+            (identical(other.oficinaId, oficinaId) ||
+                other.oficinaId == oficinaId) &&
             (identical(other.isAuthenticated, isAuthenticated) ||
                 other.isAuthenticated == isAuthenticated) &&
             (identical(other.pendingGroupSelection, pendingGroupSelection) ||
                 other.pendingGroupSelection == pendingGroupSelection) &&
+            (identical(
+                  other.pendingOficinaSelection,
+                  pendingOficinaSelection,
+                ) ||
+                other.pendingOficinaSelection == pendingOficinaSelection) &&
             const DeepCollectionEquality().equals(
               other._availableGroups,
               _availableGroups,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._availableOficinas,
+              _availableOficinas,
             ));
   }
 
@@ -400,9 +637,12 @@ class _$AuthStateImpl implements _AuthState {
     token,
     userId,
     grupoOficinaId,
+    oficinaId,
     isAuthenticated,
     pendingGroupSelection,
+    pendingOficinaSelection,
     const DeepCollectionEquality().hash(_availableGroups),
+    const DeepCollectionEquality().hash(_availableOficinas),
   );
 
   /// Create a copy of AuthState
@@ -419,9 +659,12 @@ abstract class _AuthState implements AuthState {
     final String? token,
     final int? userId,
     final int? grupoOficinaId,
+    final int? oficinaId,
     final bool isAuthenticated,
     final bool pendingGroupSelection,
+    final bool pendingOficinaSelection,
     final List<GrupoItem> availableGroups,
+    final List<OficinaItem> availableOficinas,
   }) = _$AuthStateImpl;
 
   @override
@@ -431,11 +674,17 @@ abstract class _AuthState implements AuthState {
   @override
   int? get grupoOficinaId;
   @override
+  int? get oficinaId;
+  @override
   bool get isAuthenticated;
   @override
   bool get pendingGroupSelection;
   @override
+  bool get pendingOficinaSelection;
+  @override
   List<GrupoItem> get availableGroups;
+  @override
+  List<OficinaItem> get availableOficinas;
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.

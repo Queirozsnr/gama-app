@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/select_group_screen.dart';
+import '../../features/auth/presentation/select_oficina_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/ordens_servico/presentation/ordens_servico_screen.dart';
@@ -27,6 +28,7 @@ abstract final class AppRoutes {
   static const funcionarios   = '/funcionarios';
   static const pagamentos        = '/pagamentos';
   static const gerenciarOficinas = '/gerenciar-oficinas';
+  static const selectOficina    = '/select-oficina';
 }
 
 const _pageTitles = <String, String>{
@@ -64,21 +66,24 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final auth = authAsync.valueOrNull;
       final isAuthenticated = auth?.isAuthenticated ?? false;
-      final isPending = auth?.pendingGroupSelection ?? false;
+      final isPendingGroup = auth?.pendingGroupSelection ?? false;
+      final isPendingOficina = auth?.pendingOficinaSelection ?? false;
 
-      if (isPending && loc != AppRoutes.selectGroup) return AppRoutes.selectGroup;
-      if (isAuthenticated && (loc == AppRoutes.login || loc == AppRoutes.splash)) {
+      if (isPendingGroup && loc != AppRoutes.selectGroup) return AppRoutes.selectGroup;
+      if (isPendingOficina && loc != AppRoutes.selectOficina) return AppRoutes.selectOficina;
+      if (isAuthenticated && (loc == AppRoutes.login || loc == AppRoutes.splash || loc == AppRoutes.selectGroup || loc == AppRoutes.selectOficina)) {
         final from = state.uri.queryParameters['from'];
         final target = (from != null && from.isNotEmpty) ? Uri.decodeComponent(from) : AppRoutes.home;
         return target;
       }
-      if (!isAuthenticated && !isPending && loc != AppRoutes.login) return AppRoutes.login;
+      if (!isAuthenticated && !isPendingGroup && !isPendingOficina && loc != AppRoutes.login) return AppRoutes.login;
       return null;
     },
     routes: [
       GoRoute(path: AppRoutes.splash,      builder: (_, _) => const SplashScreen()),
       GoRoute(path: AppRoutes.login,       builder: (_, _) => const LoginScreen()),
-      GoRoute(path: AppRoutes.selectGroup, builder: (_, _) => const SelectGroupScreen()),
+      GoRoute(path: AppRoutes.selectGroup,   builder: (_, _) => const SelectGroupScreen()),
+      GoRoute(path: AppRoutes.selectOficina, builder: (_, _) => const SelectOficinaScreen()),
       ShellRoute(
         builder: (context, state, child) {
           final location = GoRouterState.of(context).matchedLocation;
