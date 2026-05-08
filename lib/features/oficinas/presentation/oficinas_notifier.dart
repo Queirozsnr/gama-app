@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/oficinas_repository.dart';
 import '../domain/oficina_model.dart';
 
-class OficinasNotifier extends AsyncNotifier<List<OficinaModel>> {
+class OficinasNotifier extends AutoDisposeAsyncNotifier<List<OficinaModel>> {
   @override
   Future<List<OficinaModel>> build() => ref.read(oficinasRepositoryProvider).listar();
 
@@ -31,4 +31,4 @@ class OficinasNotifier extends AsyncNotifier<List<OficinaModel>> {
 }
 
 final oficinasNotifierProvider =
-    AsyncNotifierProvider<OficinasNotifier, List<OficinaModel>>(OficinasNotifier.new);
+    AsyncNotifierProvider.autoDispose<OficinasNotifier, List<OficinaModel>>(OficinasNotifier.new);
