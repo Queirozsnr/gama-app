@@ -9,7 +9,9 @@ import '../widgets/gama_avatar.dart';
 import '../widgets/gama_snack_bar.dart';
 
 class GamaSidebar extends ConsumerWidget {
-  const GamaSidebar({super.key});
+  const GamaSidebar({super.key, this.collapsed = false});
+
+  final bool collapsed;
 
   static const _sections = [
     _NavSection('Principal', [
@@ -68,7 +70,7 @@ class GamaSidebar extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Logo(),
+          _Logo(collapsed: collapsed),
           _GroupCard(
             initials: groupInitials,
             name: groupName,
@@ -77,30 +79,35 @@ class GamaSidebar extends ConsumerWidget {
             currentGroupId: currentGroupId,
             oficinas: oficinas,
             currentOficinaId: currentOficinaId,
+            collapsed: collapsed,
           ),
           const SizedBox(height: 8),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+              padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 14),
               children: [
                 for (final section in _sections) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
-                    child: Text(
-                      section.label,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                        letterSpacing: 0.5,
+                  if (!collapsed)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+                      child: Text(
+                        section.label,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
-                  ),
+                    )
+                  else
+                    const SizedBox(height: 12),
                   for (final item in section.items)
                     _SidebarNavItem(
                       item: item,
                       isActive: currentRoute.startsWith(item.route) ||
                           (item.route == '/home' && currentRoute == '/'),
+                      collapsed: collapsed,
                     ),
                 ],
               ],
@@ -108,22 +115,29 @@ class GamaSidebar extends ConsumerWidget {
           ),
           const Divider(height: 1),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 14, vertical: 8),
             child: Column(
               children: [
                 _SidebarNavItem(
                   item: const _NavItem('Ajuda', Icons.help_outline, '/ajuda'),
                   isActive: false,
+                  collapsed: collapsed,
                 ),
                 _SidebarNavItem(
                   item: const _NavItem('Configurações', Icons.settings_outlined, '/configuracoes'),
                   isActive: false,
+                  collapsed: collapsed,
                 ),
               ],
             ),
           ),
           const Divider(height: 1),
-          _UserProfile(initials: userInitials, name: userName, role: userCargo),
+          _UserProfile(
+            initials: userInitials,
+            name: userName,
+            role: userCargo,
+            collapsed: collapsed,
+          ),
         ],
       ),
     );
@@ -137,46 +151,65 @@ class GamaSidebar extends ConsumerWidget {
 }
 
 class _Logo extends StatelessWidget {
+  const _Logo({required this.collapsed});
+  final bool collapsed;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'G',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'GAMA',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 1,
+      padding: EdgeInsets.fromLTRB(collapsed ? 0 : 16, 20, collapsed ? 0 : 16, 12),
+      child: collapsed
+          ? Center(
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  'G',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
                 ),
               ),
-              Text(
-                'ERP Automotivo',
-                style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-        ],
-      ),
+            )
+          : Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'G',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'GAMA',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    Text(
+                      'ERP Automotivo',
+                      style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ],
+            ),
     );
   }
 }
@@ -187,6 +220,7 @@ class _GroupCard extends ConsumerStatefulWidget {
     required this.name,
     required this.groups,
     required this.oficinas,
+    required this.collapsed,
     this.oficinaNome,
     this.currentGroupId,
     this.currentOficinaId,
@@ -199,6 +233,7 @@ class _GroupCard extends ConsumerStatefulWidget {
   final List<OficinaItem> oficinas;
   final int? currentGroupId;
   final int? currentOficinaId;
+  final bool collapsed;
 
   @override
   ConsumerState<_GroupCard> createState() => _GroupCardState();
@@ -272,6 +307,26 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.collapsed) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: CompositedTransformTarget(
+          link: _layerLink,
+          child: Tooltip(
+            message: widget.name,
+            child: InkWell(
+              onTap: _show,
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Center(child: GamaAvatar(initials: widget.initials, size: 32)),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return CompositedTransformTarget(
       link: _layerLink,
       child: GestureDetector(
@@ -380,7 +435,6 @@ class _DropdownOverlay extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Seção de unidades
                   if (oficinas.isNotEmpty) ...[
                     _SectionLabel('UNIDADES'),
                     for (final o in oficinas)
@@ -393,7 +447,6 @@ class _DropdownOverlay extends StatelessWidget {
                         onTap: () => onSelectOficina(o.id),
                       ),
                   ],
-                  // Seção de grupos (só se tiver mais de um)
                   if (groups.length > 1) ...[
                     if (oficinas.isNotEmpty) const Divider(height: 1),
                     _SectionLabel('GRUPOS'),
@@ -534,10 +587,7 @@ class _DropdownAction extends StatelessWidget {
             children: [
               Icon(icon, size: 16, color: color),
               const SizedBox(width: 10),
-              Text(
-                label,
-                style: TextStyle(fontSize: 13, color: color),
-              ),
+              Text(label, style: TextStyle(fontSize: 13, color: color)),
             ],
           ),
         ),
@@ -547,47 +597,64 @@ class _DropdownAction extends StatelessWidget {
 }
 
 class _SidebarNavItem extends StatelessWidget {
-  const _SidebarNavItem({required this.item, required this.isActive});
+  const _SidebarNavItem({
+    required this.item,
+    required this.isActive,
+    required this.collapsed,
+  });
 
   final _NavItem item;
   final bool isActive;
+  final bool collapsed;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final icon = Icon(
+      item.icon,
+      size: 20,
+      color: isActive ? AppColors.primary : AppColors.textSecondary,
+    );
+
+    final tile = InkWell(
       onTap: () {
         if (Scaffold.of(context).isDrawerOpen) Navigator.of(context).pop();
         context.go(item.route);
       },
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: collapsed ? 0 : 8,
+          vertical: 10,
+        ),
         decoration: BoxDecoration(
           color: isActive ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Row(
-          children: [
-            Icon(
-              item.icon,
-              size: 20,
-              color: isActive ? AppColors.primary : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                item.label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                  color: isActive ? AppColors.primary : AppColors.textPrimary,
-                ),
+        child: collapsed
+            ? Center(child: icon)
+            : Row(
+                children: [
+                  icon,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      item.label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                        color: isActive ? AppColors.primary : AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
+
+    if (collapsed) {
+      return Tooltip(message: item.label, preferBelow: false, child: tile);
+    }
+    return tile;
   }
 }
 
@@ -596,14 +663,26 @@ class _UserProfile extends ConsumerWidget {
     required this.initials,
     required this.name,
     required this.role,
+    required this.collapsed,
   });
 
   final String initials;
   final String name;
   final String role;
+  final bool collapsed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (collapsed) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 14),
+        child: Tooltip(
+          message: '$name${role.isNotEmpty ? ' · $role' : ''}',
+          child: Center(child: GamaAvatar(initials: initials, size: 36)),
+        ),
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 4, 14, 14),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

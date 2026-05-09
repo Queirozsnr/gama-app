@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
-import '../widgets/gama_search_bar.dart';
 import '../widgets/notification_bell.dart';
 
 class GamaTopBar extends StatelessWidget implements PreferredSizeWidget {
@@ -37,6 +36,7 @@ class GamaTopBar extends StatelessWidget implements PreferredSizeWidget {
         pageTitle: pageTitle,
         pageSubtitle: pageSubtitle,
         action: action,
+        onMenuTap: onMenuTap,
         hasNotification: hasNotification,
       ) : _MobileBar(
         onMenuTap: onMenuTap,
@@ -52,19 +52,27 @@ class _DesktopBar extends StatelessWidget {
     this.pageTitle,
     this.pageSubtitle,
     this.action,
+    this.onMenuTap,
     required this.hasNotification,
   });
 
   final String? pageTitle;
   final String? pageSubtitle;
   final Widget? action;
+  final VoidCallback? onMenuTap;
   final bool hasNotification;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.table_rows_outlined, size: 20, color: AppColors.textSecondary),
+        IconButton(
+          onPressed: onMenuTap,
+          icon: const Icon(Icons.table_rows_outlined, size: 20, color: AppColors.textSecondary),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          tooltip: 'Menu',
+        ),
         const SizedBox(width: 12),
         if (pageTitle != null) ...[
           Column(
@@ -88,10 +96,7 @@ class _DesktopBar extends StatelessWidget {
           ),
           const SizedBox(width: 24),
         ],
-        Expanded(
-          child: GamaSearchBar(hint: 'Buscar OS, cliente, placa...'),
-        ),
-        const SizedBox(width: 16),
+        const Spacer(),
         NotificationBell(hasNotification: hasNotification),
         if (action != null) ...[
           const SizedBox(width: 12),

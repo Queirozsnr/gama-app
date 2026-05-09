@@ -22,6 +22,7 @@ class GamaScaffold extends StatefulWidget {
 
 class _GamaScaffoldState extends State<GamaScaffold> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _sidebarCollapsed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +30,9 @@ class _GamaScaffoldState extends State<GamaScaffold> {
 
     final topBar = GamaTopBar(
       isDesktop: isDesktop,
-      onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+      onMenuTap: isDesktop
+          ? () => setState(() => _sidebarCollapsed = !_sidebarCollapsed)
+          : () => _scaffoldKey.currentState?.openDrawer(),
       pageTitle: widget.pageTitle,
       pageSubtitle: widget.pageSubtitle,
       action: widget.topBarAction,
@@ -40,7 +43,12 @@ class _GamaScaffoldState extends State<GamaScaffold> {
         key: _scaffoldKey,
         body: Row(
           children: [
-            const SizedBox(width: 260, child: GamaSidebar()),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              width: _sidebarCollapsed ? 64 : 260,
+              child: GamaSidebar(collapsed: _sidebarCollapsed),
+            ),
             Expanded(
               child: Column(
                 children: [

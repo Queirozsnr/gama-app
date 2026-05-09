@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/gama_search_bar.dart';
+import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../domain/funcionario.dart';
 import 'funcionarios_notifier.dart';
@@ -38,22 +39,14 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen> {
   }
 
   Future<void> _excluir(Funcionario f) async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Excluir funcionário'),
-        content: Text('Deseja excluir "${f.nome}"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
+    final confirmar = await GamaConfirmDialog.show(
+      context,
+      title: 'Excluir funcionário',
+      message: 'Deseja excluir "${f.nome}"? Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      confirmColor: AppColors.error,
     );
-    if (confirmar == true && mounted) {
+    if (confirmar && mounted) {
       try {
         await ref.read(funcionariosNotifierProvider.notifier).excluir(f.id);
         if (mounted) GamaSnackBar.success(context, 'Funcionário removido.');
@@ -66,16 +59,24 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen> {
   Future<void> _resetarSenha(Funcionario f) async {
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Resetar senha'),
-        content: Text('Resetar a senha de "${f.nome}" para "gama123"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Resetar')),
-        ],
+      builder: (_) => GamaConfirmDialog(
+        title: 'Resetar senha',
+        message: Text.rich(
+          TextSpan(
+            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            children: [
+              const TextSpan(text: 'Resetar a senha de '),
+              TextSpan(text: f.nome, style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              const TextSpan(text: ' para '),
+              const TextSpan(text: 'gama123', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              const TextSpan(text: '?'),
+            ],
+          ),
+        ),
+        confirmLabel: 'Resetar',
       ),
-    );
-    if (confirmar == true && mounted) {
+    ) == true;
+    if (confirmar && mounted) {
       try {
         await ref.read(funcionariosNotifierProvider.notifier).resetarSenha(f.id);
         if (mounted) GamaSnackBar.success(context, 'Senha resetada para "gama123".');
@@ -88,6 +89,7 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen> {
   @override
   Widget build(BuildContext context) {
     final funcionariosAsync = ref.watch(funcionariosNotifierProvider);
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -95,11 +97,34 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: GamaSearchBar(
-              hint: 'Buscar por nome ou e-mail...',
-              controller: _searchController,
-              onChanged: (v) => ref.read(funcionariosNotifierProvider.notifier).buscar(v),
-            ),
+            child: isDesktop
+                ? Row(
+                    children: [
+                      Expanded(
+                        child: GamaSearchBar(
+                          hint: 'Buscar por nome ou e-mail...',
+                          controller: _searchController,
+                          onChanged: (v) => ref.read(funcionariosNotifierProvider.notifier).buscar(v),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      FilledButton.icon(
+                        onPressed: () => _openForm(),
+                        icon: const Icon(Icons.person_add_outlined),
+                        label: const Text('Novo funcionário'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                    ],
+                  )
+                : GamaSearchBar(
+                    hint: 'Buscar por nome ou e-mail...',
+                    controller: _searchController,
+                    onChanged: (v) => ref.read(funcionariosNotifierProvider.notifier).buscar(v),
+                  ),
           ),
           Expanded(
             child: funcionariosAsync.when(
@@ -164,13 +189,15 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.person_add_outlined),
-        label: const Text('Novo funcionário'),
-      ),
+      floatingActionButton: isDesktop
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _openForm(),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.person_add_outlined),
+              label: const Text('Novo funcionário'),
+            ),
     );
   }
 }

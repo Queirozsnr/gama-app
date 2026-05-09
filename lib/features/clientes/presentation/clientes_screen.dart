@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/gama_search_bar.dart';
+import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../domain/cliente.dart';
 import 'clientes_notifier.dart';
@@ -42,26 +43,15 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
   }
 
   Future<void> _excluir(Cliente cliente) async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Excluir cliente'),
-        content: Text('Deseja excluir "${cliente.nome}"? Esta ação não pode ser desfeita.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
+    final confirmar = await GamaConfirmDialog.show(
+      context,
+      title: 'Excluir cliente',
+      message: 'Deseja excluir "${cliente.nome}"? Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      confirmColor: AppColors.error,
     );
 
-    if (confirmar == true && mounted) {
+    if (confirmar && mounted) {
       try {
         await ref.read(clientesNotifierProvider.notifier).excluir(cliente.id);
         if (mounted) GamaSnackBar.success(context, 'Cliente removido.');
@@ -74,6 +64,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
   @override
   Widget build(BuildContext context) {
     final clientesAsync = ref.watch(clientesNotifierProvider);
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -81,11 +72,34 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: GamaSearchBar(
-              hint: 'Buscar por nome, e-mail, telefone...',
-              controller: _searchController,
-              onChanged: _onSearch,
-            ),
+            child: isDesktop
+                ? Row(
+                    children: [
+                      Expanded(
+                        child: GamaSearchBar(
+                          hint: 'Buscar por nome, e-mail, telefone...',
+                          controller: _searchController,
+                          onChanged: _onSearch,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      FilledButton.icon(
+                        onPressed: () => _openForm(),
+                        icon: const Icon(Icons.person_add_outlined),
+                        label: const Text('Novo cliente'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                    ],
+                  )
+                : GamaSearchBar(
+                    hint: 'Buscar por nome, e-mail, telefone...',
+                    controller: _searchController,
+                    onChanged: _onSearch,
+                  ),
           ),
           Expanded(
             child: clientesAsync.when(
@@ -161,13 +175,15 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.person_add_outlined),
-        label: const Text('Novo cliente'),
-      ),
+      floatingActionButton: isDesktop
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _openForm(),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.person_add_outlined),
+              label: const Text('Novo cliente'),
+            ),
     );
   }
 
