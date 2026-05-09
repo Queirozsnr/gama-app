@@ -591,7 +591,7 @@ class _SidebarNavItem extends StatelessWidget {
   }
 }
 
-class _UserProfile extends StatelessWidget {
+class _UserProfile extends ConsumerWidget {
   const _UserProfile({
     required this.initials,
     required this.name,
@@ -603,7 +603,7 @@ class _UserProfile extends StatelessWidget {
   final String role;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 4, 14, 14),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -632,6 +632,14 @@ class _UserProfile extends StatelessWidget {
                   Text(role, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
               ],
             ),
+          ),
+          IconButton(
+            onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
+            icon: const Icon(Icons.logout, size: 18),
+            color: AppColors.textSecondary,
+            tooltip: 'Sair',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
         ],
       ),

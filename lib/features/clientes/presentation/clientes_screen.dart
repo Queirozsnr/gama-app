@@ -132,10 +132,15 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                   onRefresh: () => ref.read(clientesNotifierProvider.notifier).buscar(
                     _searchController.text.isEmpty ? null : _searchController.text,
                   ),
-                  child: ListView.separated(
+                  child: GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 420,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      mainAxisExtent: 240,
+                    ),
                     itemCount: clientes.length,
-                    separatorBuilder: (context, i) => const SizedBox(height: 12),
                     itemBuilder: (_, i) {
                       final c = clientes[i];
                       return ClienteCard(

@@ -35,6 +35,7 @@ class AuthState with _$AuthState {
     @Default(false) bool isAuthenticated,
     @Default(false) bool pendingGroupSelection,
     @Default(false) bool pendingOficinaSelection,
+    @Default(false) bool pendingPasswordChange,
     @Default([]) List<GrupoItem> availableGroups,
     @Default([]) List<OficinaItem> availableOficinas,
   }) = _AuthState;

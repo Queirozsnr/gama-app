@@ -13,6 +13,7 @@ class LoginResponse with _$LoginResponse {
     int? oficinaId,
     List<GrupoItem>? selecioneGrupo,
     List<OficinaItem>? selecioneOficina,
+    @Default(false) bool precisaTrocarSenha,
   }) = _LoginResponse;
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) =>

@@ -58,6 +58,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         grupoOficinaId: response.grupoOficinaId,
         oficinaId: response.oficinaId,
         isAuthenticated: true,
+        pendingPasswordChange: response.precisaTrocarSenha,
         availableGroups: groups,
         availableOficinas: oficinas,
       ));
@@ -129,6 +130,12 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     } catch (_) {
       throw 'Erro inesperado.';
     }
+  }
+
+  Future<void> confirmarTrocaSenha() async {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(pendingPasswordChange: false));
   }
 
   Future<void> logout() async {

@@ -358,6 +358,7 @@ mixin _$AuthState {
   bool get isAuthenticated => throw _privateConstructorUsedError;
   bool get pendingGroupSelection => throw _privateConstructorUsedError;
   bool get pendingOficinaSelection => throw _privateConstructorUsedError;
+  bool get pendingPasswordChange => throw _privateConstructorUsedError;
   List<GrupoItem> get availableGroups => throw _privateConstructorUsedError;
   List<OficinaItem> get availableOficinas => throw _privateConstructorUsedError;
 
@@ -381,6 +382,7 @@ abstract class $AuthStateCopyWith<$Res> {
     bool isAuthenticated,
     bool pendingGroupSelection,
     bool pendingOficinaSelection,
+    bool pendingPasswordChange,
     List<GrupoItem> availableGroups,
     List<OficinaItem> availableOficinas,
   });
@@ -408,6 +410,7 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
     Object? isAuthenticated = null,
     Object? pendingGroupSelection = null,
     Object? pendingOficinaSelection = null,
+    Object? pendingPasswordChange = null,
     Object? availableGroups = null,
     Object? availableOficinas = null,
   }) {
@@ -441,6 +444,10 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
                 ? _value.pendingOficinaSelection
                 : pendingOficinaSelection // ignore: cast_nullable_to_non_nullable
                       as bool,
+            pendingPasswordChange: null == pendingPasswordChange
+                ? _value.pendingPasswordChange
+                : pendingPasswordChange // ignore: cast_nullable_to_non_nullable
+                      as bool,
             availableGroups: null == availableGroups
                 ? _value.availableGroups
                 : availableGroups // ignore: cast_nullable_to_non_nullable
@@ -472,6 +479,7 @@ abstract class _$$AuthStateImplCopyWith<$Res>
     bool isAuthenticated,
     bool pendingGroupSelection,
     bool pendingOficinaSelection,
+    bool pendingPasswordChange,
     List<GrupoItem> availableGroups,
     List<OficinaItem> availableOficinas,
   });
@@ -498,6 +506,7 @@ class __$$AuthStateImplCopyWithImpl<$Res>
     Object? isAuthenticated = null,
     Object? pendingGroupSelection = null,
     Object? pendingOficinaSelection = null,
+    Object? pendingPasswordChange = null,
     Object? availableGroups = null,
     Object? availableOficinas = null,
   }) {
@@ -531,6 +540,10 @@ class __$$AuthStateImplCopyWithImpl<$Res>
             ? _value.pendingOficinaSelection
             : pendingOficinaSelection // ignore: cast_nullable_to_non_nullable
                   as bool,
+        pendingPasswordChange: null == pendingPasswordChange
+            ? _value.pendingPasswordChange
+            : pendingPasswordChange // ignore: cast_nullable_to_non_nullable
+                  as bool,
         availableGroups: null == availableGroups
             ? _value._availableGroups
             : availableGroups // ignore: cast_nullable_to_non_nullable
@@ -555,6 +568,7 @@ class _$AuthStateImpl implements _AuthState {
     this.isAuthenticated = false,
     this.pendingGroupSelection = false,
     this.pendingOficinaSelection = false,
+    this.pendingPasswordChange = false,
     final List<GrupoItem> availableGroups = const [],
     final List<OficinaItem> availableOficinas = const [],
   }) : _availableGroups = availableGroups,
@@ -577,6 +591,9 @@ class _$AuthStateImpl implements _AuthState {
   @override
   @JsonKey()
   final bool pendingOficinaSelection;
+  @override
+  @JsonKey()
+  final bool pendingPasswordChange;
   final List<GrupoItem> _availableGroups;
   @override
   @JsonKey()
@@ -598,7 +615,7 @@ class _$AuthStateImpl implements _AuthState {
 
   @override
   String toString() {
-    return 'AuthState(token: $token, userId: $userId, grupoOficinaId: $grupoOficinaId, oficinaId: $oficinaId, isAuthenticated: $isAuthenticated, pendingGroupSelection: $pendingGroupSelection, pendingOficinaSelection: $pendingOficinaSelection, availableGroups: $availableGroups, availableOficinas: $availableOficinas)';
+    return 'AuthState(token: $token, userId: $userId, grupoOficinaId: $grupoOficinaId, oficinaId: $oficinaId, isAuthenticated: $isAuthenticated, pendingGroupSelection: $pendingGroupSelection, pendingOficinaSelection: $pendingOficinaSelection, pendingPasswordChange: $pendingPasswordChange, availableGroups: $availableGroups, availableOficinas: $availableOficinas)';
   }
 
   @override
@@ -621,6 +638,8 @@ class _$AuthStateImpl implements _AuthState {
                   pendingOficinaSelection,
                 ) ||
                 other.pendingOficinaSelection == pendingOficinaSelection) &&
+            (identical(other.pendingPasswordChange, pendingPasswordChange) ||
+                other.pendingPasswordChange == pendingPasswordChange) &&
             const DeepCollectionEquality().equals(
               other._availableGroups,
               _availableGroups,
@@ -641,6 +660,7 @@ class _$AuthStateImpl implements _AuthState {
     isAuthenticated,
     pendingGroupSelection,
     pendingOficinaSelection,
+    pendingPasswordChange,
     const DeepCollectionEquality().hash(_availableGroups),
     const DeepCollectionEquality().hash(_availableOficinas),
   );
@@ -663,6 +683,7 @@ abstract class _AuthState implements AuthState {
     final bool isAuthenticated,
     final bool pendingGroupSelection,
     final bool pendingOficinaSelection,
+    final bool pendingPasswordChange,
     final List<GrupoItem> availableGroups,
     final List<OficinaItem> availableOficinas,
   }) = _$AuthStateImpl;
@@ -681,6 +702,8 @@ abstract class _AuthState implements AuthState {
   bool get pendingGroupSelection;
   @override
   bool get pendingOficinaSelection;
+  @override
+  bool get pendingPasswordChange;
   @override
   List<GrupoItem> get availableGroups;
   @override

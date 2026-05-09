@@ -2,39 +2,51 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/gama_avatar.dart';
 import '../../../../shared/widgets/chips/payment_badge.dart';
+import '../../domain/funcionario.dart';
+
+const _cargoLabels = {
+  'Gerente': 'Gerente',
+  'Mecanico': 'Mecânico',
+  'Auxiliar': 'Auxiliar',
+  'Atendente': 'Atendente',
+  'Lavador': 'Lavador',
+  'Funileiro': 'Funileiro',
+  'Eletricista': 'Eletricista',
+  'Pintor': 'Pintor',
+  'TecnicoArCondicionado': 'Técnico AC',
+};
 
 class FuncionarioCard extends StatelessWidget {
   const FuncionarioCard({
     super.key,
-    required this.nome,
-    required this.cargo,
-    required this.paymentType,
-    this.comissaoPercent,
-    required this.osNoMes,
-    required this.valor,
+    required this.funcionario,
     this.onTap,
+    this.onLongPress,
+    this.onResetarSenha,
   });
 
-  final String nome;
-  final String cargo;
-  final PaymentType paymentType;
-  final int? comissaoPercent;
-  final int osNoMes;
-  final double valor;
+  final Funcionario funcionario;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onResetarSenha;
 
   String get _initials {
-    final parts = nome.trim().split(' ');
+    final parts = funcionario.nome.trim().split(' ');
     if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}';
     return parts[0].substring(0, parts[0].length.clamp(0, 2));
   }
 
-  String get _valorLabel => paymentType == PaymentType.fixo ? 'Salário' : 'A pagar';
+  PaymentType get _paymentType =>
+      funcionario.tipoRemuneracao == 'Fixo' ? PaymentType.fixo : PaymentType.comissao;
+
+  int? get _comissaoPercent =>
+      funcionario.porcentagem != null ? funcionario.porcentagem!.toInt() : null;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -55,74 +67,50 @@ class FuncionarioCard extends StatelessWidget {
               children: [
                 GamaAvatar(initials: _initials, size: 44),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      nome,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      cargo,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 4),
-                    PaymentBadge(type: paymentType, percent: comissaoPercent),
-                  ],
-                ),
-              ],
-            ),
-            const Divider(height: 20),
-            Row(
-              children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'OS no mês',
-                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      Text(
+                        funcionario.nome,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                       ),
-                      Row(
-                        children: [
-                          const Icon(Icons.build_outlined, size: 14, color: AppColors.textSecondary),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$osNoMes',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        _cargoLabels[funcionario.cargo] ?? funcionario.cargo,
+                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
+                      const SizedBox(height: 4),
+                      PaymentBadge(type: _paymentType, percent: _comissaoPercent),
                     ],
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      _valorLabel,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                    ),
-                    Text(
-                      'R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.success,
-                      ),
-                    ),
-                  ],
-                ),
+                if (onResetarSenha != null)
+                  IconButton(
+                    onPressed: onResetarSenha,
+                    icon: const Icon(Icons.lock_reset_outlined),
+                    color: AppColors.textSecondary,
+                    tooltip: 'Resetar senha',
+                  ),
               ],
             ),
+            if (funcionario.oficinas.isNotEmpty) ...[
+              const Divider(height: 20),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: funcionario.oficinas.map((o) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Text(o.nome, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                )).toList(),
+              ),
+            ],
           ],
         ),
       ),

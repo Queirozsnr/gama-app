@@ -27,6 +27,7 @@ mixin _$LoginResponse {
   int? get oficinaId => throw _privateConstructorUsedError;
   List<GrupoItem>? get selecioneGrupo => throw _privateConstructorUsedError;
   List<OficinaItem>? get selecioneOficina => throw _privateConstructorUsedError;
+  bool get precisaTrocarSenha => throw _privateConstructorUsedError;
 
   /// Serializes this LoginResponse to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -52,6 +53,7 @@ abstract class $LoginResponseCopyWith<$Res> {
     int? oficinaId,
     List<GrupoItem>? selecioneGrupo,
     List<OficinaItem>? selecioneOficina,
+    bool precisaTrocarSenha,
   });
 }
 
@@ -76,6 +78,7 @@ class _$LoginResponseCopyWithImpl<$Res, $Val extends LoginResponse>
     Object? oficinaId = freezed,
     Object? selecioneGrupo = freezed,
     Object? selecioneOficina = freezed,
+    Object? precisaTrocarSenha = null,
   }) {
     return _then(
       _value.copyWith(
@@ -103,6 +106,10 @@ class _$LoginResponseCopyWithImpl<$Res, $Val extends LoginResponse>
                 ? _value.selecioneOficina
                 : selecioneOficina // ignore: cast_nullable_to_non_nullable
                       as List<OficinaItem>?,
+            precisaTrocarSenha: null == precisaTrocarSenha
+                ? _value.precisaTrocarSenha
+                : precisaTrocarSenha // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -125,6 +132,7 @@ abstract class _$$LoginResponseImplCopyWith<$Res>
     int? oficinaId,
     List<GrupoItem>? selecioneGrupo,
     List<OficinaItem>? selecioneOficina,
+    bool precisaTrocarSenha,
   });
 }
 
@@ -148,6 +156,7 @@ class __$$LoginResponseImplCopyWithImpl<$Res>
     Object? oficinaId = freezed,
     Object? selecioneGrupo = freezed,
     Object? selecioneOficina = freezed,
+    Object? precisaTrocarSenha = null,
   }) {
     return _then(
       _$LoginResponseImpl(
@@ -175,6 +184,10 @@ class __$$LoginResponseImplCopyWithImpl<$Res>
             ? _value._selecioneOficina
             : selecioneOficina // ignore: cast_nullable_to_non_nullable
                   as List<OficinaItem>?,
+        precisaTrocarSenha: null == precisaTrocarSenha
+            ? _value.precisaTrocarSenha
+            : precisaTrocarSenha // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -190,6 +203,7 @@ class _$LoginResponseImpl implements _LoginResponse {
     this.oficinaId,
     final List<GrupoItem>? selecioneGrupo,
     final List<OficinaItem>? selecioneOficina,
+    this.precisaTrocarSenha = false,
   }) : _selecioneGrupo = selecioneGrupo,
        _selecioneOficina = selecioneOficina;
 
@@ -226,8 +240,12 @@ class _$LoginResponseImpl implements _LoginResponse {
   }
 
   @override
+  @JsonKey()
+  final bool precisaTrocarSenha;
+
+  @override
   String toString() {
-    return 'LoginResponse(token: $token, userId: $userId, grupoOficinaId: $grupoOficinaId, oficinaId: $oficinaId, selecioneGrupo: $selecioneGrupo, selecioneOficina: $selecioneOficina)';
+    return 'LoginResponse(token: $token, userId: $userId, grupoOficinaId: $grupoOficinaId, oficinaId: $oficinaId, selecioneGrupo: $selecioneGrupo, selecioneOficina: $selecioneOficina, precisaTrocarSenha: $precisaTrocarSenha)';
   }
 
   @override
@@ -248,7 +266,9 @@ class _$LoginResponseImpl implements _LoginResponse {
             const DeepCollectionEquality().equals(
               other._selecioneOficina,
               _selecioneOficina,
-            ));
+            ) &&
+            (identical(other.precisaTrocarSenha, precisaTrocarSenha) ||
+                other.precisaTrocarSenha == precisaTrocarSenha));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -261,6 +281,7 @@ class _$LoginResponseImpl implements _LoginResponse {
     oficinaId,
     const DeepCollectionEquality().hash(_selecioneGrupo),
     const DeepCollectionEquality().hash(_selecioneOficina),
+    precisaTrocarSenha,
   );
 
   /// Create a copy of LoginResponse
@@ -285,6 +306,7 @@ abstract class _LoginResponse implements LoginResponse {
     final int? oficinaId,
     final List<GrupoItem>? selecioneGrupo,
     final List<OficinaItem>? selecioneOficina,
+    final bool precisaTrocarSenha,
   }) = _$LoginResponseImpl;
 
   factory _LoginResponse.fromJson(Map<String, dynamic> json) =
@@ -302,6 +324,8 @@ abstract class _LoginResponse implements LoginResponse {
   List<GrupoItem>? get selecioneGrupo;
   @override
   List<OficinaItem>? get selecioneOficina;
+  @override
+  bool get precisaTrocarSenha;
 
   /// Create a copy of LoginResponse
   /// with the given fields replaced by the non-null parameter values.

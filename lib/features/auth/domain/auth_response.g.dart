@@ -18,6 +18,7 @@ _$LoginResponseImpl _$$LoginResponseImplFromJson(Map<String, dynamic> json) =>
       selecioneOficina: (json['selecioneOficina'] as List<dynamic>?)
           ?.map((e) => OficinaItem.fromJson(e as Map<String, dynamic>))
           .toList(),
+      precisaTrocarSenha: json['precisaTrocarSenha'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$LoginResponseImplToJson(_$LoginResponseImpl instance) =>
@@ -28,6 +29,7 @@ Map<String, dynamic> _$$LoginResponseImplToJson(_$LoginResponseImpl instance) =>
       'oficinaId': instance.oficinaId,
       'selecioneGrupo': instance.selecioneGrupo,
       'selecioneOficina': instance.selecioneOficina,
+      'precisaTrocarSenha': instance.precisaTrocarSenha,
     };
 
 _$LoginRequestImpl _$$LoginRequestImplFromJson(Map<String, dynamic> json) =>
