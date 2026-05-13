@@ -31,3 +31,14 @@ final historicoPagamentosProvider = FutureProvider.autoDispose.family<List<Pagam
   (ref, funcionarioId) =>
       ref.read(pagamentosRemoteDataSourceProvider).listarHistorico(funcionarioId),
 );
+
+// Provider para dashboard do Sócio — key: (funcionarioId, dataInicio, dataFim)
+final dashboardSocioProvider =
+    FutureProvider.autoDispose.family<DashboardSocio, (int, DateTime, DateTime)>(
+  (ref, args) {
+    final (funcionarioId, dataInicio, dataFim) = args;
+    return ref
+        .read(pagamentosRemoteDataSourceProvider)
+        .obterDashboardSocio(funcionarioId, dataInicio, dataFim);
+  },
+);

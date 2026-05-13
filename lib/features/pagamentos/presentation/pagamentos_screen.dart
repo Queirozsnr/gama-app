@@ -35,7 +35,8 @@ class PagamentosScreen extends ConsumerWidget {
             ],
           ),
         ),
-        data: (funcionarios) {
+        data: (todos) {
+          final funcionarios = todos.where((f) => f.tipoRemuneracao != 'Socio').toList();
           if (funcionarios.isEmpty) {
             return const Center(
               child: Column(
@@ -150,19 +151,19 @@ class _FuncionarioTile extends StatelessWidget {
             ],
           ),
           IconButton(
-            constraints: const BoxConstraints(),
-            padding: const EdgeInsets.only(left: 10),
-            icon: const Icon(Icons.history, size: 20, color: AppColors.textSecondary),
-            tooltip: 'Histórico',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => HistoricoPagamentosScreen(
-                  funcionarioId: funcionario.funcionarioId,
-                  funcionarioNome: funcionario.nome,
+              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.only(left: 10),
+              icon: const Icon(Icons.history, size: 20, color: AppColors.textSecondary),
+              tooltip: 'Histórico',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => HistoricoPagamentosScreen(
+                    funcionarioId: funcionario.funcionarioId,
+                    funcionarioNome: funcionario.nome,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
       onTap: () => Navigator.of(context).push(

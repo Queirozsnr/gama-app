@@ -21,9 +21,10 @@ class GamaSidebar extends ConsumerWidget {
       _NavItem('Veículos',          Icons.directions_car_outlined, '/veiculos'),
     ]),
     _NavSection('Operação', [
-      _NavItem('Estoque',       Icons.inventory_2_outlined, '/estoque'),
-      _NavItem('Funcionários',  Icons.badge_outlined,       '/funcionarios'),
-      _NavItem('Pagamentos',    Icons.payments_outlined,    '/pagamentos'),
+      _NavItem('Estoque',       Icons.inventory_2_outlined,  '/estoque'),
+      _NavItem('Funcionários',  Icons.badge_outlined,        '/funcionarios'),
+      _NavItem('Pagamentos',    Icons.payments_outlined,     '/pagamentos'),
+      _NavItem('Receitas',      Icons.trending_up_outlined,  '/receitas'),
     ]),
   ];
 

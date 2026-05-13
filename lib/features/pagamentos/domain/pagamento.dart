@@ -72,6 +72,65 @@ class PagamentoResumo {
       );
 }
 
+class DashboardSocio {
+  const DashboardSocio({
+    required this.receitaBruta,
+    required this.totalDeducoes,
+    required this.valorLiquido,
+    required this.quantidadeOS,
+    required this.itens,
+  });
+
+  final double receitaBruta;
+  final double totalDeducoes;
+  final double valorLiquido;
+  final int quantidadeOS;
+  final List<DashboardSocioOsItem> itens;
+
+  factory DashboardSocio.fromJson(Map<String, dynamic> json) => DashboardSocio(
+        receitaBruta: (json['receitaBruta'] as num).toDouble(),
+        totalDeducoes: (json['totalDeducoes'] as num).toDouble(),
+        valorLiquido: (json['valorLiquido'] as num).toDouble(),
+        quantidadeOS: json['quantidadeOS'] as int,
+        itens: (json['itens'] as List<dynamic>)
+            .map((e) => DashboardSocioOsItem.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
+class DashboardSocioOsItem {
+  const DashboardSocioOsItem({
+    required this.ordemServicoId,
+    required this.clienteNome,
+    required this.veiculoInfo,
+    required this.status,
+    required this.dataEntrada,
+    required this.totalOS,
+    required this.totalDeducoes,
+    required this.valorLiquido,
+  });
+
+  final int ordemServicoId;
+  final String clienteNome;
+  final String veiculoInfo;
+  final String status;
+  final DateTime dataEntrada;
+  final double totalOS;
+  final double totalDeducoes;
+  final double valorLiquido;
+
+  factory DashboardSocioOsItem.fromJson(Map<String, dynamic> json) => DashboardSocioOsItem(
+        ordemServicoId: json['ordemServicoId'] as int,
+        clienteNome: json['clienteNome'] as String,
+        veiculoInfo: json['veiculoInfo'] as String,
+        status: json['status'] as String,
+        dataEntrada: DateTime.parse(json['dataEntrada'] as String),
+        totalOS: (json['totalOS'] as num).toDouble(),
+        totalDeducoes: (json['totalDeducoes'] as num).toDouble(),
+        valorLiquido: (json['valorLiquido'] as num).toDouble(),
+      );
+}
+
 class OsAberta {
   const OsAberta({
     required this.ordemServicoId,

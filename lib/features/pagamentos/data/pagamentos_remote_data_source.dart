@@ -46,6 +46,18 @@ class PagamentosRemoteDataSource {
     await _dio.delete('/pagamentos/$id');
   }
 
+  Future<DashboardSocio> obterDashboardSocio(
+      int funcionarioId, DateTime dataInicio, DateTime dataFim) async {
+    final response = await _dio.get(
+      '/pagamentos/socio/$funcionarioId/dashboard',
+      queryParameters: {
+        'dataInicio': dataInicio.toIso8601String(),
+        'dataFim': dataFim.toIso8601String(),
+      },
+    );
+    return DashboardSocio.fromJson(response.data as Map<String, dynamic>);
+  }
+
   Future<List<PagamentoResumo>> listarHistorico(int funcionarioId) async {
     final response = await _dio.get('/pagamentos/funcionarios/$funcionarioId/historico');
     return (response.data as List)
