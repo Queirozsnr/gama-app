@@ -12,14 +12,13 @@ abstract final class JwtDecoder {
     }
   }
 
-  static String? nome(String token) =>
-      _claims(token)['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] as String?;
+  static String? nome(String token) => _claims(token)['name'] as String?;
+  static String? cargo(String token) => _claims(token)['role'] as String?;
 
-  static String? cargo(String token) =>
-      _claims(token)['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] as String?;
+  static String? cargoLabel(String token) => _claims(token)['roleLabel'] as String?;
 
   static int? userId(String token) {
-    final v = _claims(token)['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+    final v = _claims(token)['sub'];
     return v != null ? int.tryParse(v.toString()) : null;
   }
 
@@ -32,4 +31,7 @@ abstract final class JwtDecoder {
     final v = _claims(token)['oficinaId'];
     return v != null ? int.tryParse(v.toString()) : null;
   }
+
+  static bool permissaoGerenciarOficinas(String token) =>
+      _claims(token)['gerenciarOficinas'] == 'true';
 }

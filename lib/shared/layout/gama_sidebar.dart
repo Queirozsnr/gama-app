@@ -53,7 +53,7 @@ class GamaSidebar extends ConsumerWidget {
 
     final token = auth?.token ?? '';
     final userName = token.isNotEmpty ? (JwtDecoder.nome(token) ?? 'Usuário') : 'Usuário';
-    final userCargo = token.isNotEmpty ? (JwtDecoder.cargo(token) ?? '') : '';
+    final userCargo = token.isNotEmpty ? (JwtDecoder.cargoLabel(token) ?? '') : '';
     final userInitials = _initials(userName);
 
     return Container(
@@ -258,8 +258,7 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
 
   void _show() {
     final token = ref.read(authNotifierProvider).valueOrNull?.token ?? '';
-    final cargo = token.isNotEmpty ? JwtDecoder.cargo(token) : null;
-    final isGestor = cargo == 'Gestor';
+    final isGestor = token.isNotEmpty && JwtDecoder.permissaoGerenciarOficinas(token);
 
     _overlay = OverlayEntry(builder: (_) => _DropdownOverlay(
       layerLink: _layerLink,
