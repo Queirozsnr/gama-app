@@ -254,6 +254,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen> {
     try {
       await ref.read(ordensServicoRemoteDataSourceProvider).atualizar(os.id, data);
       ref.invalidate(osDetalheProvider(widget.osId));
+      ref.invalidate(ordensServicoNotifierProvider);
       if (mounted) GamaSnackBar.success(context, 'Dados atualizados.');
     } catch (e) {
       if (mounted) GamaSnackBar.error(context, _dioError(e, 'Erro ao atualizar OS.'));
@@ -514,7 +515,7 @@ class _Body extends StatelessWidget {
                           Icon(Icons.edit_outlined, size: 14,
                               color: os.status == 'Entregue' ? AppColors.textSecondary : AppColors.primary),
                           const SizedBox(width: 6),
-                          Text('Editar datas, pagamento e observações',
+                          Text('Editar',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,

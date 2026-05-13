@@ -16,6 +16,8 @@ class OrdemServico {
     required this.totalServicos,
     required this.totalPecas,
     required this.total,
+    this.euSouMecanico = false,
+    this.mecanicoNomes = const [],
   });
 
   final int id;
@@ -34,6 +36,8 @@ class OrdemServico {
   final double totalServicos;
   final double totalPecas;
   final double total;
+  final bool euSouMecanico;
+  final List<String> mecanicoNomes;
 
   factory OrdemServico.fromJson(Map<String, dynamic> json) => OrdemServico(
         id: json['id'] as int,
@@ -56,5 +60,10 @@ class OrdemServico {
         totalServicos: (json['totalServicos'] as num).toDouble(),
         totalPecas: (json['totalPecas'] as num).toDouble(),
         total: (json['total'] as num).toDouble(),
+        euSouMecanico: json['euSouMecanico'] as bool? ?? false,
+        mecanicoNomes: (json['mecanicoNomes'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            [],
       );
 }

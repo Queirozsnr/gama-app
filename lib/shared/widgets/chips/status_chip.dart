@@ -21,10 +21,18 @@ extension OsStatusX on OsStatus {
         OsStatus.entregue       => 'Entregue',
       };
 
+  Color get dotColor => switch (this) {
+        OsStatus.aberta         => const Color(0xFF9E9E9E),
+        OsStatus.emAndamento    => const Color(0xFF1565C0),
+        OsStatus.aguardandoPeca => const Color(0xFFE65100),
+        OsStatus.concluida      => const Color(0xFF2E7D32),
+        OsStatus.entregue       => const Color(0xFF546E7A),
+      };
+
   Color get bgColor => switch (this) {
         OsStatus.aberta         => const Color(0xFFF5F5F5),
         OsStatus.emAndamento    => const Color(0xFFE3F2FD),
-        OsStatus.aguardandoPeca => const Color(0xFFFFF8E1),
+        OsStatus.aguardandoPeca => const Color(0xFFFFF3E0),
         OsStatus.concluida      => const Color(0xFFE8F5E9),
         OsStatus.entregue       => const Color(0xFFECEFF1),
       };
@@ -38,11 +46,11 @@ extension OsStatusX on OsStatus {
       };
 
   Color get accentColor => switch (this) {
-        OsStatus.aberta         => Colors.transparent,
+        OsStatus.aberta         => const Color(0xFF9E9E9E),
         OsStatus.emAndamento    => const Color(0xFF1565C0),
-        OsStatus.aguardandoPeca => const Color(0xFF212121),
-        OsStatus.concluida      => const Color(0xFFC62828),
-        OsStatus.entregue       => const Color(0xFF37474F),
+        OsStatus.aguardandoPeca => const Color(0xFFE65100),
+        OsStatus.concluida      => const Color(0xFF2E7D32),
+        OsStatus.entregue       => const Color(0xFF546E7A),
       };
 }
 
@@ -54,18 +62,32 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
         color: status.bgColor,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        status.label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: status.textColor,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: status.dotColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            status.label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: status.textColor,
+            ),
+          ),
+        ],
       ),
     );
   }

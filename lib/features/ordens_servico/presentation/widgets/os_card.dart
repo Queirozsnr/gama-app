@@ -73,6 +73,10 @@ class OsCard extends StatelessWidget {
                         ? '${os.veiculoDescricao} · ${os.veiculoPlaca}'
                         : os.veiculoDescricao,
                   ),
+                  if (os.mecanicoNomes.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    _Row(Icons.engineering_outlined, _mecanicoLabel(os.mecanicoNomes)),
+                  ],
                   const SizedBox(height: 10),
                   Row(
                     children: [
@@ -81,13 +85,6 @@ class OsCard extends StatelessWidget {
                       Text(_fmt(os.dataEntrada),
                           style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                       const Spacer(),
-                      if (os.totalMecanicos > 0) ...[
-                        const Icon(Icons.engineering_outlined, size: 12, color: AppColors.textSecondary),
-                        const SizedBox(width: 3),
-                        Text('${os.totalMecanicos}',
-                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                        const SizedBox(width: 8),
-                      ],
                       Text(
                         'R\$ ${os.total.toStringAsFixed(2).replaceAll('.', ',')}',
                         style: const TextStyle(
@@ -122,6 +119,11 @@ class OsCard extends StatelessWidget {
 
   String _fmt(DateTime dt) =>
       '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+
+  String _mecanicoLabel(List<String> nomes) {
+    if (nomes.length <= 2) return nomes.join(', ');
+    return '${nomes.take(2).join(', ')} +${nomes.length - 2}';
+  }
 }
 
 class _Row extends StatelessWidget {

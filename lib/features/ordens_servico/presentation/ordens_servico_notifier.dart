@@ -10,7 +10,10 @@ class OrdensServicoNotifier extends AutoDisposeAsyncNotifier<List<OrdemServico>>
   Future<List<OrdemServico>> build() => _fetch();
 
   Future<List<OrdemServico>> _fetch() =>
-      ref.read(ordensServicoRemoteDataSourceProvider).listar(status: _filtroStatus);
+      ref.read(ordensServicoRemoteDataSourceProvider).listar(
+        status: _filtroStatus,
+        excluirEntregue: _filtroStatus == null,
+      );
 
   Future<void> filtrar(String? status) async {
     _filtroStatus = status;

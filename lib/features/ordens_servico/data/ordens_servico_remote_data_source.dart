@@ -13,12 +13,14 @@ class OrdensServicoRemoteDataSource {
     int? clienteId,
     int? veiculoId,
     int? funcionarioId,
+    bool excluirEntregue = false,
   }) async {
     final resp = await _dio.get('/ordens-servico', queryParameters: {
       'status': ?status,
       'clienteId': ?clienteId,
       'veiculoId': ?veiculoId,
       'funcionarioId': ?funcionarioId,
+      if (excluirEntregue) 'excluirEntregue': true,
     });
     return (resp.data as List)
         .map((e) => OrdemServico.fromJson(e as Map<String, dynamic>))
