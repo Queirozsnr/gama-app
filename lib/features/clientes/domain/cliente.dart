@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'veiculo_resumo.dart';
 
 part 'cliente.freezed.dart';
 part 'cliente.g.dart';
@@ -14,6 +15,7 @@ class Cliente with _$Cliente {
     String? cidade,
     required bool ativo,
     required DateTime criadoEm,
+    @Default([]) List<VeiculoResumo> veiculos,
   }) = _Cliente;
 
   factory Cliente.fromJson(Map<String, dynamic> json) => _$ClienteFromJson(json);

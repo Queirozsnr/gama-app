@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/gama_search_bar.dart';
 import '../../../shared/widgets/gama_confirm_dialog.dart';
+import '../../veiculos/data/veiculos_remote_data_source.dart';
+import '../../veiculos/domain/veiculo.dart';
+import '../../veiculos/presentation/widgets/veiculo_form_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../domain/cliente.dart';
+import '../domain/veiculo_resumo.dart';
 import 'clientes_notifier.dart';
 import 'widgets/cliente_card.dart';
 import 'widgets/cliente_form_dialog.dart';
@@ -27,6 +31,35 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
 
   void _onSearch(String value) {
     ref.read(clientesNotifierProvider.notifier).buscar(value);
+  }
+
+  Future<void> _openVeiculoForm(int clienteId) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) => VeiculoFormDialog(clienteIdFixo: clienteId),
+    );
+    if (result == true && mounted) {
+      GamaSnackBar.success(context, 'Veículo cadastrado!');
+    }
+  }
+
+  Future<void> _openEditVeiculo(VeiculoResumo resumo) async {
+    Veiculo veiculo;
+    try {
+      veiculo = await ref.read(veiculosRemoteDataSourceProvider).obter(resumo.id);
+    } catch (_) {
+      if (mounted) GamaSnackBar.error(context, 'Erro ao carregar veículo.');
+      return;
+    }
+    if (!mounted) return;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) => VeiculoFormDialog(veiculo: veiculo),
+    );
+    if (result == true && mounted) {
+      GamaSnackBar.success(context, 'Veículo atualizado!');
+      ref.invalidate(clientesNotifierProvider);
+    }
   }
 
   Future<void> _openForm({Cliente? cliente}) async {
@@ -162,10 +195,12 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen> {
                         email: c.email ?? '',
                         telefone: c.telefone ?? '',
                         cidade: c.cidade ?? '',
-                        placas: const [],
+                        veiculos: c.veiculos,
                         desde: _formatarData(c.criadoEm),
                         onTap: () => _openForm(cliente: c),
                         onLongPress: () => _excluir(c),
+                        onAddVeiculo: () => _openVeiculoForm(c.id),
+                        onEditVeiculo: _openEditVeiculo,
                       );
                     },
                   ),

@@ -29,6 +29,7 @@ mixin _$Cliente {
   String? get cidade => throw _privateConstructorUsedError;
   bool get ativo => throw _privateConstructorUsedError;
   DateTime get criadoEm => throw _privateConstructorUsedError;
+  List<VeiculoResumo> get veiculos => throw _privateConstructorUsedError;
 
   /// Serializes this Cliente to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -53,6 +54,7 @@ abstract class $ClienteCopyWith<$Res> {
     String? cidade,
     bool ativo,
     DateTime criadoEm,
+    List<VeiculoResumo> veiculos,
   });
 }
 
@@ -79,6 +81,7 @@ class _$ClienteCopyWithImpl<$Res, $Val extends Cliente>
     Object? cidade = freezed,
     Object? ativo = null,
     Object? criadoEm = null,
+    Object? veiculos = null,
   }) {
     return _then(
       _value.copyWith(
@@ -114,6 +117,10 @@ class _$ClienteCopyWithImpl<$Res, $Val extends Cliente>
                 ? _value.criadoEm
                 : criadoEm // ignore: cast_nullable_to_non_nullable
                       as DateTime,
+            veiculos: null == veiculos
+                ? _value.veiculos
+                : veiculos // ignore: cast_nullable_to_non_nullable
+                      as List<VeiculoResumo>,
           )
           as $Val,
     );
@@ -137,6 +144,7 @@ abstract class _$$ClienteImplCopyWith<$Res> implements $ClienteCopyWith<$Res> {
     String? cidade,
     bool ativo,
     DateTime criadoEm,
+    List<VeiculoResumo> veiculos,
   });
 }
 
@@ -162,6 +170,7 @@ class __$$ClienteImplCopyWithImpl<$Res>
     Object? cidade = freezed,
     Object? ativo = null,
     Object? criadoEm = null,
+    Object? veiculos = null,
   }) {
     return _then(
       _$ClienteImpl(
@@ -197,6 +206,10 @@ class __$$ClienteImplCopyWithImpl<$Res>
             ? _value.criadoEm
             : criadoEm // ignore: cast_nullable_to_non_nullable
                   as DateTime,
+        veiculos: null == veiculos
+            ? _value._veiculos
+            : veiculos // ignore: cast_nullable_to_non_nullable
+                  as List<VeiculoResumo>,
       ),
     );
   }
@@ -214,7 +227,8 @@ class _$ClienteImpl implements _Cliente {
     this.cidade,
     required this.ativo,
     required this.criadoEm,
-  });
+    final List<VeiculoResumo> veiculos = const [],
+  }) : _veiculos = veiculos;
 
   factory _$ClienteImpl.fromJson(Map<String, dynamic> json) =>
       _$$ClienteImplFromJson(json);
@@ -235,10 +249,18 @@ class _$ClienteImpl implements _Cliente {
   final bool ativo;
   @override
   final DateTime criadoEm;
+  final List<VeiculoResumo> _veiculos;
+  @override
+  @JsonKey()
+  List<VeiculoResumo> get veiculos {
+    if (_veiculos is EqualUnmodifiableListView) return _veiculos;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_veiculos);
+  }
 
   @override
   String toString() {
-    return 'Cliente(id: $id, nome: $nome, email: $email, telefone: $telefone, cpf: $cpf, cidade: $cidade, ativo: $ativo, criadoEm: $criadoEm)';
+    return 'Cliente(id: $id, nome: $nome, email: $email, telefone: $telefone, cpf: $cpf, cidade: $cidade, ativo: $ativo, criadoEm: $criadoEm, veiculos: $veiculos)';
   }
 
   @override
@@ -255,7 +277,8 @@ class _$ClienteImpl implements _Cliente {
             (identical(other.cidade, cidade) || other.cidade == cidade) &&
             (identical(other.ativo, ativo) || other.ativo == ativo) &&
             (identical(other.criadoEm, criadoEm) ||
-                other.criadoEm == criadoEm));
+                other.criadoEm == criadoEm) &&
+            const DeepCollectionEquality().equals(other._veiculos, _veiculos));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -270,6 +293,7 @@ class _$ClienteImpl implements _Cliente {
     cidade,
     ativo,
     criadoEm,
+    const DeepCollectionEquality().hash(_veiculos),
   );
 
   /// Create a copy of Cliente
@@ -296,6 +320,7 @@ abstract class _Cliente implements Cliente {
     final String? cidade,
     required final bool ativo,
     required final DateTime criadoEm,
+    final List<VeiculoResumo> veiculos,
   }) = _$ClienteImpl;
 
   factory _Cliente.fromJson(Map<String, dynamic> json) = _$ClienteImpl.fromJson;
@@ -316,6 +341,8 @@ abstract class _Cliente implements Cliente {
   bool get ativo;
   @override
   DateTime get criadoEm;
+  @override
+  List<VeiculoResumo> get veiculos;
 
   /// Create a copy of Cliente
   /// with the given fields replaced by the non-null parameter values.

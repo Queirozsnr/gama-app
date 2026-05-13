@@ -55,7 +55,7 @@ Page<void> Function(BuildContext, GoRouterState) _fade(Widget Function(BuildCont
     key: state.pageKey,
     child: builder(context, state),
     transitionDuration: const Duration(milliseconds: 180),
-    transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+    transitionsBuilder: (_, animation, _, child) => FadeTransition(opacity: animation, child: child),
   );
 }
 

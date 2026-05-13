@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../features/oficinas/data/oficinas_remote_data_source.dart';
 import '../../../../features/oficinas/domain/oficina_model.dart';
 import '../../../../shared/widgets/gama_button.dart';
+import '../../../../shared/widgets/gama_searchable_select.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
 import '../../domain/funcionario.dart';
 import '../funcionarios_notifier.dart';
@@ -25,6 +26,12 @@ const _cargoLabels = {
   'TecnicoArCondicionado': 'Técnico AC',
 };
 
+const _tiposRemuneracao = ['Fixo', 'Porcentagem'];
+const _tipoRemuneracaoLabels = {
+  'Fixo': 'Salário fixo',
+  'Porcentagem': 'Porcentagem da OS',
+};
+
 class FuncionarioFormDialog extends ConsumerStatefulWidget {
   const FuncionarioFormDialog({super.key, this.funcionario});
   final Funcionario? funcionario;
@@ -39,8 +46,8 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
   late final TextEditingController _email;
   late final TextEditingController _telefone;
   late final TextEditingController _valor;
-  late String _cargo;
-  late String _tipoRemuneracao;
+  String? _cargo;
+  String? _tipoRemuneracao;
   final Set<int> _oficinasSelected = {};
   List<OficinaModel> _oficinas = [];
   bool _loadingOficinas = true;
@@ -79,8 +86,22 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
     super.dispose();
   }
 
+  Future<List<String>> _filtrarCargos(String q) async =>
+      _cargos.where((c) => (_cargoLabels[c] ?? c).toLowerCase().contains(q.toLowerCase())).toList();
+
+  Future<List<String>> _filtrarTipos(String q) async =>
+      _tiposRemuneracao.where((t) => (_tipoRemuneracaoLabels[t] ?? t).toLowerCase().contains(q.toLowerCase())).toList();
+
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_cargo == null) {
+      GamaSnackBar.error(context, 'Selecione um cargo.');
+      return;
+    }
+    if (_tipoRemuneracao == null) {
+      GamaSnackBar.error(context, 'Selecione o tipo de remuneração.');
+      return;
+    }
     setState(() => _loading = true);
     try {
       final valorNum = double.tryParse(_valor.text.trim().replaceAll(',', '.'));
@@ -152,16 +173,30 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                         ],
                         _campo(_telefone, 'Telefone', teclado: TextInputType.phone),
                         const SizedBox(height: 12),
-                        _dropdown('Cargo', _cargo, _cargos, _cargoLabels, (v) => setState(() => _cargo = v!)),
+                        GamaSearchableSelect<String>(
+                          label: 'Cargo *',
+                          selectedValue: _cargo,
+                          optionsBuilder: _filtrarCargos,
+                          displayString: (c) => _cargoLabels[c] ?? c,
+                          isRequired: true,
+                          onChanged: (v) => setState(() => _cargo = v),
+                        ),
                         const SizedBox(height: 12),
-                        _dropdown('Remuneração', _tipoRemuneracao, ['Fixo', 'Porcentagem'],
-                          {'Fixo': 'Salário fixo', 'Porcentagem': 'Porcentagem da OS'},
-                          (v) => setState(() { _tipoRemuneracao = v!; _valor.clear(); }),
+                        GamaSearchableSelect<String>(
+                          label: 'Remuneração *',
+                          selectedValue: _tipoRemuneracao,
+                          optionsBuilder: _filtrarTipos,
+                          displayString: (t) => _tipoRemuneracaoLabels[t] ?? t,
+                          isRequired: true,
+                          onChanged: (v) => setState(() {
+                            _tipoRemuneracao = v;
+                            _valor.clear();
+                          }),
                         ),
                         const SizedBox(height: 12),
                         _campo(
                           _valor,
-                          _tipoRemuneracao == 'Fixo' ? 'Salário (R\$)' : 'Porcentagem (%)',
+                          _tipoRemuneracao == 'Porcentagem' ? 'Porcentagem (%)' : 'Salário (R\$)',
                           teclado: const TextInputType.numberWithOptions(decimal: true),
                         ),
                         const SizedBox(height: 16),
@@ -183,8 +218,8 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                                 title: Text(o.nome, style: const TextStyle(fontSize: 14)),
                                 value: _oficinasSelected.contains(o.id),
                                 onChanged: (v) => setState(() {
-                                  if (v == true) _oficinasSelected.add(o.id);
-                                  else _oficinasSelected.remove(o.id);
+                                  if (v == true) { _oficinasSelected.add(o.id); }
+                                  else { _oficinasSelected.remove(o.id); }
                                 }),
                                 activeColor: AppColors.primary,
                               )).toList(),
@@ -225,23 +260,6 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
         filled: true, fillColor: Colors.white,
       ),
       validator: obrigatorio ? (v) => (v == null || v.trim().isEmpty) ? 'Campo obrigatório' : null : null,
-    );
-  }
-
-  Widget _dropdown(String label, String value, List<String> options, Map<String, String> labels, ValueChanged<String?> onChanged) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        filled: true, fillColor: Colors.white,
-      ),
-      items: options.map((o) => DropdownMenuItem(value: o, child: Text(labels[o] ?? o))).toList(),
-      onChanged: onChanged,
     );
   }
 }

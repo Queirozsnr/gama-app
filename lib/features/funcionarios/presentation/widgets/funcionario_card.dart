@@ -40,7 +40,7 @@ class FuncionarioCard extends StatelessWidget {
       funcionario.tipoRemuneracao == 'Fixo' ? PaymentType.fixo : PaymentType.comissao;
 
   int? get _comissaoPercent =>
-      funcionario.porcentagem != null ? funcionario.porcentagem!.toInt() : null;
+      funcionario.porcentagem?.toInt();
 
   @override
   Widget build(BuildContext context) {

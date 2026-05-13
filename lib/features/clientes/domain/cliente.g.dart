@@ -16,6 +16,11 @@ _$ClienteImpl _$$ClienteImplFromJson(Map<String, dynamic> json) =>
       cidade: json['cidade'] as String?,
       ativo: json['ativo'] as bool,
       criadoEm: DateTime.parse(json['criadoEm'] as String),
+      veiculos:
+          (json['veiculos'] as List<dynamic>?)
+              ?.map((e) => VeiculoResumo.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$$ClienteImplToJson(_$ClienteImpl instance) =>
@@ -28,4 +33,5 @@ Map<String, dynamic> _$$ClienteImplToJson(_$ClienteImpl instance) =>
       'cidade': instance.cidade,
       'ativo': instance.ativo,
       'criadoEm': instance.criadoEm.toIso8601String(),
+      'veiculos': instance.veiculos,
     };

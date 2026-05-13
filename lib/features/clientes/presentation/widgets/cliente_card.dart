@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/gama_avatar.dart';
-import '../../../../shared/widgets/chips/vehicle_plate_chip.dart';
+import '../../domain/veiculo_resumo.dart';
 import 'contact_row.dart';
 
 class ClienteCard extends StatelessWidget {
@@ -12,9 +12,11 @@ class ClienteCard extends StatelessWidget {
     required this.telefone,
     required this.email,
     required this.cidade,
-    required this.placas,
+    this.veiculos = const [],
     this.onTap,
     this.onLongPress,
+    this.onAddVeiculo,
+    this.onEditVeiculo,
   });
 
   final String nome;
@@ -22,9 +24,11 @@ class ClienteCard extends StatelessWidget {
   final String telefone;
   final String email;
   final String cidade;
-  final List<String> placas;
+  final List<VeiculoResumo> veiculos;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onAddVeiculo;
+  final void Function(VeiculoResumo)? onEditVeiculo;
 
   String get _initials {
     final parts = nome.trim().split(' ');
@@ -85,21 +89,77 @@ class ClienteCard extends StatelessWidget {
             ContactRow(icon: Icons.email_outlined, value: email),
             ContactRow(icon: Icons.location_on_outlined, value: cidade),
             const Divider(height: 20),
-            Text(
-              'VEÍCULOS (${placas.length})',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-                letterSpacing: 0.5,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'VEÍCULOS (${veiculos.length})',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                if (onAddVeiculo != null)
+                  GestureDetector(
+                    onTap: onAddVeiculo,
+                    child: const Icon(Icons.add_circle_outline, size: 16, color: AppColors.primary),
+                  ),
+              ],
             ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 6,
-              children: placas.map((p) => VehiclePlateChip(plate: p)).toList(),
+              children: veiculos.map((v) => _VeiculoChip(
+                veiculo: v,
+                onTap: onEditVeiculo != null ? () => onEditVeiculo!(v) : null,
+              )).toList(),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VeiculoChip extends StatelessWidget {
+  const _VeiculoChip({required this.veiculo, this.onTap});
+
+  final VeiculoResumo veiculo;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: onTap != null ? AppColors.primary.withValues(alpha: 0.08) : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: onTap != null ? AppColors.primary.withValues(alpha: 0.3) : Colors.grey.shade300,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              veiculo.label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: onTap != null ? AppColors.primary : AppColors.textSecondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 4),
+              Icon(Icons.edit_outlined, size: 10, color: AppColors.primary.withValues(alpha: 0.7)),
+            ],
           ],
         ),
       ),

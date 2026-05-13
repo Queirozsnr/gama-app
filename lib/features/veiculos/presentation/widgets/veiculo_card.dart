@@ -14,6 +14,7 @@ class VeiculoCard extends StatelessWidget {
     required this.visitas,
     required this.proprietario,
     this.onTap,
+    this.onLongPress,
   });
 
   final String placa;
@@ -25,11 +26,13 @@ class VeiculoCard extends StatelessWidget {
   final int visitas;
   final String proprietario;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
