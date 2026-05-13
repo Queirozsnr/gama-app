@@ -63,7 +63,7 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
     _email = TextEditingController(text: f?.email ?? '');
     _telefone = TextEditingController(text: f?.telefone ?? '');
     _cargo = f?.cargo ?? _cargos.first;
-    _tipoRemuneracao = f?.tipoRemuneracao ?? 'Fixo';
+    _tipoRemuneracao = (_cargo == 'Gerente') ? null : (f?.tipoRemuneracao ?? 'Fixo');
     _valor = TextEditingController(
       text: f == null ? '' : (_tipoRemuneracao == 'Fixo' ? f.salario?.toString() : f.porcentagem?.toString()) ?? '',
     );
@@ -98,18 +98,20 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
       GamaSnackBar.error(context, 'Selecione um cargo.');
       return;
     }
-    if (_tipoRemuneracao == null) {
+    final isGerente = _cargo == 'Gerente';
+    if (!isGerente && _tipoRemuneracao == null) {
       GamaSnackBar.error(context, 'Selecione o tipo de remuneração.');
       return;
     }
     setState(() => _loading = true);
     try {
+      final tipoFinal = isGerente ? 'Socio' : _tipoRemuneracao!;
       final valorNum = double.tryParse(_valor.text.trim().replaceAll(',', '.'));
       final data = {
         'cargo': _cargo,
-        'tipoRemuneracao': _tipoRemuneracao,
-        if (_tipoRemuneracao == 'Fixo') 'salario': valorNum,
-        if (_tipoRemuneracao == 'Porcentagem') 'porcentagem': valorNum,
+        'tipoRemuneracao': tipoFinal,
+        if (tipoFinal == 'Fixo') 'salario': valorNum,
+        if (tipoFinal == 'Porcentagem') 'porcentagem': valorNum,
         if (_telefone.text.trim().isNotEmpty) 'telefone': _telefone.text.trim(),
         'oficinaIds': _oficinasSelected.toList(),
       };
@@ -179,26 +181,34 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                           optionsBuilder: _filtrarCargos,
                           displayString: (c) => _cargoLabels[c] ?? c,
                           isRequired: true,
-                          onChanged: (v) => setState(() => _cargo = v),
-                        ),
-                        const SizedBox(height: 12),
-                        GamaSearchableSelect<String>(
-                          label: 'Remuneração *',
-                          selectedValue: _tipoRemuneracao,
-                          optionsBuilder: _filtrarTipos,
-                          displayString: (t) => _tipoRemuneracaoLabels[t] ?? t,
-                          isRequired: true,
                           onChanged: (v) => setState(() {
-                            _tipoRemuneracao = v;
-                            _valor.clear();
+                            _cargo = v;
+                            if (v == 'Gerente') {
+                              _tipoRemuneracao = null;
+                              _valor.clear();
+                            }
                           }),
                         ),
-                        const SizedBox(height: 12),
-                        _campo(
-                          _valor,
-                          _tipoRemuneracao == 'Porcentagem' ? 'Porcentagem (%)' : 'Salário (R\$)',
-                          teclado: const TextInputType.numberWithOptions(decimal: true),
-                        ),
+                        if (_cargo != null && _cargo != 'Gerente') ...[
+                          const SizedBox(height: 12),
+                          GamaSearchableSelect<String>(
+                            label: 'Remuneração *',
+                            selectedValue: _tipoRemuneracao,
+                            optionsBuilder: _filtrarTipos,
+                            displayString: (t) => _tipoRemuneracaoLabels[t] ?? t,
+                            isRequired: true,
+                            onChanged: (v) => setState(() {
+                              _tipoRemuneracao = v;
+                              _valor.clear();
+                            }),
+                          ),
+                          const SizedBox(height: 12),
+                          _campo(
+                            _valor,
+                            _tipoRemuneracao == 'Porcentagem' ? 'Porcentagem (%)' : 'Salário (R\$)',
+                            teclado: const TextInputType.numberWithOptions(decimal: true),
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         const Text('Oficinas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                         const SizedBox(height: 8),

@@ -36,8 +36,11 @@ class FuncionarioCard extends StatelessWidget {
     return parts[0].substring(0, parts[0].length.clamp(0, 2));
   }
 
-  PaymentType get _paymentType =>
-      funcionario.tipoRemuneracao == 'Fixo' ? PaymentType.fixo : PaymentType.comissao;
+  PaymentType get _paymentType => switch (funcionario.tipoRemuneracao) {
+        'Fixo'        => PaymentType.fixo,
+        'Socio'       => PaymentType.socio,
+        _             => PaymentType.comissao,
+      };
 
   int? get _comissaoPercent =>
       funcionario.porcentagem?.toInt();
@@ -81,8 +84,10 @@ class FuncionarioCard extends StatelessWidget {
                         _cargoLabels[funcionario.cargo] ?? funcionario.cargo,
                         style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
-                      const SizedBox(height: 4),
-                      PaymentBadge(type: _paymentType, percent: _comissaoPercent),
+                      if (funcionario.cargo != 'Gerente') ...[
+                        const SizedBox(height: 4),
+                        PaymentBadge(type: _paymentType, percent: _comissaoPercent),
+                      ],
                     ],
                   ),
                 ),

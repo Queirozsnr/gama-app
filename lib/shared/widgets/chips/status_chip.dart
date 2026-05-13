@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 
-enum OsStatus { aberta, emAndamento, aguardandoPeca, concluida, entregue }
+enum OsStatus { aberta, emAndamento, aguardandoPeca, concluida, entregue;
+
+  static OsStatus fromString(String s) => switch (s) {
+    'Aberta'          => aberta,
+    'EmAndamento'     => emAndamento,
+    'AguardandoPecas' => aguardandoPeca,
+    'Concluida'       => concluida,
+    'Entregue'        => entregue,
+    _                 => aberta,
+  };
+}
 
 extension OsStatusX on OsStatus {
   String get label => switch (this) {

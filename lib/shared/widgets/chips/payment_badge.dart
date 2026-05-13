@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum PaymentType { comissao, fixo }
+enum PaymentType { comissao, fixo, socio }
 
 class PaymentBadge extends StatelessWidget {
   const PaymentBadge({
@@ -15,16 +15,19 @@ class PaymentBadge extends StatelessWidget {
   String get _label => switch (type) {
         PaymentType.comissao => percent != null ? '$percent% comissão' : 'Comissão',
         PaymentType.fixo     => 'Fixo mensal',
+        PaymentType.socio    => 'Sócio',
       };
 
   Color get _bgColor => switch (type) {
         PaymentType.comissao => const Color(0xFFFFF3E0),
         PaymentType.fixo     => const Color(0xFFE3F2FD),
+        PaymentType.socio    => const Color(0xFFEDE7F6),
       };
 
   Color get _textColor => switch (type) {
         PaymentType.comissao => const Color(0xFFE65100),
         PaymentType.fixo     => const Color(0xFF1565C0),
+        PaymentType.socio    => const Color(0xFF4527A0),
       };
 
   @override
