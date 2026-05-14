@@ -14,6 +14,8 @@ import '../domain/item_os.dart';
 import '../domain/ordem_servico_detalhe.dart';
 import '../domain/os_mecanico.dart';
 import 'ordens_servico_notifier.dart';
+import '../../estoque/data/estoque_remote_data_source.dart';
+import '../../estoque/domain/estoque.dart';
 
 const _statusTransicoes = {
   'Aberta':           ['EmAndamento'],
@@ -1339,20 +1341,23 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
 
 // ── Item form dialog ──────────────────────────────────────────────────────────
 
-class _ItemFormDialog extends StatefulWidget {
+class _ItemFormDialog extends ConsumerStatefulWidget {
   const _ItemFormDialog({this.tipoInicial = 'Servico'});
   final String tipoInicial;
 
   @override
-  State<_ItemFormDialog> createState() => _ItemFormDialogState();
+  ConsumerState<_ItemFormDialog> createState() => _ItemFormDialogState();
 }
 
-class _ItemFormDialogState extends State<_ItemFormDialog> {
+class _ItemFormDialogState extends ConsumerState<_ItemFormDialog> {
   late String _tipo;
   final _descCtrl  = TextEditingController();
   final _qtdCtrl   = TextEditingController(text: '1');
   final _valorCtrl = TextEditingController();
   String? _origemPeca;
+  ProdutoListagem? _produto;
+
+  bool get _isEstoque => _origemPeca == 'Estoque';
 
   @override
   void initState() {
@@ -1369,8 +1374,19 @@ class _ItemFormDialogState extends State<_ItemFormDialog> {
     super.dispose();
   }
 
+  void _onProdutoSelecionado(ProdutoListagem? p) {
+    setState(() => _produto = p);
+    if (p != null) {
+      _descCtrl.text = p.nome;
+      if (_valorCtrl.text.isEmpty) {
+        _valorCtrl.text = p.precoVenda.toStringAsFixed(2);
+      }
+    }
+  }
+
   void _salvar() {
-    if (_descCtrl.text.trim().isEmpty) return;
+    final descOk = _isEstoque ? _produto != null : _descCtrl.text.trim().isNotEmpty;
+    if (!descOk) return;
     final qtd   = double.tryParse(_qtdCtrl.text) ?? 1;
     final valor = double.tryParse(_valorCtrl.text.replaceAll(',', '.')) ?? 0;
     Navigator.pop(context, {
@@ -1379,6 +1395,7 @@ class _ItemFormDialogState extends State<_ItemFormDialog> {
       'quantidade': qtd,
       'valorUnitario': valor,
       if (_tipo == 'Peca' && _origemPeca != null) 'origemPeca': _origemPeca,
+      if (_isEstoque && _produto != null) 'produtoId': _produto!.id,
     });
   }
 
@@ -1397,7 +1414,7 @@ class _ItemFormDialogState extends State<_ItemFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final canSave = _descCtrl.text.trim().isNotEmpty;
+    final canSave = _isEstoque ? _produto != null : _descCtrl.text.trim().isNotEmpty;
 
     return Dialog(
       backgroundColor: Colors.white,
@@ -1417,7 +1434,17 @@ class _ItemFormDialogState extends State<_ItemFormDialog> {
                 style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 16),
-              TextField(controller: _descCtrl, decoration: _dec('Descrição'), autofocus: true),
+              if (_isEstoque)
+                GamaSearchableSelect<ProdutoListagem>(
+                  label: 'Produto do estoque *',
+                  selectedValue: _produto,
+                  displayString: (p) => p.nome,
+                  optionsBuilder: (query) =>
+                      ref.read(estoqueDataSourceProvider).listarProdutos(busca: query),
+                  onChanged: _onProdutoSelecionado,
+                )
+              else
+                TextField(controller: _descCtrl, decoration: _dec('Descrição'), autofocus: true),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -1447,7 +1474,7 @@ class _ItemFormDialogState extends State<_ItemFormDialog> {
                   items: _origensLabels.entries
                       .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
                       .toList(),
-                  onChanged: (v) => setState(() => _origemPeca = v),
+                  onChanged: (v) => setState(() { _origemPeca = v; _produto = null; _descCtrl.clear(); _valorCtrl.clear(); }),
                 ),
               ],
               const SizedBox(height: 20),

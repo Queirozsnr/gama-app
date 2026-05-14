@@ -7,6 +7,7 @@ class ItemOs {
     required this.valorUnitario,
     required this.subtotal,
     this.origemPeca,
+    this.produtoId,
   });
 
   final int id;
@@ -16,6 +17,7 @@ class ItemOs {
   final double valorUnitario;
   final double subtotal;
   final String? origemPeca; // 'Estoque' | 'Comprado' | 'ClienteTrouxe'
+  final int? produtoId;
 
   bool get isPeca => tipo == 'Peca';
 
@@ -27,5 +29,6 @@ class ItemOs {
         valorUnitario: (json['valorUnitario'] as num).toDouble(),
         subtotal: (json['subtotal'] as num).toDouble(),
         origemPeca: json['origemPeca'] as String?,
+        produtoId: json['produtoId'] as int?,
       );
 }

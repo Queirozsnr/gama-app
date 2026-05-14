@@ -11,6 +11,8 @@ import '../../veiculos/data/veiculos_remote_data_source.dart';
 import '../../veiculos/domain/veiculo.dart';
 import '../data/ordens_servico_remote_data_source.dart';
 import 'ordens_servico_notifier.dart';
+import '../../estoque/data/estoque_remote_data_source.dart';
+import '../../estoque/domain/estoque.dart';
 
 const _formasPagamento = ['Dinheiro', 'Pix', 'CartaoDebito', 'CartaoCredito', 'Transferencia', 'Outro'];
 const _formasPagamentoLabels = {
@@ -29,12 +31,13 @@ const _origensLabels = {
 };
 
 class _ItemInput {
-  _ItemInput({required this.tipo, required this.descricao, required this.quantidade, required this.valorUnitario, this.origemPeca});
+  _ItemInput({required this.tipo, required this.descricao, required this.quantidade, required this.valorUnitario, this.origemPeca, this.produtoId});
   String tipo;
   String descricao;
   double quantidade;
   double valorUnitario;
   String? origemPeca;
+  int? produtoId;
 }
 
 class OsNovaScreen extends ConsumerStatefulWidget {
@@ -107,12 +110,13 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen> {
         if (_previsaoEntrega != null) 'previsaoEntrega': _previsaoEntrega!.toIso8601String(),
         if (_formaPagamento != null) 'formaPagamento': _formaPagamento,
         'mecanicoIds': <int>[],
-        'itens': todos.map((i) => {
+        'itens': todos.map((i) => <String, dynamic>{
           'tipo': i.tipo,
           'descricao': i.descricao,
           'quantidade': i.quantidade,
           'valorUnitario': i.valorUnitario,
           if (i.tipo == 'Peca' && i.origemPeca != null) 'origemPeca': i.origemPeca,
+          if (i.produtoId != null) 'produtoId': i.produtoId,
         }).toList(),
       });
       ref.invalidate(ordensServicoNotifierProvider);
@@ -338,7 +342,7 @@ class _ItemSection extends StatelessWidget {
 
 // ── Tile de item ──────────────────────────────────────────────────────────────
 
-class _ItemInputTile extends StatefulWidget {
+class _ItemInputTile extends ConsumerStatefulWidget {
   const _ItemInputTile({
     super.key,
     required this.item,
@@ -356,10 +360,10 @@ class _ItemInputTile extends StatefulWidget {
   final List<String> origens;
 
   @override
-  State<_ItemInputTile> createState() => _ItemInputTileState();
+  ConsumerState<_ItemInputTile> createState() => _ItemInputTileState();
 }
 
-class _ItemInputTileState extends State<_ItemInputTile> {
+class _ItemInputTileState extends ConsumerState<_ItemInputTile> {
   late final TextEditingController _desc;
   late final TextEditingController _qtd;
   late final TextEditingController _valor;
@@ -429,11 +433,32 @@ class _ItemInputTileState extends State<_ItemInputTile> {
             ],
           ),
           const SizedBox(height: 8),
-          TextField(
-            controller: _desc,
-            decoration: _dec('Descrição'),
-            onChanged: (v) { item.descricao = v; widget.onChanged(); },
-          ),
+          if (item.origemPeca == 'Estoque')
+            GamaSearchableSelect<ProdutoListagem>(
+              label: 'Produto do estoque *',
+              selectedValue: item.produtoId != null ? null : null,
+              displayString: (p) => p.nome,
+              optionsBuilder: (query) =>
+                  ref.read(estoqueDataSourceProvider).listarProdutos(busca: query),
+              onChanged: (p) {
+                setState(() {
+                  item.produtoId = p?.id;
+                  item.descricao = p?.nome ?? item.descricao;
+                  if (p != null) {
+                    _desc.text = p.nome;
+                    if (_valor.text.isEmpty) _valor.text = p.precoVenda.toStringAsFixed(2);
+                    item.valorUnitario = p.precoVenda;
+                  }
+                });
+                widget.onChanged();
+              },
+            )
+          else
+            TextField(
+              controller: _desc,
+              decoration: _dec('Descrição'),
+              onChanged: (v) { item.descricao = v; widget.onChanged(); },
+            ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -463,7 +488,7 @@ class _ItemInputTileState extends State<_ItemInputTile> {
               initialValue: item.origemPeca,
               decoration: _dec('Origem da peça'),
               items: widget.origens.map((o) => DropdownMenuItem(value: o, child: Text(widget.origensLabels[o] ?? o))).toList(),
-              onChanged: (v) { setState(() => item.origemPeca = v); widget.onChanged(); },
+              onChanged: (v) { setState(() { item.origemPeca = v; item.produtoId = null; _desc.clear(); _valor.clear(); }); widget.onChanged(); },
             ),
           ],
         ],
