@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/state/top_bar_scope.dart';
 import '../../../../shared/widgets/gama_button.dart';
 import '../../../../shared/widgets/gama_searchable_select.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
@@ -47,7 +48,8 @@ class OsNovaScreen extends ConsumerStatefulWidget {
   ConsumerState<OsNovaScreen> createState() => _OsNovaScreenState();
 }
 
-class _OsNovaScreenState extends ConsumerState<OsNovaScreen> {
+class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
+    with TopBarSlotMixin<OsNovaScreen> {
   final _obsCtrl = TextEditingController();
   Cliente? _cliente;
   Veiculo? _veiculo;
@@ -122,7 +124,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen> {
       ref.invalidate(ordensServicoNotifierProvider);
       if (mounted) {
         GamaSnackBar.success(context, 'OS #$id criada!');
-        context.pushReplacement('/ordens-servico/$id');
+        context.go('/ordens-servico/$id');
       }
     } catch (_) {
       if (mounted) GamaSnackBar.error(context, 'Erro ao criar OS.');
@@ -133,21 +135,12 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        leading: BackButton(color: AppColors.textPrimary),
-        title: const Text('Nova OS',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1),
-        ),
-      ),
-      body: SingleChildScrollView(
+    setTopBarSlot(TopBarSlot(
+      pageTitle: 'Nova OS',
+      leading: BackButton(onPressed: () => context.go('/ordens-servico')),
+    ));
+
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Align(
           alignment: Alignment.topCenter,
@@ -269,7 +262,6 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen> {
               const SizedBox(height: 24),
             ],
           ),
-        ),
         ),
       ),
     );

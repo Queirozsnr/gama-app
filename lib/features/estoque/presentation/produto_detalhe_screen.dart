@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/state/top_bar_scope.dart';
 import '../data/estoque_remote_data_source.dart';
 import '../domain/estoque.dart';
 import 'estoque_notifier.dart';
-import 'novo_produto_screen.dart';
 import 'nova_movimentacao_screen.dart';
 
 const _categoriasLabel = {
@@ -41,34 +42,30 @@ class ProdutoDetalheScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncMovs = ref.watch(movimentacoesProvider(produto.id));
 
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        title: Text(produto.nome,
-            style: const TextStyle(fontSize: 16), overflow: TextOverflow.ellipsis),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Editar',
-            onPressed: () async {
-              final ok = await Navigator.of(context).push<bool>(
-                MaterialPageRoute(
-                  builder: (_) => NovoProdutoScreen(produto: produto),
-                ),
-              );
-              if (ok == true && context.mounted) Navigator.of(context).pop(true);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.error),
-            tooltip: 'Excluir',
-            onPressed: () => _confirmarExclusao(context, ref),
-          ),
-        ],
+    return TopBarSlotProvider(
+      slot: TopBarSlot(
+        pageTitle: produto.nome,
+        leading: BackButton(onPressed: () => context.go('/estoque')),
+        action: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Editar',
+              onPressed: () => context.go(
+                '/estoque/produto/${produto.id}/editar',
+                extra: produto,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppColors.error),
+              tooltip: 'Excluir',
+              onPressed: () => _confirmarExclusao(context, ref),
+            ),
+          ],
+        ),
       ),
-      body: CustomScrollView(
+      child: CustomScrollView(
         slivers: [
           // Info card
           SliverToBoxAdapter(
@@ -250,7 +247,7 @@ class ProdutoDetalheScreen extends ConsumerWidget {
     );
     if (ok == true) {
       ref.invalidate(movimentacoesProvider(produto.id));
-      if (context.mounted) Navigator.of(context).pop(true);
+      ref.read(produtosNotifierProvider.notifier).refresh();
     }
   }
 
@@ -272,7 +269,11 @@ class ProdutoDetalheScreen extends ConsumerWidget {
     if (ok == true && context.mounted) {
       try {
         await ref.read(estoqueDataSourceProvider).excluirProduto(produto.id);
-        if (context.mounted) Navigator.of(context).pop(true);
+        if (context.mounted) {
+          ref.invalidate(resumoEstoqueProvider);
+          ref.read(produtosNotifierProvider.notifier).refresh();
+          context.go('/estoque');
+        }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

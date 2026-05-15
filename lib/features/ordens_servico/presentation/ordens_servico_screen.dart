@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/state/top_bar_scope.dart';
 import '../../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
 import '../domain/ordem_servico.dart';
@@ -23,29 +24,57 @@ class OrdensServicoScreen extends ConsumerStatefulWidget {
   ConsumerState<OrdensServicoScreen> createState() => _OrdensServicoScreenState();
 }
 
-class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
+class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
+    with TopBarSlotMixin<OrdensServicoScreen> {
   String? _filtroStatus;
   final _buscaCtrl = TextEditingController();
   String _busca = '';
 
   @override
-  void initState() {
-    super.initState();
-    _buscaCtrl.addListener(() => setState(() => _busca = _buscaCtrl.text.toLowerCase()));
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateSlot();
+  }
+
+  void _updateSlot() {
+    final isHistorico = _filtroStatus == 'Entregue';
+    setTopBarSlot(TopBarSlot(
+      searchController: _buscaCtrl,
+      searchHint: 'Buscar por cliente, veículo ou placa…',
+      onSearchChanged: (v) => setState(() => _busca = v.toLowerCase()),
+      action: isHistorico
+          ? null
+          : FilledButton.icon(
+              onPressed: _abrirNova,
+              icon: const Icon(Icons.add, size: 17),
+              label: const Text('Nova OS'),
+            ),
+      mobileAction: isHistorico
+          ? null
+          : IconButton(
+              onPressed: _abrirNova,
+              icon: const Icon(Icons.add),
+              color: AppColors.accent,
+              tooltip: 'Nova OS',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+    ));
   }
 
   @override
   void dispose() {
-    _buscaCtrl.dispose();
     super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _buscaCtrl.dispose());
   }
 
   void _setFiltro(String? status) {
     setState(() => _filtroStatus = status);
     ref.read(ordensServicoNotifierProvider.notifier).filtrar(status);
+    _updateSlot();
   }
 
-  void _abrirNova() => context.push('/ordens-servico/nova');
+  void _abrirNova() => context.go('/ordens-servico/nova');
   void _abrirHistorico() => _setFiltro('Entregue');
 
   Future<void> _excluir(OrdemServico os) async {
@@ -77,40 +106,26 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
   @override
   Widget build(BuildContext context) {
     final osAsync = ref.watch(ordensServicoNotifierProvider);
-    final isDesktop = MediaQuery.of(context).size.width >= 800;
     final isHistorico = _filtroStatus == 'Entregue';
 
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: Column(
         children: [
-          // Toolbar
+          // Histórico toggle
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Row(
-              children: [
-                TextButton.icon(
-                  onPressed: isHistorico ? () => _setFiltro(null) : _abrirHistorico,
-                  icon: Icon(isHistorico ? Icons.arrow_back : Icons.history, size: 16),
-                  label: Text(isHistorico ? 'Voltar' : 'Histórico'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: isHistorico ? () => _setFiltro(null) : _abrirHistorico,
+                icon: Icon(isHistorico ? Icons.arrow_back : Icons.history, size: 16),
+                label: Text(isHistorico ? 'Voltar' : 'Histórico'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
-                const Spacer(),
-                if (isDesktop && !isHistorico)
-                  FilledButton.icon(
-                    onPressed: _abrirNova,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Nova OS'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
           // Filter chips — ocultos no histórico
@@ -137,7 +152,9 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                     ),
                     side: BorderSide(
-                      color: isSelected ? AppColors.primary.withValues(alpha: 0.4) : AppColors.border,
+                      color: isSelected
+                          ? AppColors.primary.withValues(alpha: 0.4)
+                          : AppColors.border,
                     ),
                     backgroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -145,31 +162,6 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
                 },
               ),
             ),
-          // Busca
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: TextField(
-              controller: _buscaCtrl,
-              decoration: InputDecoration(
-                hintText: 'Buscar por cliente, veículo ou placa…',
-                hintStyle: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.textSecondary),
-                suffixIcon: _busca.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close, size: 16),
-                        color: AppColors.textSecondary,
-                        onPressed: () => _buscaCtrl.clear(),
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-              ),
-            ),
-          ),
           // List
           Expanded(
             child: osAsync.when(
@@ -184,7 +176,8 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
                         style: TextStyle(color: AppColors.textSecondary)),
                     const SizedBox(height: 12),
                     FilledButton.icon(
-                      onPressed: () => ref.read(ordensServicoNotifierProvider.notifier).recarregar(),
+                      onPressed: () =>
+                          ref.read(ordensServicoNotifierProvider.notifier).recarregar(),
                       icon: const Icon(Icons.refresh),
                       label: const Text('Tentar novamente'),
                     ),
@@ -202,13 +195,17 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
                         Icon(Icons.assignment_outlined, size: 64, color: AppColors.border),
                         const SizedBox(height: 16),
                         Text(
-                          _busca.isNotEmpty ? 'Nenhum resultado para "$_busca"' : 'Nenhuma OS encontrada',
-                          style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+                          _busca.isNotEmpty
+                              ? 'Nenhum resultado para "$_busca"'
+                              : 'Nenhuma OS encontrada',
+                          style: const TextStyle(
+                              fontSize: 16, color: AppColors.textSecondary),
                         ),
                         if (_busca.isEmpty && isHistorico) ...[
                           const SizedBox(height: 8),
                           const Text('Nenhuma OS entregue ainda',
-                              style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                              style: TextStyle(
+                                  fontSize: 13, color: AppColors.textSecondary)),
                         ],
                       ],
                     ),
@@ -223,7 +220,8 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
                     os.status == 'Aberta' ? () => _excluir(os) : null;
 
                 return RefreshIndicator(
-                  onRefresh: () => ref.read(ordensServicoNotifierProvider.notifier).recarregar(),
+                  onRefresh: () =>
+                      ref.read(ordensServicoNotifierProvider.notifier).recarregar(),
                   child: CustomScrollView(
                     slivers: [
                       if (temSeparacao)
@@ -234,7 +232,7 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
                         ),
                       _SliverOsGrid(
                         lista: temSeparacao ? minhas : exibir,
-                        onTap: (os) => context.push('/ordens-servico/${os.id}'),
+                        onTap: (os) => context.go('/ordens-servico/${os.id}'),
                         longPress: longPress,
                       ),
                       if (temSeparacao) ...[
@@ -245,11 +243,11 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
                         ),
                         _SliverOsGrid(
                           lista: outras,
-                          onTap: (os) => context.push('/ordens-servico/${os.id}'),
+                          onTap: (os) => context.go('/ordens-servico/${os.id}'),
                           longPress: longPress,
                         ),
                       ],
-                      const SliverToBoxAdapter(child: SizedBox(height: 88)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
                     ],
                   ),
                 );
@@ -258,15 +256,6 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
           ),
         ],
       ),
-      floatingActionButton: isDesktop || isHistorico
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: _abrirNova,
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('Nova OS'),
-            ),
     );
   }
 }
@@ -274,7 +263,8 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen> {
 // ── Sliver section header ─────────────────────────────────────────────────────
 
 class _SliverSectionHeader extends StatelessWidget {
-  const _SliverSectionHeader({required this.label, required this.color, required this.icon});
+  const _SliverSectionHeader(
+      {required this.label, required this.color, required this.icon});
   final String label;
   final Color color;
   final IconData icon;
@@ -289,7 +279,11 @@ class _SliverSectionHeader extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color, letterSpacing: 0.4),
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                    letterSpacing: 0.4),
               ),
               const SizedBox(width: 8),
               Expanded(child: Divider(color: color.withValues(alpha: 0.25), height: 1)),
@@ -302,7 +296,8 @@ class _SliverSectionHeader extends StatelessWidget {
 // ── Sliver OS grid ────────────────────────────────────────────────────────────
 
 class _SliverOsGrid extends StatelessWidget {
-  const _SliverOsGrid({required this.lista, required this.onTap, required this.longPress});
+  const _SliverOsGrid(
+      {required this.lista, required this.onTap, required this.longPress});
   final List<OrdemServico> lista;
   final void Function(OrdemServico) onTap;
   final VoidCallback? Function(OrdemServico) longPress;

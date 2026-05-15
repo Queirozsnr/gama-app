@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/state/top_bar_scope.dart';
 import '../domain/estoque.dart';
 import 'estoque_notifier.dart';
-import 'novo_produto_screen.dart';
-import 'nova_movimentacao_screen.dart';
-import 'produto_detalhe_screen.dart';
 
 const _categorias = [
   'Freios', 'Filtros', 'Lubrificantes', 'Ignicao',
@@ -25,16 +24,42 @@ class EstoqueScreen extends ConsumerStatefulWidget {
   ConsumerState<EstoqueScreen> createState() => _EstoqueScreenState();
 }
 
-class _EstoqueScreenState extends ConsumerState<EstoqueScreen> {
+class _EstoqueScreenState extends ConsumerState<EstoqueScreen>
+    with TopBarSlotMixin<EstoqueScreen> {
   final _searchController = TextEditingController();
-  String? _statusFiltro; // null = Todos
+  String? _statusFiltro;
   String? _categoriaFiltro;
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    setTopBarSlot(TopBarSlot(
+      searchController: _searchController,
+      searchHint: 'Buscar por nome ou código…',
+      onSearchChanged: (v) => _aplicarFiltro(busca: v),
+      action: FilledButton.icon(
+        onPressed: _abrirNovoProduto,
+        icon: const Icon(Icons.add, size: 17),
+        label: const Text('Novo produto'),
+      ),
+      mobileAction: IconButton(
+        onPressed: _abrirNovoProduto,
+        icon: const Icon(Icons.add),
+        color: AppColors.accent,
+        tooltip: 'Novo produto',
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+      ),
+    ));
   }
+
+  @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _searchController.dispose());
+  }
+
+  void _abrirNovoProduto() => context.go('/estoque/produto/novo');
 
   void _aplicarFiltro({String? status, String? categoria, String? busca}) {
     final notifier = ref.read(produtosNotifierProvider.notifier);
@@ -66,37 +91,6 @@ class _EstoqueScreenState extends ConsumerState<EstoqueScreen> {
                 loading: () => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
                 error: (_, __) => const SizedBox.shrink(),
                 data: (r) => _ResumoCards(resumo: r),
-              ),
-            ),
-
-            // Barra de busca
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: SearchBar(
-                  controller: _searchController,
-                  hintText: 'Buscar por nome ou código...',
-                  leading: const Icon(Icons.search, size: 20),
-                  trailing: [
-                    if (_searchController.text.isNotEmpty)
-                      IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          _aplicarFiltro(busca: '');
-                        },
-                      ),
-                  ],
-                  onChanged: (v) => _aplicarFiltro(busca: v),
-                  elevation: const WidgetStatePropertyAll(0),
-                  backgroundColor: const WidgetStatePropertyAll(Colors.white),
-                  side: const WidgetStatePropertyAll(
-                    BorderSide(color: AppColors.border),
-                  ),
-                  padding: const WidgetStatePropertyAll(
-                    EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                ),
               ),
             ),
 
@@ -179,15 +173,13 @@ class _EstoqueScreenState extends ConsumerState<EstoqueScreen> {
                 }
                 return SliverList.separated(
                   itemCount: produtos.length,
-                  separatorBuilder: (context, _) => const Divider(height: 1, indent: 16, endIndent: 16),
+                  separatorBuilder: (_, _) => const Divider(height: 1, indent: 16, endIndent: 16),
                   itemBuilder: (_, i) => _ProdutoTile(
                     produto: produtos[i],
-                    onTap: () async {
-                      await Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => ProdutoDetalheScreen(produto: produtos[i]),
-                      ));
-                      ref.read(produtosNotifierProvider.notifier).refresh();
-                    },
+                    onTap: () => context.go(
+                      '/estoque/produto/${produtos[i].id}',
+                      extra: produtos[i],
+                    ),
                   ),
                 );
               },
@@ -195,19 +187,6 @@ class _EstoqueScreenState extends ConsumerState<EstoqueScreen> {
             const SliverToBoxAdapter(child: SizedBox(height: 88)),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const NovoProdutoScreen()),
-          );
-          ref.invalidate(resumoEstoqueProvider);
-          ref.read(produtosNotifierProvider.notifier).refresh();
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Novo produto'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
       ),
     );
   }

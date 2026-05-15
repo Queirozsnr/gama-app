@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_avatar.dart';
 import '../domain/pagamento.dart';
 import 'historico_pagamentos_screen.dart';
@@ -8,11 +9,36 @@ import 'novo_pagamento_screen.dart';
 import 'pagamento_detalhe_screen.dart';
 import 'pagamentos_notifier.dart';
 
-class PagamentosScreen extends ConsumerWidget {
+class PagamentosScreen extends ConsumerStatefulWidget {
   const PagamentosScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PagamentosScreen> createState() => _PagamentosScreenState();
+}
+
+class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
+    with TopBarSlotMixin<PagamentosScreen> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    setTopBarSlot(TopBarSlot(
+      searchController: _searchController,
+      searchHint: 'Buscar por nome…',
+      onSearchChanged: (v) => setState(() => _query = v.toLowerCase()),
+    ));
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _searchController.dispose());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final asyncData = ref.watch(pagamentosNotifierProvider);
 
     return Scaffold(
@@ -36,19 +62,27 @@ class PagamentosScreen extends ConsumerWidget {
           ),
         ),
         data: (todos) {
-          final funcionarios = todos.where((f) => f.tipoRemuneracao != 'Socio').toList();
+          final funcionarios = todos
+              .where((f) => f.tipoRemuneracao != 'Socio')
+              .where((f) => _query.isEmpty || f.nome.toLowerCase().contains(_query))
+              .toList();
+
           if (funcionarios.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.payments_outlined, size: 64, color: AppColors.border),
-                  SizedBox(height: 16),
-                  Text('Nenhum funcionário cadastrado', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+                  const SizedBox(height: 16),
+                  Text(
+                    _query.isEmpty ? 'Nenhum funcionário cadastrado' : 'Nenhum resultado para "$_query"',
+                    style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+                  ),
                 ],
               ),
             );
           }
+
           return RefreshIndicator(
             onRefresh: () => ref.read(pagamentosNotifierProvider.notifier).refresh(),
             child: ListView.separated(
@@ -151,19 +185,19 @@ class _FuncionarioTile extends StatelessWidget {
             ],
           ),
           IconButton(
-              constraints: const BoxConstraints(),
-              padding: const EdgeInsets.only(left: 10),
-              icon: const Icon(Icons.history, size: 20, color: AppColors.textSecondary),
-              tooltip: 'Histórico',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => HistoricoPagamentosScreen(
-                    funcionarioId: funcionario.funcionarioId,
-                    funcionarioNome: funcionario.nome,
-                  ),
+            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.only(left: 10),
+            icon: const Icon(Icons.history, size: 20, color: AppColors.textSecondary),
+            tooltip: 'Histórico',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => HistoricoPagamentosScreen(
+                  funcionarioId: funcionario.funcionarioId,
+                  funcionarioNome: funcionario.nome,
                 ),
               ),
             ),
+          ),
         ],
       ),
       onTap: () => Navigator.of(context).push(

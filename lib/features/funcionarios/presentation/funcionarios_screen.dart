@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/gama_search_bar.dart';
+import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../domain/funcionario.dart';
@@ -16,13 +16,39 @@ class FuncionariosScreen extends ConsumerStatefulWidget {
   ConsumerState<FuncionariosScreen> createState() => _FuncionariosScreenState();
 }
 
-class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen> {
+class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
+    with TopBarSlotMixin<FuncionariosScreen> {
   final _searchController = TextEditingController();
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies(); // sets _topBarNotifier via mixin
+    setTopBarSlot(TopBarSlot(
+      searchController: _searchController,
+      searchHint: 'Buscar por nome ou e-mail…',
+      onSearchChanged: (v) =>
+          ref.read(funcionariosNotifierProvider.notifier).buscar(v),
+      action: FilledButton.icon(
+        onPressed: () => _openForm(),
+        icon: const Icon(Icons.person_add_outlined, size: 17),
+        label: const Text('Novo funcionário'),
+      ),
+      mobileAction: IconButton(
+        onPressed: () => _openForm(),
+        icon: const Icon(Icons.person_add_outlined),
+        color: AppColors.accent,
+        tooltip: 'Novo funcionário',
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+      ),
+    ));
+  }
+
+  @override
   void dispose() {
-    _searchController.dispose();
-    super.dispose();
+    super.dispose(); // mixin clears slot, TopBar will rebuild next frame
+    // Defer disposal so the TopBar finishes rebuilding before the controller is gone.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _searchController.dispose());
   }
 
   Future<void> _openForm({Funcionario? funcionario}) async {
@@ -89,115 +115,68 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen> {
   @override
   Widget build(BuildContext context) {
     final funcionariosAsync = ref.watch(funcionariosNotifierProvider);
-    final isDesktop = MediaQuery.of(context).size.width >= 800;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: isDesktop
-                ? Row(
-                    children: [
-                      Expanded(
-                        child: GamaSearchBar(
-                          hint: 'Buscar por nome ou e-mail...',
-                          controller: _searchController,
-                          onChanged: (v) => ref.read(funcionariosNotifierProvider.notifier).buscar(v),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      FilledButton.icon(
-                        onPressed: () => _openForm(),
-                        icon: const Icon(Icons.person_add_outlined),
-                        label: const Text('Novo funcionário'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        ),
-                      ),
-                    ],
-                  )
-                : GamaSearchBar(
-                    hint: 'Buscar por nome ou e-mail...',
-                    controller: _searchController,
-                    onChanged: (v) => ref.read(funcionariosNotifierProvider.notifier).buscar(v),
-                  ),
-          ),
-          Expanded(
-            child: funcionariosAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
-                    const SizedBox(height: 12),
-                    const Text('Erro ao carregar funcionários', style: TextStyle(color: AppColors.textSecondary)),
-                    const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: () => ref.invalidate(funcionariosNotifierProvider),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Tentar novamente'),
-                    ),
-                  ],
-                ),
+      body: funcionariosAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
+              const SizedBox(height: 12),
+              const Text('Erro ao carregar funcionários', style: TextStyle(color: AppColors.textSecondary)),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: () => ref.invalidate(funcionariosNotifierProvider),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Tentar novamente'),
               ),
-              data: (funcionarios) {
-                if (funcionarios.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.people_outline, size: 64, color: AppColors.border),
-                        const SizedBox(height: 16),
-                        const Text('Nenhum funcionário encontrado', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
-                        const SizedBox(height: 8),
-                        const Text('Toque no + para adicionar o primeiro', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                      ],
-                    ),
-                  );
-                }
-                return RefreshIndicator(
-                  onRefresh: () => ref.read(funcionariosNotifierProvider.notifier).buscar(
-                    _searchController.text.isEmpty ? null : _searchController.text,
-                  ),
-                  child: GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
-                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 420,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      mainAxisExtent: 180,
-                    ),
-                    itemCount: funcionarios.length,
-                    itemBuilder: (_, i) {
-                      final f = funcionarios[i];
-                      return FuncionarioCard(
-                        funcionario: f,
-                        onTap: () => _openForm(funcionario: f),
-                        onLongPress: () => _excluir(f),
-                        onResetarSenha: () => _resetarSenha(f),
-                      );
-                    },
-                  ),
+            ],
+          ),
+        ),
+        data: (funcionarios) {
+          if (funcionarios.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.people_outline, size: 64, color: AppColors.border),
+                  const SizedBox(height: 16),
+                  const Text('Nenhum funcionário encontrado', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+                  const SizedBox(height: 8),
+                  const Text('Toque no + para adicionar o primeiro', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                ],
+              ),
+            );
+          }
+          return RefreshIndicator(
+            onRefresh: () => ref.read(funcionariosNotifierProvider.notifier).buscar(
+              _searchController.text.isEmpty ? null : _searchController.text,
+            ),
+            child: GridView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 420,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                mainAxisExtent: 180,
+              ),
+              itemCount: funcionarios.length,
+              itemBuilder: (_, i) {
+                final f = funcionarios[i];
+                return FuncionarioCard(
+                  funcionario: f,
+                  onTap: () => _openForm(funcionario: f),
+                  onLongPress: () => _excluir(f),
+                  onResetarSenha: () => _resetarSenha(f),
                 );
               },
             ),
-          ),
-        ],
+          );
+        },
       ),
-      floatingActionButton: isDesktop
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => _openForm(),
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.person_add_outlined),
-              label: const Text('Novo funcionário'),
-            ),
     );
   }
 }

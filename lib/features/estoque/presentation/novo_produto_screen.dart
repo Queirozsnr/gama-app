@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_searchable_select.dart';
 import '../data/estoque_remote_data_source.dart';
 import '../domain/estoque.dart';
@@ -26,7 +28,8 @@ class NovoProdutoScreen extends ConsumerStatefulWidget {
   ConsumerState<NovoProdutoScreen> createState() => _NovoProdutoScreenState();
 }
 
-class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen> {
+class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen>
+    with TopBarSlotMixin<NovoProdutoScreen> {
   final _form = GlobalKey<FormState>();
   final _nome = TextEditingController();
   final _codigo = TextEditingController();
@@ -95,7 +98,11 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen> {
           fornecedorId: _fornecedor?.id,
         );
       }
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        ref.invalidate(resumoEstoqueProvider);
+        ref.read(produtosNotifierProvider.notifier).refresh();
+        context.go('/estoque');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -110,23 +117,20 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen> {
   @override
   Widget build(BuildContext context) {
     if (!_editando) ref.watch(fornecedoresEstoqueProvider);
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        title: Text(_editando ? 'Editar produto' : 'Novo produto'),
-        actions: [
-          TextButton(
-            onPressed: _salvando ? null : _salvar,
-            child: _salvando
-                ? const SizedBox(width: 18, height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('Salvar'),
-          ),
-        ],
+
+    setTopBarSlot(TopBarSlot(
+      pageTitle: _editando ? 'Editar produto' : 'Novo produto',
+      leading: BackButton(onPressed: () => context.go('/estoque')),
+      action: TextButton(
+        onPressed: _salvando ? null : _salvar,
+        child: _salvando
+            ? const SizedBox(width: 18, height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2))
+            : const Text('Salvar'),
       ),
-      body: Form(
+    ));
+
+    return Form(
         key: _form,
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -224,10 +228,10 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen> {
             const SizedBox(height: 32),
           ],
         ),
-      ),
     );
   }
 }
+
 
 class _Section extends StatelessWidget {
   const _Section(this.label);

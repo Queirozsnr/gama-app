@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/jwt_decoder.dart';
 import '../../features/auth/domain/auth_state.dart';
@@ -15,17 +16,17 @@ class GamaSidebar extends ConsumerWidget {
 
   static const _sections = [
     _NavSection('Principal', [
-      _NavItem('Dashboard',         Icons.dashboard_outlined,      '/home'),
-      _NavItem('Ordens de Serviço', Icons.receipt_long_outlined,   '/ordens-servico'),
-      _NavItem('Clientes',          Icons.people_outline,          '/clientes'),
-      _NavItem('Veículos',          Icons.directions_car_outlined, '/veiculos'),
+      _NavItem('Dashboard',         Icons.space_dashboard_outlined,   '/home'),
+      _NavItem('Ordens de Serviço', Icons.receipt_long_outlined,      '/ordens-servico'),
+      _NavItem('Clientes',          Icons.groups_outlined,            '/clientes'),
+      _NavItem('Veículos',          Icons.directions_car_outlined,    '/veiculos'),
     ]),
     _NavSection('Operação', [
-      _NavItem('Estoque',       Icons.inventory_2_outlined,  '/estoque'),
+      _NavItem('Estoque',       Icons.inventory_2_outlined,    '/estoque'),
       _NavItem('Fornecedores',  Icons.local_shipping_outlined, '/fornecedores'),
-      _NavItem('Funcionários',  Icons.badge_outlined,        '/funcionarios'),
-      _NavItem('Pagamentos',    Icons.payments_outlined,     '/pagamentos'),
-      _NavItem('Receitas',      Icons.trending_up_outlined,  '/receitas'),
+      _NavItem('Funcionários',  Icons.badge_outlined,          '/funcionarios'),
+      _NavItem('Pagamentos',    Icons.payments_outlined,       '/pagamentos'),
+      _NavItem('Receitas',      Icons.trending_up_outlined,    '/receitas'),
     ]),
   ];
 
@@ -61,13 +62,9 @@ class GamaSidebar extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.sidebarBg,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(4, 0),
-          ),
-        ],
+        border: const Border(
+          right: BorderSide(color: AppColors.sidebarLine),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,19 +83,19 @@ class GamaSidebar extends ConsumerWidget {
           const SizedBox(height: 8),
           Expanded(
             child: ListView(
-              padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 14),
+              padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 10),
               children: [
                 for (final section in _sections) ...[
                   if (!collapsed)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+                      padding: const EdgeInsets.fromLTRB(8, 14, 8, 4),
                       child: Text(
-                        section.label,
-                        style: const TextStyle(
-                          fontSize: 12,
+                        section.label.toUpperCase(),
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 9,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.5,
+                          color: AppColors.sidebarText.withValues(alpha: 0.5),
+                          letterSpacing: 1.2,
                         ),
                       ),
                     )
@@ -115,9 +112,12 @@ class GamaSidebar extends ConsumerWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
+          Container(
+            height: 1,
+            color: AppColors.sidebarLine,
+          ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 14, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 10, vertical: 8),
             child: Column(
               children: [
                 _SidebarNavItem(
@@ -133,7 +133,7 @@ class GamaSidebar extends ConsumerWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
+          Container(height: 1, color: AppColors.sidebarLine),
           _UserProfile(
             initials: userInitials,
             name: userName,
@@ -158,55 +158,72 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(collapsed ? 0 : 16, 20, collapsed ? 0 : 16, 12),
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        collapsed ? 0 : 20, 20, collapsed ? 0 : 20, 16,
+      ),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.sidebarLine)),
+      ),
       child: collapsed
           ? Center(
               child: Container(
-                width: 32,
-                height: 32,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: AppColors.accent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
-                child: const Text(
+                child: Text(
                   'G',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF1A1714),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
                 ),
               ),
             )
           : Row(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: AppColors.accent,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignment: Alignment.center,
-                  child: const Text(
+                  child: Text(
                     'G',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF1A1714),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                const Column(
+                const SizedBox(width: 12),
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'GAMA',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                        letterSpacing: 1,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: -0.2,
                       ),
                     ),
                     Text(
-                      'ERP Automotivo',
-                      style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                      'oficina · v1.0',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 9,
+                        color: AppColors.sidebarText,
+                        letterSpacing: 1,
+                      ),
                     ),
                   ],
                 ),
@@ -310,16 +327,16 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
   Widget build(BuildContext context) {
     if (widget.collapsed) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: CompositedTransformTarget(
           link: _layerLink,
           child: Tooltip(
             message: widget.name,
             child: InkWell(
               onTap: _show,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Center(child: GamaAvatar(initials: widget.initials, size: 32)),
               ),
             ),
@@ -333,38 +350,43 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
       child: GestureDetector(
         onTap: _show,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 14),
+          margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(10),
+            color: const Color(0xFF26221D),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.sidebarLine),
           ),
           child: Row(
             children: [
-              GamaAvatar(initials: widget.initials, size: 32),
-              const SizedBox(width: 8),
+              GamaAvatar(initials: widget.initials, size: 26),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       widget.name,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       widget.oficinaNome ?? 'PLANO PRO',
-                      style: const TextStyle(fontSize: 10, color: AppColors.primary),
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 9,
+                        color: AppColors.accent,
+                        letterSpacing: 0.4,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.expand_more, size: 16, color: AppColors.textSecondary),
+              Icon(Icons.unfold_more, size: 16, color: AppColors.sidebarText),
             ],
           ),
         ),
@@ -424,13 +446,14 @@ class _DropdownOverlay extends StatelessWidget {
           offset: const Offset(0, 58),
           child: Material(
             elevation: 12,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             shadowColor: Colors.black26,
             child: Container(
               width: 232,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.line),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -449,7 +472,8 @@ class _DropdownOverlay extends StatelessWidget {
                       ),
                   ],
                   if (groups.length > 1) ...[
-                    if (oficinas.isNotEmpty) const Divider(height: 1),
+                    if (oficinas.isNotEmpty)
+                      Container(height: 1, color: AppColors.line),
                     _SectionLabel('GRUPOS'),
                     for (final g in groups)
                       _DropdownItem(
@@ -462,11 +486,11 @@ class _DropdownOverlay extends StatelessWidget {
                       ),
                   ],
                   if (showGerenciar) ...[
-                    const Divider(height: 1),
+                    Container(height: 1, color: AppColors.line),
                     _DropdownAction(
                       icon: Icons.settings_outlined,
                       label: 'Gerenciar oficinas',
-                      color: AppColors.textSecondary,
+                      color: AppColors.ink2,
                       isLast: true,
                       onTap: () {
                         onDismiss();
@@ -491,13 +515,13 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
       child: Text(
         label,
-        style: const TextStyle(
-          fontSize: 10,
+        style: GoogleFonts.jetBrainsMono(
+          fontSize: 9,
           fontWeight: FontWeight.w700,
-          color: AppColors.textSecondary,
+          color: AppColors.ink3,
           letterSpacing: 0.8,
         ),
       ),
@@ -530,15 +554,15 @@ class _DropdownItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
-            GamaAvatar(initials: initials, size: 32),
+            GamaAvatar(initials: initials, size: 30),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 nome,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: AppColors.ink,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -548,10 +572,10 @@ class _DropdownItem extends StatelessWidget {
               const SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
               )
             else if (isCurrent)
-              const Icon(Icons.check, size: 16, color: AppColors.primary),
+              const Icon(Icons.check, size: 16, color: AppColors.accent),
           ],
         ),
       ),
@@ -578,17 +602,20 @@ class _DropdownAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: isLast
-          ? const BorderRadius.vertical(bottom: Radius.circular(12))
+          ? const BorderRadius.vertical(bottom: Radius.circular(10))
           : BorderRadius.zero,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(
             children: [
               Icon(icon, size: 16, color: color),
               const SizedBox(width: 10),
-              Text(label, style: TextStyle(fontSize: 13, color: color)),
+              Text(
+                label,
+                style: GoogleFonts.inter(fontSize: 13, color: color),
+              ),
             ],
           ),
         ),
@@ -613,7 +640,7 @@ class _SidebarNavItem extends StatelessWidget {
     final icon = Icon(
       item.icon,
       size: 20,
-      color: isActive ? AppColors.primary : AppColors.textSecondary,
+      color: isActive ? const Color(0xFF1A1714) : AppColors.sidebarText,
     );
 
     final tile = InkWell(
@@ -624,11 +651,12 @@ class _SidebarNavItem extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: collapsed ? 0 : 8,
-          vertical: 10,
+          horizontal: collapsed ? 0 : 10,
+          vertical: 9,
         ),
+        margin: const EdgeInsets.only(bottom: 2),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
+          color: isActive ? AppColors.accent : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: collapsed
@@ -636,14 +664,14 @@ class _SidebarNavItem extends StatelessWidget {
             : Row(
                 children: [
                   icon,
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       item.label,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                        color: isActive ? AppColors.primary : AppColors.textPrimary,
+                      style: GoogleFonts.inter(
+                        fontSize: 13.5,
+                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                        color: isActive ? const Color(0xFF1A1714) : AppColors.sidebarText,
                       ),
                     ),
                   ),
@@ -685,15 +713,10 @@ class _UserProfile extends ConsumerWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
-          GamaAvatar(initials: initials, size: 36),
+          GamaAvatar(initials: initials, size: 32),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -701,22 +724,25 @@ class _UserProfile extends ConsumerWidget {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (role.isNotEmpty)
-                  Text(role, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                  Text(
+                    role,
+                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.sidebarText),
+                  ),
               ],
             ),
           ),
           IconButton(
             onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
-            icon: const Icon(Icons.logout, size: 18),
-            color: AppColors.textSecondary,
+            icon: const Icon(Icons.logout, size: 16),
+            color: AppColors.sidebarText,
             tooltip: 'Sair',
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../state/top_bar_scope.dart';
+import 'gama_bottom_nav.dart';
 import 'gama_sidebar.dart';
 import 'gama_top_bar.dart';
 
@@ -8,13 +10,11 @@ class GamaScaffold extends StatefulWidget {
     required this.body,
     this.pageTitle,
     this.pageSubtitle,
-    this.topBarAction,
   });
 
   final Widget body;
   final String? pageTitle;
   final String? pageSubtitle;
-  final Widget? topBarAction;
 
   @override
   State<GamaScaffold> createState() => _GamaScaffoldState();
@@ -22,55 +22,60 @@ class GamaScaffold extends StatefulWidget {
 
 class _GamaScaffoldState extends State<GamaScaffold> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  bool _sidebarCollapsed = false;
+  final _topBarNotifier = TopBarNotifier();
+
+  @override
+  void dispose() {
+    _topBarNotifier.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width >= 800;
 
-    final topBar = GamaTopBar(
-      isDesktop: isDesktop,
-      onMenuTap: isDesktop
-          ? () => setState(() => _sidebarCollapsed = !_sidebarCollapsed)
-          : () => _scaffoldKey.currentState?.openDrawer(),
-      pageTitle: widget.pageTitle,
-      pageSubtitle: widget.pageSubtitle,
-      action: widget.topBarAction,
-    );
-
     if (isDesktop) {
       return Scaffold(
         key: _scaffoldKey,
-        body: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              width: _sidebarCollapsed ? 64 : 260,
-              child: GamaSidebar(collapsed: _sidebarCollapsed),
-            ),
-            Expanded(
-              child: Column(
-                children: [
-                  topBar,
-                  Expanded(child: widget.body),
-                ],
+        body: TopBarScope(
+          notifier: _topBarNotifier,
+          child: Row(
+            children: [
+              const SizedBox(width: 260, child: GamaSidebar()),
+              Expanded(
+                child: Column(
+                  children: [
+                    GamaTopBar(
+                      isDesktop: true,
+                      pageTitle: widget.pageTitle,
+                      pageSubtitle: widget.pageSubtitle,
+                    ),
+                    Expanded(child: widget.body),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
     return Scaffold(
       key: _scaffoldKey,
-      drawer: const Drawer(width: 260, child: SafeArea(child: GamaSidebar())),
-      body: SafeArea(
-        child: Column(
-          children: [
-            topBar,
-            Expanded(child: widget.body),
-          ],
+      bottomNavigationBar: const GamaBottomNav(),
+      body: TopBarScope(
+        notifier: _topBarNotifier,
+        child: SafeArea(
+          child: Column(
+            children: [
+              GamaTopBar(
+                isDesktop: false,
+                pageTitle: widget.pageTitle,
+                pageSubtitle: widget.pageSubtitle,
+              ),
+              Expanded(child: widget.body),
+            ],
+          ),
         ),
       ),
     );

@@ -14,6 +14,9 @@ import '../../features/clientes/presentation/clientes_screen.dart';
 import '../../features/veiculos/presentation/veiculos_screen.dart';
 import '../../features/estoque/presentation/estoque_screen.dart';
 import '../../features/estoque/presentation/fornecedores_screen.dart';
+import '../../features/estoque/presentation/novo_produto_screen.dart';
+import '../../features/estoque/presentation/produto_detalhe_screen.dart';
+import '../../features/estoque/domain/estoque.dart';
 import '../../features/funcionarios/presentation/funcionarios_screen.dart';
 import '../../features/pagamentos/presentation/pagamentos_screen.dart';
 import '../../features/pagamentos/presentation/receitas_socio_page.dart';
@@ -26,7 +29,8 @@ abstract final class AppRoutes {
   static const login          = '/login';
   static const selectGroup    = '/select-group';
   static const home           = '/home';
-  static const ordensServico       = '/ordens-servico';
+  static const ordensServico        = '/ordens-servico';
+  static const ordensServicoNova    = '/ordens-servico/nova';
   static const ordensServicoDetalhe = '/ordens-servico/:id';
   static const clientes       = '/clientes';
   static const veiculos       = '/veiculos';
@@ -38,6 +42,9 @@ abstract final class AppRoutes {
   static const gerenciarOficinas = '/gerenciar-oficinas';
   static const selectOficina    = '/select-oficina';
   static const trocarSenha      = '/trocar-senha';
+  static const estoqueProdutoNovo    = '/estoque/produto/novo';
+  static const estoqueProdutoDetalhe = '/estoque/produto/:id';
+  static const estoqueProdutoEditar  = '/estoque/produto/:id/editar';
 }
 
 const _pageTitles = <String, String>{
@@ -115,24 +122,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
         routes: [
           GoRoute(path: AppRoutes.home,              pageBuilder: _fade((ctx, st) => const HomeScreen())),
-          GoRoute(
-            path: AppRoutes.ordensServico,
-            pageBuilder: _fade((ctx, st) => const OrdensServicoScreen()),
-            routes: [
-              GoRoute(
-                path: 'nova',
-                pageBuilder: _fade((ctx, st) => const OsNovaScreen()),
-              ),
-              GoRoute(
-                path: ':id',
-                pageBuilder: _fade((ctx, st) => OsDetalheScreen(osId: int.parse(st.pathParameters['id']!))),
-              ),
-            ],
-          ),
+          GoRoute(path: AppRoutes.ordensServico,     pageBuilder: _fade((ctx, st) => const OrdensServicoScreen())),
+          GoRoute(path: AppRoutes.ordensServicoNova, pageBuilder: _fade((ctx, st) => const OsNovaScreen())),
+          GoRoute(path: AppRoutes.ordensServicoDetalhe, pageBuilder: _fade((ctx, st) =>
+              OsDetalheScreen(osId: int.parse(st.pathParameters['id']!)))),
           GoRoute(path: AppRoutes.clientes,          pageBuilder: _fade((ctx, st) => const ClientesScreen())),
           GoRoute(path: AppRoutes.veiculos,          pageBuilder: _fade((ctx, st) => const VeiculosScreen())),
-          GoRoute(path: AppRoutes.estoque,           pageBuilder: _fade((ctx, st) => const EstoqueScreen())),
-          GoRoute(path: AppRoutes.fornecedores,      pageBuilder: _fade((ctx, st) => const FornecedoresScreen())),
+          GoRoute(path: AppRoutes.estoque,               pageBuilder: _fade((ctx, st) => const EstoqueScreen())),
+          GoRoute(path: AppRoutes.estoqueProdutoNovo,    pageBuilder: _fade((ctx, st) => const NovoProdutoScreen())),
+          GoRoute(path: AppRoutes.estoqueProdutoEditar,  pageBuilder: _fade((ctx, st) => NovoProdutoScreen(produto: st.extra! as ProdutoListagem))),
+          GoRoute(path: AppRoutes.estoqueProdutoDetalhe, pageBuilder: _fade((ctx, st) => ProdutoDetalheScreen(produto: st.extra! as ProdutoListagem))),
+          GoRoute(path: AppRoutes.fornecedores,          pageBuilder: _fade((ctx, st) => const FornecedoresScreen())),
           GoRoute(path: AppRoutes.funcionarios,      pageBuilder: _fade((ctx, st) => const FuncionariosScreen())),
           GoRoute(path: AppRoutes.pagamentos,        pageBuilder: _fade((ctx, st) => const PagamentosScreen())),
           GoRoute(path: AppRoutes.receitas,          pageBuilder: _fade((ctx, st) => const ReceitasSocioPage())),

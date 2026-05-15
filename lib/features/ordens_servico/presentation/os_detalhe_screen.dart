@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/state/top_bar_scope.dart';
 import '../../../../shared/widgets/chips/status_chip.dart';
 import '../../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
@@ -65,7 +67,8 @@ class OsDetalheScreen extends ConsumerStatefulWidget {
   ConsumerState<OsDetalheScreen> createState() => _OsDetalheScreenState();
 }
 
-class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen> {
+class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
+    with TopBarSlotMixin<OsDetalheScreen> {
   bool _actionLoading = false;
 
   String _dioError(Object e, String fallback) {
@@ -281,7 +284,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen> {
       ref.invalidate(ordensServicoNotifierProvider);
       if (mounted) {
         GamaSnackBar.success(context, 'OS excluída.');
-        Navigator.of(context).pop();
+        context.go('/ordens-servico');
       }
     } catch (e) {
       if (mounted) GamaSnackBar.error(context, _dioError(e, 'Erro ao excluir OS.'));
@@ -293,42 +296,50 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen> {
   Widget build(BuildContext context) {
     final detalheAsync = ref.watch(osDetalheProvider(widget.osId));
 
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: detalheAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
-              const SizedBox(height: 12),
-              const Text('Erro ao carregar OS', style: TextStyle(color: AppColors.textSecondary)),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: () => ref.invalidate(osDetalheProvider(widget.osId)),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Tentar novamente'),
-              ),
-            ],
-          ),
+    setTopBarSlot(TopBarSlot(
+      pageTitle: 'OS #${widget.osId}',
+      leading: BackButton(onPressed: () => context.go('/ordens-servico')),
+      action: _actionLoading
+          ? const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+            )
+          : null,
+    ));
+
+    return detalheAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
+            const SizedBox(height: 12),
+            const Text('Erro ao carregar OS', style: TextStyle(color: AppColors.textSecondary)),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () => ref.invalidate(osDetalheProvider(widget.osId)),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Tentar novamente'),
+            ),
+          ],
         ),
-        data: (os) => _Body(
-          os: os,
-          actionLoading: _actionLoading,
-          podeEditar: os.status != 'Entregue',
-          onAlterarStatus: () => _alterarStatus(os),
-          onIngressar: () => _ingressar(os.id),
-          onAdicionarMecanico: () => _adicionarMecanico(os.id),
-          onRemoverMecanico: (m) => _removerMecanico(os.id, m),
-          onAdicionarServico: () => _adicionarItem(os.id, 'Servico'),
-          onAdicionarPeca: () => _adicionarItem(os.id, 'Peca'),
-          onRemoverItem: (item) => _removerItem(os.id, item),
-          onAdicionarDesconto: () => _adicionarDesconto(os.id),
-          onRemoverDesconto: (d) => _removerDesconto(os.id, d),
-          onEditarConclusao: () => _editarConclusao(os),
-          onExcluir: () => _excluir(os),
-        ),
+      ),
+      data: (os) => _Body(
+        os: os,
+        actionLoading: _actionLoading,
+        podeEditar: os.status != 'Entregue',
+        onAlterarStatus: () => _alterarStatus(os),
+        onIngressar: () => _ingressar(os.id),
+        onAdicionarMecanico: () => _adicionarMecanico(os.id),
+        onRemoverMecanico: (m) => _removerMecanico(os.id, m),
+        onAdicionarServico: () => _adicionarItem(os.id, 'Servico'),
+        onAdicionarPeca: () => _adicionarItem(os.id, 'Peca'),
+        onRemoverItem: (item) => _removerItem(os.id, item),
+        onAdicionarDesconto: () => _adicionarDesconto(os.id),
+        onRemoverDesconto: (d) => _removerDesconto(os.id, d),
+        onEditarConclusao: () => _editarConclusao(os),
+        onExcluir: () => _excluir(os),
       ),
     );
   }
@@ -384,28 +395,6 @@ class _Body extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
-        // AppBar
-        SliverAppBar(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          pinned: true,
-          leading: const BackButton(color: AppColors.textPrimary),
-          title: Text('OS #${os.id}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-          actions: [
-            if (actionLoading)
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-              ),
-          ],
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1),
-          ),
-        ),
-
         SliverPadding(
           padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
           sliver: SliverList(

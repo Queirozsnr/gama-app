@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 
-enum GamaButtonVariant { primary, secondary }
+enum GamaButtonVariant { primary, secondary, danger }
 
 class GamaButton extends StatelessWidget {
   const GamaButton({
@@ -12,6 +13,7 @@ class GamaButton extends StatelessWidget {
     this.isFullWidth = true,
     this.variant = GamaButtonVariant.primary,
     this.icon,
+    this.height = 46,
   });
 
   final String label;
@@ -20,44 +22,71 @@ class GamaButton extends StatelessWidget {
   final bool isFullWidth;
   final GamaButtonVariant variant;
   final IconData? icon;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     final child = isLoading
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+        ? SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: variant == GamaButtonVariant.primary
+                  ? const Color(0xFF1A1714)
+                  : AppColors.accent,
+            ),
           )
         : icon != null
             ? Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, size: 18),
+                  Icon(icon, size: 17),
                   const SizedBox(width: 8),
                   Text(label),
                 ],
               )
             : Text(label);
 
-    final Widget button = switch (variant) {
+    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+    final labelStyle = GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.5);
+
+    Widget button = switch (variant) {
       GamaButtonVariant.primary => FilledButton(
           onPressed: isLoading ? null : onPressed,
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            backgroundColor: AppColors.accent,
+            foregroundColor: const Color(0xFF1A1714),
+            disabledBackgroundColor: AppColors.accentSoft,
+            disabledForegroundColor: AppColors.accentDark,
+            shape: shape,
+            minimumSize: Size(0, height),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            textStyle: labelStyle,
           ),
           child: child,
         ),
       GamaButtonVariant.secondary => OutlinedButton(
           onPressed: isLoading ? null : onPressed,
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: AppColors.border),
-            foregroundColor: AppColors.textPrimary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            side: const BorderSide(color: AppColors.line),
+            foregroundColor: AppColors.ink,
+            shape: shape,
+            minimumSize: Size(0, height),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            textStyle: labelStyle,
+          ),
+          child: child,
+        ),
+      GamaButtonVariant.danger => FilledButton(
+          onPressed: isLoading ? null : onPressed,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.danger,
+            foregroundColor: Colors.white,
+            shape: shape,
+            minimumSize: Size(0, height),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            textStyle: labelStyle,
           ),
           child: child,
         ),
