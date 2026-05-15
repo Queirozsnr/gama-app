@@ -438,6 +438,12 @@ class _OficinaFormDialogState extends State<_OficinaFormDialog> {
               endereco: _enderecoCtrl.text.trim(),
               telefone: _telefoneCtrl.text.trim(),
               ativo: _ativo,
+              telefone2: widget.oficina!.telefone2,
+              email: widget.oficina!.email,
+              whatsapp: widget.oficina!.whatsapp,
+              instagram: widget.oficina!.instagram,
+              cnpj: widget.oficina!.cnpj,
+              corPadrao: widget.oficina!.corPadrao,
             );
       } else {
         await widget.ref.read(oficinasNotifierProvider.notifier).criar(

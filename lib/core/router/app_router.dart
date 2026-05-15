@@ -21,6 +21,7 @@ import '../../features/funcionarios/presentation/funcionarios_screen.dart';
 import '../../features/pagamentos/presentation/pagamentos_screen.dart';
 import '../../features/pagamentos/presentation/receitas_socio_page.dart';
 import '../../features/oficinas/presentation/gerenciar_oficinas_screen.dart';
+import '../../features/oficinas/presentation/configuracoes_oficina_screen.dart';
 import '../../features/auth/presentation/trocar_senha_screen.dart';
 import '../../shared/layout/gama_scaffold.dart';
 
@@ -39,7 +40,8 @@ abstract final class AppRoutes {
   static const funcionarios   = '/funcionarios';
   static const pagamentos        = '/pagamentos';
   static const receitas          = '/receitas';
-  static const gerenciarOficinas = '/gerenciar-oficinas';
+  static const gerenciarOficinas    = '/gerenciar-oficinas';
+  static const configuracoesOficina = '/configuracoes-oficina';
   static const selectOficina    = '/select-oficina';
   static const trocarSenha      = '/trocar-senha';
   static const estoqueProdutoNovo    = '/estoque/produto/novo';
@@ -57,7 +59,8 @@ const _pageTitles = <String, String>{
   AppRoutes.funcionarios:  'Funcionários',
   AppRoutes.pagamentos:        'Pagamentos',
   AppRoutes.receitas:          'Receitas',
-  AppRoutes.gerenciarOficinas: 'Gerenciar Oficinas',
+  AppRoutes.gerenciarOficinas:    'Gerenciar Oficinas',
+  AppRoutes.configuracoesOficina: 'Configurações da Oficina',
 };
 
 class _RouterNotifier extends ChangeNotifier {
@@ -136,7 +139,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: AppRoutes.funcionarios,      pageBuilder: _fade((ctx, st) => const FuncionariosScreen())),
           GoRoute(path: AppRoutes.pagamentos,        pageBuilder: _fade((ctx, st) => const PagamentosScreen())),
           GoRoute(path: AppRoutes.receitas,          pageBuilder: _fade((ctx, st) => const ReceitasSocioPage())),
-          GoRoute(path: AppRoutes.gerenciarOficinas, pageBuilder: _fade((ctx, st) => const GerenciarOficinasScreen())),
+          GoRoute(path: AppRoutes.gerenciarOficinas,    pageBuilder: _fade((ctx, st) => const GerenciarOficinasScreen())),
+          GoRoute(path: AppRoutes.configuracoesOficina, pageBuilder: _fade((ctx, st) => const ConfiguracoesOficinaScreen())),
         ],
       ),
     ],

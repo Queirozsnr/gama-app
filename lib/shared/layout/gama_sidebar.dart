@@ -126,8 +126,8 @@ class GamaSidebar extends ConsumerWidget {
                   collapsed: collapsed,
                 ),
                 _SidebarNavItem(
-                  item: const _NavItem('Configurações', Icons.settings_outlined, '/configuracoes'),
-                  isActive: false,
+                  item: const _NavItem('Configurações', Icons.settings_outlined, '/configuracoes-oficina'),
+                  isActive: currentRoute.startsWith('/configuracoes-oficina'),
                   collapsed: collapsed,
                 ),
               ],
