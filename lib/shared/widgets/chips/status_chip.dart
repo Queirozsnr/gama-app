@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
-enum OsStatus { aberta, emAndamento, aguardandoPeca, concluida, entregue;
+enum OsStatus {
+  aberta, emAndamento, aguardandoPeca, concluida, entregue;
 
   static OsStatus fromString(String s) => switch (s) {
     'Aberta'          => aberta,
@@ -14,61 +16,63 @@ enum OsStatus { aberta, emAndamento, aguardandoPeca, concluida, entregue;
 
 extension OsStatusX on OsStatus {
   String get label => switch (this) {
-        OsStatus.aberta         => 'Aberta',
-        OsStatus.emAndamento    => 'Em andamento',
-        OsStatus.aguardandoPeca => 'Aguardando peça',
-        OsStatus.concluida      => 'Concluída',
-        OsStatus.entregue       => 'Entregue',
-      };
+    OsStatus.aberta         => 'ABERTA',
+    OsStatus.emAndamento    => 'EM ANDAMENTO',
+    OsStatus.aguardandoPeca => 'AGUARDA PEÇA',
+    OsStatus.concluida      => 'PRONTO',
+    OsStatus.entregue       => 'ENTREGUE',
+  };
 
   Color get dotColor => switch (this) {
-        OsStatus.aberta         => const Color(0xFF9E9E9E),
-        OsStatus.emAndamento    => const Color(0xFF1565C0),
-        OsStatus.aguardandoPeca => const Color(0xFFE65100),
-        OsStatus.concluida      => const Color(0xFF2E7D32),
-        OsStatus.entregue       => const Color(0xFF546E7A),
-      };
+    OsStatus.aberta         => AppColors.ink3,
+    OsStatus.emAndamento    => AppColors.accent,
+    OsStatus.aguardandoPeca => AppColors.warn,
+    OsStatus.concluida      => AppColors.ok,
+    OsStatus.entregue       => AppColors.ink2,
+  };
 
   Color get bgColor => switch (this) {
-        OsStatus.aberta         => const Color(0xFFF5F5F5),
-        OsStatus.emAndamento    => const Color(0xFFE3F2FD),
-        OsStatus.aguardandoPeca => const Color(0xFFFFF3E0),
-        OsStatus.concluida      => const Color(0xFFE8F5E9),
-        OsStatus.entregue       => const Color(0xFFECEFF1),
-      };
+    OsStatus.aberta         => AppColors.surface2,
+    OsStatus.emAndamento    => AppColors.accentSoft,
+    OsStatus.aguardandoPeca => AppColors.warnSoft,
+    OsStatus.concluida      => AppColors.okSoft,
+    OsStatus.entregue       => AppColors.surface2,
+  };
 
   Color get textColor => switch (this) {
-        OsStatus.aberta         => const Color(0xFF757575),
-        OsStatus.emAndamento    => const Color(0xFF1565C0),
-        OsStatus.aguardandoPeca => const Color(0xFFE65100),
-        OsStatus.concluida      => const Color(0xFF2E7D32),
-        OsStatus.entregue       => const Color(0xFF546E7A),
-      };
+    OsStatus.aberta         => AppColors.ink2,
+    OsStatus.emAndamento    => AppColors.accent,
+    OsStatus.aguardandoPeca => AppColors.warn,
+    OsStatus.concluida      => AppColors.ok,
+    OsStatus.entregue       => AppColors.ink2,
+  };
 
   Color get accentColor => switch (this) {
-        OsStatus.aberta         => const Color(0xFF9E9E9E),
-        OsStatus.emAndamento    => const Color(0xFF1565C0),
-        OsStatus.aguardandoPeca => const Color(0xFFE65100),
-        OsStatus.concluida      => const Color(0xFF2E7D32),
-        OsStatus.entregue       => const Color(0xFF546E7A),
-      };
+    OsStatus.aberta         => AppColors.ink3,
+    OsStatus.emAndamento    => AppColors.accent,
+    OsStatus.aguardandoPeca => AppColors.warn,
+    OsStatus.concluida      => AppColors.ok,
+    OsStatus.entregue       => AppColors.ink2,
+  };
 }
 
 class StatusChip extends StatelessWidget {
-  const StatusChip({super.key, required this.status});
+  const StatusChip({super.key, required this.status, this.expand = false});
 
   final OsStatus status;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      width: expand ? double.infinity : null,
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: status.bgColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
         children: [
           Container(
             width: 6,
@@ -82,9 +86,10 @@ class StatusChip extends StatelessWidget {
           Text(
             status.label,
             style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
               color: status.textColor,
+              letterSpacing: 0.3,
             ),
           ),
         ],

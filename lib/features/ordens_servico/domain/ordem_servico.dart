@@ -18,6 +18,7 @@ class OrdemServico {
     required this.total,
     this.euSouMecanico = false,
     this.mecanicoNomes = const [],
+    this.primeiroServico,
   });
 
   final int id;
@@ -26,6 +27,7 @@ class OrdemServico {
   final int veiculoId;
   final String veiculoDescricao;
   final String? veiculoPlaca;
+  final String? primeiroServico;
   final String status;
   final String? formaPagamento;
   final String? observacoes;
@@ -65,5 +67,6 @@ class OrdemServico {
                 ?.map((e) => e as String)
                 .toList() ??
             [],
+        primeiroServico: json['primeiroServico'] as String?,
       );
 }

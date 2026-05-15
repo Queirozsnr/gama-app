@@ -14,12 +14,18 @@ class OrdensServicoRemoteDataSource {
     int? veiculoId,
     int? funcionarioId,
     bool excluirEntregue = false,
+    String? dataInicio,
+    String? dataFim,
+    String? ordenar,
   }) async {
     final resp = await _dio.get('/ordens-servico', queryParameters: {
       'status': ?status,
       'clienteId': ?clienteId,
       'veiculoId': ?veiculoId,
       'funcionarioId': ?funcionarioId,
+      'dataInicio': ?dataInicio,
+      'dataFim': ?dataFim,
+      'ordenar': ?ordenar,
       if (excluirEntregue) 'excluirEntregue': true,
     });
     return (resp.data as List)

@@ -94,18 +94,18 @@ class _DesktopTopBar extends StatelessWidget {
               ],
             ),
           const SizedBox(width: 20),
-          // Search bar — takes available space
-          if (slot?.hasSearch == true)
-            Expanded(
+          const Spacer(),
+          if (slot?.hasSearch == true) ...[
+            SizedBox(
+              width: 300,
               child: _SearchBar(
                 controller: slot!.searchController,
                 hint: slot!.searchHint ?? 'Buscar…',
                 onChanged: slot!.onSearchChanged,
               ),
-            )
-          else
-            const Spacer(),
-          const SizedBox(width: 16),
+            ),
+            const SizedBox(width: 16),
+          ],
           NotificationBell(hasNotification: hasNotification),
           if (slot?.action != null) ...[
             const SizedBox(width: 12),
