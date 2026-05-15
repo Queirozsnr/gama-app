@@ -116,44 +116,77 @@ class _MaisSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            width: 36, height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.line,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Column(
+              children: [
+                for (final item in items) _MaisItem(item: item, current: current),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MaisItem extends StatelessWidget {
+  const _MaisItem({required this.item, required this.current});
+  final _Item item;
+  final String current;
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = current.startsWith(item.route);
+    final color = isActive ? AppColors.accent : AppColors.ink2;
+    final textColor = isActive ? AppColors.accent : AppColors.ink;
+
+    return InkWell(
+      onTap: () {
+        Navigator.pop(context);
+        context.go(item.route);
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.accentSoft : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
           children: [
-            Container(
-              width: 36, height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: AppColors.line,
-                borderRadius: BorderRadius.circular(2),
+            Icon(item.icon, size: 20, color: color),
+            const SizedBox(width: 14),
+            Text(
+              item.label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                color: textColor,
               ),
             ),
-            for (final item in items)
-              ListTile(
-                leading: Icon(
-                  item.icon,
-                  color: current.startsWith(item.route)
-                      ? AppColors.accent
-                      : AppColors.ink2,
+            if (isActive) ...[
+              const Spacer(),
+              Container(
+                width: 6, height: 6,
+                decoration: const BoxDecoration(
+                  color: AppColors.accent,
+                  shape: BoxShape.circle,
                 ),
-                title: Text(
-                  item.label,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: current.startsWith(item.route)
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-                    color: current.startsWith(item.route)
-                        ? AppColors.accent
-                        : AppColors.ink,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.go(item.route);
-                },
               ),
+            ],
           ],
         ),
       ),
