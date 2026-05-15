@@ -7,7 +7,7 @@ enum OsPeriodo { hoje, semana, mes, tudo }
 
 class OrdensServicoNotifier extends AutoDisposeAsyncNotifier<List<OrdemServico>> {
   String? _filtroStatus;
-  OsPeriodo _periodo = OsPeriodo.mes;
+  OsPeriodo _periodo = OsPeriodo.semana;
 
   @override
   Future<List<OrdemServico>> build() => _fetch();
