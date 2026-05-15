@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/state/top_bar_scope.dart';
 import '../../../../shared/widgets/chips/status_chip.dart';
@@ -50,7 +51,6 @@ const _origensLabels = {
   'ClienteTrouxe':   'Cliente trouxe',
 };
 
-// Cores por status para o bottom sheet
 const _statusColors = {
   'Aberta':           Color(0xFF757575),
   'EmAndamento':      Color(0xFF1565C0),
@@ -58,6 +58,9 @@ const _statusColors = {
   'Concluida':        Color(0xFF2E7D32),
   'Entregue':         Color(0xFF546E7A),
 };
+
+String _fmt(DateTime dt) =>
+    '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
 
 class OsDetalheScreen extends ConsumerStatefulWidget {
   const OsDetalheScreen({super.key, required this.osId});
@@ -70,6 +73,45 @@ class OsDetalheScreen extends ConsumerStatefulWidget {
 class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
     with TopBarSlotMixin<OsDetalheScreen> {
   bool _actionLoading = false;
+  bool _menuAberto = false;
+
+  String? _primaryActionLabel(String status) {
+    switch (status) {
+      case 'EmAndamento':
+      case 'AguardandoPecas':
+        return 'Marcar pronta';
+      case 'Concluida':
+        return 'Marcar entregue';
+      default:
+        return null;
+    }
+  }
+
+  String? _primaryActionTarget(String status) {
+    switch (status) {
+      case 'EmAndamento':
+      case 'AguardandoPecas':
+        return 'Concluida';
+      case 'Concluida':
+        return 'Entregue';
+      default:
+        return null;
+    }
+  }
+
+  Future<void> _alterarStatusDireto(OrdemServicoDetalhe os, String novoStatus) async {
+    setState(() => _actionLoading = true);
+    try {
+      await ref.read(ordensServicoRemoteDataSourceProvider).alterarStatus(os.id, novoStatus);
+      ref.invalidate(osDetalheProvider(widget.osId));
+      ref.invalidate(ordensServicoNotifierProvider);
+      if (mounted) GamaSnackBar.success(context, 'Status atualizado para ${_statusLabels[novoStatus]}.');
+    } catch (e) {
+      if (mounted) GamaSnackBar.error(context, _dioError(e, 'Erro ao atualizar status.'));
+    } finally {
+      if (mounted) setState(() => _actionLoading = false);
+    }
+  }
 
   String _dioError(Object e, String fallback) {
     if (e is DioException) {
@@ -77,6 +119,57 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
       if (data is Map && data['error'] != null) return data['error'] as String;
     }
     return fallback;
+  }
+
+  void _showOsMenu(OrdemServicoDetalhe os) {
+    if (_menuAberto) return;
+    setState(() => _menuAberto = true);
+    final podeExcluir = os.status == 'Aberta';
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.line,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            if (os.status != 'Entregue')
+              ListTile(
+                leading: const Icon(Icons.edit_outlined, color: AppColors.ink2),
+                title: Text('Editar OS',
+                    style: GoogleFonts.inter(fontSize: 15, color: AppColors.ink)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _editarConclusao(os);
+                },
+              ),
+            if (podeExcluir)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: AppColors.danger),
+                title: Text('Excluir OS',
+                    style: GoogleFonts.inter(fontSize: 15, color: AppColors.danger)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _excluir(os);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    ).whenComplete(() {
+      if (mounted) setState(() => _menuAberto = false);
+    });
   }
 
   Future<void> _alterarStatus(OrdemServicoDetalhe os) async {
@@ -146,7 +239,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
       title: 'Remover mecânico',
       message: 'Remover ${mecanico.nome} desta OS?',
       confirmLabel: 'Remover',
-      confirmColor: AppColors.error,
+      confirmColor: AppColors.danger,
     );
     if (!ok || !mounted) return;
 
@@ -188,7 +281,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
       title: 'Remover item',
       message: 'Remover "${item.descricao}" desta OS?',
       confirmLabel: 'Remover',
-      confirmColor: AppColors.error,
+      confirmColor: AppColors.danger,
     );
     if (!ok || !mounted) return;
 
@@ -231,7 +324,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
       title: 'Remover desconto',
       message: 'Remover "${desconto.descricao}"?',
       confirmLabel: 'Remover',
-      confirmColor: AppColors.error,
+      confirmColor: AppColors.danger,
     );
     if (!ok || !mounted) return;
 
@@ -274,7 +367,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
       title: 'Excluir OS #${os.id}',
       message: 'Esta ação não pode ser desfeita.',
       confirmLabel: 'Excluir',
-      confirmColor: AppColors.error,
+      confirmColor: AppColors.danger,
     );
     if (!ok || !mounted) return;
 
@@ -295,14 +388,41 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
   @override
   Widget build(BuildContext context) {
     final detalheAsync = ref.watch(osDetalheProvider(widget.osId));
+    final os = detalheAsync.valueOrNull;
+    final primeiroServico = os?.itens.where((i) => !i.isPeca).firstOrNull?.descricao;
 
     setTopBarSlot(TopBarSlot(
-      pageTitle: 'OS #${widget.osId}',
+      mobileStyle: MobileTopBarStyle.dark,
+      mobileSubtitle: 'OS #${widget.osId}',
+      pageTitle: primeiroServico ?? 'Ordem de Serviço',
       leading: BackButton(onPressed: () => context.go('/ordens-servico')),
-      action: _actionLoading
+      mobileAction: _actionLoading
           ? const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              padding: EdgeInsets.only(right: 16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+              ),
+            )
+          : os != null
+              ? IconButton(
+                  icon: const Icon(Icons.more_vert, color: Colors.white70),
+                  onPressed: () => _showOsMenu(os),
+                )
+              : null,
+      action: os != null
+          ? _DesktopActions(
+              os: os,
+              loading: _actionLoading,
+              primaryLabel: _primaryActionLabel(os.status),
+              onAlterarStatus: () => _alterarStatus(os),
+              onPrimaryAction: () {
+                final target = _primaryActionTarget(os.status);
+                if (target != null) _alterarStatusDireto(os, target);
+              },
+              onExcluir: () => _excluir(os),
+              onEditarConclusao: () => _editarConclusao(os),
             )
           : null,
     ));
@@ -313,9 +433,9 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.textSecondary),
+            const Icon(Icons.error_outline, size: 48, color: AppColors.ink2),
             const SizedBox(height: 12),
-            const Text('Erro ao carregar OS', style: TextStyle(color: AppColors.textSecondary)),
+            const Text('Erro ao carregar OS', style: TextStyle(color: AppColors.ink2)),
             const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: () => ref.invalidate(osDetalheProvider(widget.osId)),
@@ -380,275 +500,1167 @@ class _Body extends StatelessWidget {
   final VoidCallback onEditarConclusao;
   final VoidCallback onExcluir;
 
-  String _fmt(DateTime dt) =>
-      '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+  @override
+  Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
+    return isDesktop ? _buildDesktop(context) : _buildMobile(context);
+  }
+
+  // ── Desktop layout (two-column) ──────────────────────────────────────────
+
+  Widget _buildDesktop(BuildContext context) {
+    final servicos = os.itens.where((i) => !i.isPeca).toList();
+    final pecas    = os.itens.where((i) =>  i.isPeca).toList();
+    final podeExcluir = os.status == 'Aberta';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1400),
+          child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Coluna principal ─────────────────────────────────────────
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Veículo
+                _DesktopVeiculoCard(os: os),
+                const SizedBox(height: 12),
+
+                // Cliente
+                _DesktopClienteCard(
+                  os: os,
+                  podeEditar: podeEditar,
+                  onEditar: onEditarConclusao,
+                ),
+                const SizedBox(height: 12),
+
+                // Serviços
+                _Section(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.build_outlined, size: 15, color: AppColors.ink2),
+                          const SizedBox(width: 6),
+                          Text('Serviços',
+                              style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                          const Spacer(),
+                          if (podeEditar)
+                            _HeaderBtn(Icons.add, 'Adicionar serviço', onAdicionarServico),
+                        ],
+                      ),
+                      if (servicos.isEmpty) ...[
+                        const SizedBox(height: 8),
+                        _EmptyHint('Nenhum serviço cadastrado.'),
+                      ] else ...[
+                        const SizedBox(height: 4),
+                        for (int i = 0; i < servicos.length; i++) ...[
+                          const Divider(height: 1),
+                          _ItemTile(
+                            item: servicos[i],
+                            onRemove: podeEditar ? () => onRemoverItem(servicos[i]) : null,
+                          ),
+                        ],
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Peças
+                _Section(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.settings_outlined, size: 15, color: AppColors.ink2),
+                          const SizedBox(width: 6),
+                          Text('Peças aplicadas',
+                              style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                          const Spacer(),
+                          if (podeEditar)
+                            _HeaderBtn(Icons.add, 'Buscar peça', onAdicionarPeca),
+                        ],
+                      ),
+                      if (pecas.isEmpty) ...[
+                        const SizedBox(height: 8),
+                        _EmptyHint('Nenhuma peça cadastrada.'),
+                      ] else ...[
+                        const SizedBox(height: 4),
+                        for (int i = 0; i < pecas.length; i++) ...[
+                          const Divider(height: 1),
+                          _ItemTile(
+                            item: pecas[i],
+                            onRemove: podeEditar ? () => onRemoverItem(pecas[i]) : null,
+                          ),
+                        ],
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Observações
+                _Section(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.notes_outlined, size: 15, color: AppColors.ink2),
+                          const SizedBox(width: 6),
+                          Text('Observações',
+                              style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                          const SizedBox(width: 4),
+                          Text('Notas internas — não aparecem pro cliente',
+                              style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink3)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        os.observacoes != null && os.observacoes!.isNotEmpty
+                            ? os.observacoes!
+                            : 'Nenhuma observação registrada.',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: os.observacoes != null && os.observacoes!.isNotEmpty
+                              ? AppColors.ink2
+                              : AppColors.ink3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                if (podeExcluir) ...[
+                  const SizedBox(height: 24),
+                  TextButton.icon(
+                    onPressed: onExcluir,
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text('Excluir OS'),
+                    style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                  ),
+                ],
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 20),
+
+          // ── Sidebar ──────────────────────────────────────────────────
+          Expanded(
+            child: Column(
+              children: [
+                // Resumo financeiro
+                _ResumoFinanceiroCard(
+                  os: os,
+                  podeEditar: podeEditar,
+                  onAdicionarDesconto: onAdicionarDesconto,
+                  onRemoverDesconto: onRemoverDesconto,
+                ),
+                const SizedBox(height: 12),
+
+                // Histórico (placeholder)
+                _HistoricoCard(),
+                const SizedBox(height: 12),
+
+                // Responsável (mecânicos)
+                _ResponsavelCard(
+                  os: os,
+                  podeEditar: podeEditar,
+                  onIngressar: onIngressar,
+                  onAdicionarMecanico: onAdicionarMecanico,
+                  onRemoverMecanico: onRemoverMecanico,
+                ),
+                const SizedBox(height: 32),
+                Text('Criado por ${os.criadoPorNome}',
+                    style: const TextStyle(fontSize: 11, color: AppColors.ink2)),
+              ],
+            ),
+          ),
+        ],
+      ),
+        ),
+      ),
+    );
+  }
+
+  // ── Mobile layout (tabbed) ────────────────────────────────────────────────
+
+  Widget _buildMobile(BuildContext context) {
+    final status = OsStatus.fromString(os.status);
+    final proximos = _statusTransicoes[os.status] ?? [];
+    final servicos = os.itens.where((i) => !i.isPeca).toList();
+    final pecas    = os.itens.where((i) =>  i.isPeca).toList();
+    final totalFinal = os.total - os.totalDescontos;
+
+    return DefaultTabController(
+      length: 3,
+      child: Column(
+        children: [
+          // ── Status bar ────────────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              border: Border(bottom: BorderSide(color: AppColors.line)),
+            ),
+            child: Row(
+              children: [
+                StatusChip(status: status),
+                const Spacer(),
+                if (os.previsaoEntrega != null)
+                  _InfoTag(
+                    Icons.schedule_outlined,
+                    _fmt(os.previsaoEntrega!),
+                    color: DateTime.now().isAfter(os.previsaoEntrega!) &&
+                            os.status != 'Concluida' &&
+                            os.status != 'Entregue'
+                        ? AppColors.danger
+                        : AppColors.ink2,
+                  ),
+              ],
+            ),
+          ),
+
+          // ── Tab bar ───────────────────────────────────────────────────
+          Container(
+            color: AppColors.surface,
+            child: TabBar(
+              labelColor: AppColors.accent,
+              unselectedLabelColor: AppColors.ink2,
+              indicatorColor: AppColors.accent,
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+              unselectedLabelStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+              tabs: const [
+                Tab(text: 'Resumo'),
+                Tab(text: 'Peças'),
+                Tab(text: 'Histórico'),
+              ],
+            ),
+          ),
+
+          // ── Tab views ─────────────────────────────────────────────────
+          Expanded(
+            child: TabBarView(
+              children: [
+                // Resumo
+                _ResumoTab(
+                  os: os,
+                  servicos: servicos,
+                  podeEditar: podeEditar,
+                  onEditarConclusao: onEditarConclusao,
+                  onIngressar: onIngressar,
+                  onAdicionarMecanico: onAdicionarMecanico,
+                  onRemoverMecanico: onRemoverMecanico,
+                  onAdicionarServico: onAdicionarServico,
+                  onRemoverItem: onRemoverItem,
+                ),
+                // Peças
+                _PecasTab(
+                  os: os,
+                  pecas: pecas,
+                  podeEditar: podeEditar,
+                  onAdicionarPeca: onAdicionarPeca,
+                  onRemoverItem: onRemoverItem,
+                  onAdicionarDesconto: onAdicionarDesconto,
+                  onRemoverDesconto: onRemoverDesconto,
+                ),
+                // Histórico
+                const _HistoricoTab(),
+              ],
+            ),
+          ),
+
+          // ── Bottom action bar ─────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              border: Border(top: BorderSide(color: AppColors.line)),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Total',
+                          style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink2)),
+                      Text(
+                        'R\$ ${totalFinal.toStringAsFixed(2).replaceAll('.', ',')}',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  if (proximos.isNotEmpty)
+                    FilledButton(
+                      onPressed: actionLoading ? null : onAlterarStatus,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: AppColors.sidebarBg,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+                      ),
+                      child: Text(
+                        'Alterar status',
+                        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Mobile tab: Resumo ────────────────────────────────────────────────────────
+
+class _ResumoTab extends StatelessWidget {
+  const _ResumoTab({
+    required this.os,
+    required this.servicos,
+    required this.podeEditar,
+    required this.onEditarConclusao,
+    required this.onIngressar,
+    required this.onAdicionarMecanico,
+    required this.onRemoverMecanico,
+    required this.onAdicionarServico,
+    required this.onRemoverItem,
+  });
+
+  final OrdemServicoDetalhe os;
+  final List<ItemOs> servicos;
+  final bool podeEditar;
+  final VoidCallback onEditarConclusao;
+  final VoidCallback onIngressar;
+  final VoidCallback onAdicionarMecanico;
+  final void Function(OsMecanico) onRemoverMecanico;
+  final VoidCallback onAdicionarServico;
+  final void Function(ItemOs) onRemoverItem;
 
   @override
   Widget build(BuildContext context) {
-    final status = OsStatus.fromString(os.status);
-    final proximos = _statusTransicoes[os.status] ?? [];
-    final podeExcluir = os.status == 'Aberta';
-    final isDesktop = MediaQuery.of(context).size.width >= 800;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      children: [
+        // Vehicle card
+        _VehicleCard(os: os),
+        const SizedBox(height: 8),
+        // Client card
+        _ClientCard(os: os, podeEditar: podeEditar, onEditar: onEditarConclusao),
+        const SizedBox(height: 14),
 
-    final servicos = os.itens.where((i) => !i.isPeca).toList();
-    final pecas    = os.itens.where((i) =>  i.isPeca).toList();
+        const SizedBox(height: 14),
 
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate([
-
-              // ── Status card ─────────────────────────────────────────────
-              _Section(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        StatusChip(status: status),
-                        const Spacer(),
-                        _InfoTag(Icons.calendar_today_outlined, 'Entrada: ${_fmt(os.dataEntrada)}'),
-                      ],
-                    ),
-                    if (os.previsaoEntrega != null) ...[
-                      const SizedBox(height: 8),
-                      _InfoTag(
-                        Icons.schedule_outlined,
-                        'Previsão: ${_fmt(os.previsaoEntrega!)}',
-                        color: DateTime.now().isAfter(os.previsaoEntrega!) &&
-                                os.status != 'Concluida' &&
-                                os.status != 'Entregue'
-                            ? AppColors.error
-                            : AppColors.textSecondary,
-                      ),
-                    ],
-                    if (os.dataConclusao != null) ...[
-                      const SizedBox(height: 8),
-                      _InfoTag(Icons.check_circle_outline, 'Concluída: ${_fmt(os.dataConclusao!)}',
-                          color: AppColors.success),
-                    ],
-                    if (proximos.isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      const Divider(height: 1),
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: onAlterarStatus,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.swap_horiz, size: 18, color: AppColors.primary),
-                              const SizedBox(width: 8),
-                              const Text('Alterar status',
-                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
-                              const Spacer(),
-                              Text(
-                                proximos.map((s) => _statusLabels[s]).join(' / '),
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(Icons.chevron_right, size: 18, color: AppColors.textSecondary),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // ── Cliente + Veículo ────────────────────────────────────────
-              _Section(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _DetailRow(Icons.person_outline, 'Cliente', os.clienteNome),
-                    if (os.clienteTelefone != null) ...[
-                      const SizedBox(height: 8),
-                      _DetailRow(Icons.phone_outlined, 'Telefone', os.clienteTelefone!),
-                    ],
-                    const SizedBox(height: 8),
-                    _DetailRow(
-                      Icons.directions_car_outlined,
-                      'Veículo',
-                      os.veiculoPlaca != null
-                          ? '${os.veiculoDescricao} · ${os.veiculoPlaca}'
-                          : os.veiculoDescricao,
-                    ),
-                    if (os.veiculoCor != null) ...[
-                      const SizedBox(height: 8),
-                      _DetailRow(Icons.palette_outlined, 'Cor', os.veiculoCor!),
-                    ],
-                    if (os.formaPagamento != null) ...[
-                      const SizedBox(height: 8),
-                      _DetailRow(Icons.payment_outlined, 'Pagamento',
-                          _formasPagamentoLabels[os.formaPagamento] ?? os.formaPagamento!),
-                    ],
-                    if (os.observacoes != null && os.observacoes!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      _DetailRow(Icons.notes_outlined, 'Observações', os.observacoes!),
-                    ],
-                    const SizedBox(height: 12),
-                    const Divider(height: 1),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: os.status == 'Entregue' ? null : onEditarConclusao,
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit_outlined, size: 14,
-                              color: os.status == 'Entregue' ? AppColors.textSecondary : AppColors.primary),
-                          const SizedBox(width: 6),
-                          Text('Editar',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: os.status == 'Entregue' ? AppColors.textSecondary : AppColors.primary,
-                              )),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // ── Mecânicos ────────────────────────────────────────────────
-              _SectionHeader(
-                label: 'Mecânicos',
-                actions: podeEditar ? [
-                  _HeaderBtn(Icons.engineering_outlined, 'Ingressar', onIngressar),
-                  _HeaderBtn(Icons.person_add_outlined, 'Adicionar', onAdicionarMecanico),
-                ] : [],
-              ),
-              const SizedBox(height: 6),
-              if (os.mecanicos.isEmpty)
-                _EmptyHint('Nenhum mecânico atribuído.')
-              else
-                _Section(
-                  child: Column(
-                    children: [
-                      for (int i = 0; i < os.mecanicos.length; i++) ...[
-                        if (i > 0) const Divider(height: 1),
-                        _MecanicoTile(
-                          mecanico: os.mecanicos[i],
-                          onRemove: podeEditar ? () => onRemoverMecanico(os.mecanicos[i]) : null,
-                        ),
-                      ],
-                    ],
+        // Mecânicos
+        _SectionHeader(
+          label: 'Mecânicos',
+          actions: podeEditar ? [
+            _HeaderBtn(Icons.engineering_outlined, 'Ingressar', onIngressar),
+            _HeaderBtn(Icons.person_add_outlined, 'Adicionar', onAdicionarMecanico),
+          ] : [],
+        ),
+        const SizedBox(height: 6),
+        if (os.mecanicos.isEmpty)
+          _EmptyHint('Nenhum mecânico atribuído.')
+        else
+          _Section(
+            child: Column(
+              children: [
+                for (int i = 0; i < os.mecanicos.length; i++) ...[
+                  if (i > 0) const Divider(height: 1),
+                  _MecanicoTile(
+                    mecanico: os.mecanicos[i],
+                    onRemove: podeEditar ? () => onRemoverMecanico(os.mecanicos[i]) : null,
                   ),
-                ),
-              const SizedBox(height: 12),
-
-              // ── Serviços ─────────────────────────────────────────────────
-              _SectionHeader(
-                label: 'Serviços',
-                actions: podeEditar ? [_HeaderBtn(Icons.add, 'Adicionar', onAdicionarServico)] : [],
-              ),
-              const SizedBox(height: 6),
-              if (servicos.isEmpty)
-                _EmptyHint('Nenhum serviço cadastrado.')
-              else
-                _Section(
-                  child: Column(
-                    children: [
-                      for (int i = 0; i < servicos.length; i++) ...[
-                        if (i > 0) const Divider(height: 1),
-                        _ItemTile(item: servicos[i], onRemove: podeEditar ? () => onRemoverItem(servicos[i]) : null),
-                      ],
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 12),
-
-              // ── Peças ────────────────────────────────────────────────────
-              _SectionHeader(
-                label: 'Peças',
-                actions: podeEditar ? [_HeaderBtn(Icons.add, 'Adicionar', onAdicionarPeca)] : [],
-              ),
-              const SizedBox(height: 6),
-              if (pecas.isEmpty)
-                _EmptyHint('Nenhuma peça cadastrada.')
-              else
-                _Section(
-                  child: Column(
-                    children: [
-                      for (int i = 0; i < pecas.length; i++) ...[
-                        if (i > 0) const Divider(height: 1),
-                        _ItemTile(item: pecas[i], onRemove: podeEditar ? () => onRemoverItem(pecas[i]) : null),
-                      ],
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 12),
-
-              // ── Totais + Descontos ───────────────────────────────────────
-              _SectionHeader(
-                label: 'Descontos',
-                actions: podeEditar ? [_HeaderBtn(Icons.add, 'Adicionar', onAdicionarDesconto)] : [],
-              ),
-              const SizedBox(height: 6),
-              _Section(
-                child: Column(
-                  children: [
-                    _TotalRow('Serviços', os.totalServicos),
-                    const SizedBox(height: 6),
-                    _TotalRow('Peças', os.totalPecas),
-                    if (os.descontos.isNotEmpty) ...[
-                      const Divider(height: 16),
-                      for (final d in os.descontos) ...[
-                        _DescontoTile(desconto: d, onRemove: podeEditar ? () => onRemoverDesconto(d) : null),
-                        const SizedBox(height: 4),
-                      ],
-                    ],
-                    const Divider(height: 16),
-                    if (os.totalDescontos > 0) ...[
-                      _TotalRow('Subtotal', os.total),
-                      const SizedBox(height: 6),
-                      _TotalRow('Descontos', -os.totalDescontos, color: AppColors.error),
-                      const SizedBox(height: 6),
-                    ],
-                    _TotalRow('Total', os.total - os.totalDescontos, bold: true),
-                  ],
-                ),
-              ),
-
-              if (podeExcluir) ...[
-                const SizedBox(height: 24),
-                Align(
-                  alignment: isDesktop ? Alignment.centerLeft : Alignment.center,
-                  child: FilledButton(
-                    onPressed: onExcluir,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                    ),
-                    child: const Text('Excluir OS'),
-                  ),
-                ),
+                ],
               ],
+            ),
+          ),
+        const SizedBox(height: 14),
 
-              const SizedBox(height: 32),
-              Center(
-                child: Text('Criado por ${os.criadoPorNome}',
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+        // Serviços
+        _SectionHeader(
+          label: 'Serviços',
+          actions: podeEditar ? [_HeaderBtn(Icons.add, 'Adicionar', onAdicionarServico)] : [],
+        ),
+        const SizedBox(height: 6),
+        if (servicos.isEmpty)
+          _EmptyHint('Nenhum serviço cadastrado.')
+        else
+          _Section(
+            child: Column(
+              children: [
+                for (int i = 0; i < servicos.length; i++) ...[
+                  if (i > 0) const Divider(height: 1),
+                  _ItemTile(
+                    item: servicos[i],
+                    onRemove: podeEditar ? () => onRemoverItem(servicos[i]) : null,
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+        const SizedBox(height: 14),
+        _Section(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.notes_outlined, size: 15, color: AppColors.ink2),
+                  const SizedBox(width: 6),
+                  Text('Observação',
+                      style: GoogleFonts.inter(
+                          fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                ],
               ),
-              const SizedBox(height: 16),
-            ]),
+              const SizedBox(height: 6),
+              Text(
+                os.observacoes != null && os.observacoes!.isNotEmpty
+                    ? os.observacoes!
+                    : 'Nenhuma observação registrada.',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: os.observacoes != null && os.observacoes!.isNotEmpty
+                      ? AppColors.ink2
+                      : AppColors.ink3,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 32),
+        Center(
+          child: Text('Criado por ${os.criadoPorNome}',
+              style: const TextStyle(fontSize: 11, color: AppColors.ink2)),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+// ── Mobile tab: Peças ─────────────────────────────────────────────────────────
+
+class _PecasTab extends StatelessWidget {
+  const _PecasTab({
+    required this.os,
+    required this.pecas,
+    required this.podeEditar,
+    required this.onAdicionarPeca,
+    required this.onRemoverItem,
+    required this.onAdicionarDesconto,
+    required this.onRemoverDesconto,
+  });
+
+  final OrdemServicoDetalhe os;
+  final List<ItemOs> pecas;
+  final bool podeEditar;
+  final VoidCallback onAdicionarPeca;
+  final void Function(ItemOs) onRemoverItem;
+  final VoidCallback onAdicionarDesconto;
+  final void Function(DescontoOs) onRemoverDesconto;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      children: [
+        _SectionHeader(
+          label: 'Peças',
+          actions: podeEditar ? [_HeaderBtn(Icons.add, 'Adicionar', onAdicionarPeca)] : [],
+        ),
+        const SizedBox(height: 6),
+        if (pecas.isEmpty)
+          _EmptyHint('Nenhuma peça cadastrada.')
+        else
+          _Section(
+            child: Column(
+              children: [
+                for (int i = 0; i < pecas.length; i++) ...[
+                  if (i > 0) const Divider(height: 1),
+                  _ItemTile(item: pecas[i], onRemove: podeEditar ? () => onRemoverItem(pecas[i]) : null),
+                ],
+              ],
+            ),
+          ),
+        const SizedBox(height: 14),
+
+        _SectionHeader(
+          label: 'Descontos',
+          actions: podeEditar ? [_HeaderBtn(Icons.add, 'Adicionar', onAdicionarDesconto)] : [],
+        ),
+        const SizedBox(height: 6),
+        _Section(
+          child: Column(
+            children: [
+              _TotalRow('Serviços', os.totalServicos),
+              const SizedBox(height: 6),
+              _TotalRow('Peças', os.totalPecas),
+              if (os.descontos.isNotEmpty) ...[
+                const Divider(height: 16),
+                for (final d in os.descontos) ...[
+                  _DescontoTile(desconto: d, onRemove: podeEditar ? () => onRemoverDesconto(d) : null),
+                  const SizedBox(height: 4),
+                ],
+              ],
+              const Divider(height: 16),
+              if (os.totalDescontos > 0) ...[
+                _TotalRow('Subtotal', os.total),
+                const SizedBox(height: 6),
+                _TotalRow('Descontos', -os.totalDescontos, color: AppColors.danger),
+                const SizedBox(height: 6),
+              ],
+              _TotalRow('Total', os.total - os.totalDescontos, bold: true),
+            ],
           ),
         ),
       ],
     );
   }
+}
+
+// ── Mobile tab: Histórico ─────────────────────────────────────────────────────
+
+class _HistoricoTab extends StatelessWidget {
+  const _HistoricoTab();
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.history, size: 40, color: AppColors.ink3),
+            const SizedBox(height: 10),
+            Text('Histórico em breve',
+                style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink2)),
+          ],
+        ),
+      );
+}
+
+// ── Vehicle card (mobile) ─────────────────────────────────────────────────────
+
+class _VehicleCard extends StatelessWidget {
+  const _VehicleCard({required this.os});
+  final OrdemServicoDetalhe os;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.surface2,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.directions_car_outlined, size: 22, color: AppColors.ink2),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(os.veiculoDescricao,
+                      style: GoogleFonts.inter(
+                          fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                  if (os.veiculoCor != null)
+                    Text(os.veiculoCor!,
+                        style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
+                ],
+              ),
+            ),
+            if (os.veiculoPlaca != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.sidebarBg,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  os.veiculoPlaca!,
+                  style: const TextStyle(
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+}
+
+// ── Client card (mobile) ──────────────────────────────────────────────────────
+
+class _ClientCard extends StatelessWidget {
+  const _ClientCard({
+    required this.os,
+    required this.podeEditar,
+    required this.onEditar,
+  });
+  final OrdemServicoDetalhe os;
+  final bool podeEditar;
+  final VoidCallback onEditar;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppColors.accentSoft,
+                  child: Text(
+                    os.clienteNome.isNotEmpty ? os.clienteNome[0].toUpperCase() : '?',
+                    style: GoogleFonts.inter(
+                        fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.accent),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(os.clienteNome,
+                          style: GoogleFonts.inter(
+                              fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                      if (os.clienteTelefone != null)
+                        Text(os.clienteTelefone!,
+                            style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
+                    ],
+                  ),
+                ),
+                if (podeEditar)
+                  IconButton(
+                    onPressed: onEditar,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    color: AppColors.ink2,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+              ],
+            ),
+            if (os.formaPagamento != null) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.payment_outlined, size: 14, color: AppColors.ink2),
+                  const SizedBox(width: 6),
+                  Text(
+                    _formasPagamentoLabels[os.formaPagamento] ?? os.formaPagamento!,
+                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+}
+
+// ── Desktop action buttons (topbar) ──────────────────────────────────────────
+
+class _DesktopActions extends StatelessWidget {
+  const _DesktopActions({
+    required this.os,
+    required this.loading,
+    required this.primaryLabel,
+    required this.onAlterarStatus,
+    required this.onPrimaryAction,
+    required this.onExcluir,
+    required this.onEditarConclusao,
+  });
+
+  final OrdemServicoDetalhe os;
+  final bool loading;
+  final String? primaryLabel;
+  final VoidCallback onAlterarStatus;
+  final VoidCallback onPrimaryAction;
+  final VoidCallback onExcluir;
+  final VoidCallback onEditarConclusao;
+
+  static final _btnShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+
+  @override
+  Widget build(BuildContext context) {
+    final proximos = _statusTransicoes[os.status] ?? [];
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Imprimir
+        OutlinedButton.icon(
+          onPressed: () {},
+          icon: const Icon(Icons.print_outlined, size: 15),
+          label: const Text('Imprimir'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.ink2,
+            side: const BorderSide(color: AppColors.line),
+            shape: _btnShape,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+          ),
+        ),
+        if (proximos.isNotEmpty) ...[
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: loading ? null : onAlterarStatus,
+            icon: const Icon(Icons.swap_horiz, size: 15),
+            label: const Text('Mudar status'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.ink2,
+              side: const BorderSide(color: AppColors.line),
+              shape: _btnShape,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+        if (primaryLabel != null) ...[
+          const SizedBox(width: 8),
+          FilledButton.icon(
+            onPressed: loading ? null : onPrimaryAction,
+            icon: const Icon(Icons.check_circle_outline, size: 15),
+            label: Text(primaryLabel!),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              foregroundColor: AppColors.sidebarBg,
+              shape: _btnShape,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+        const SizedBox(width: 4),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_horiz, color: AppColors.ink2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          onSelected: (v) {
+            if (v == 'editar') onEditarConclusao();
+            if (v == 'excluir') onExcluir();
+          },
+          itemBuilder: (_) => [
+            if (os.status != 'Entregue')
+              PopupMenuItem(
+                value: 'editar',
+                child: Row(children: [
+                  const Icon(Icons.edit_outlined, size: 16, color: AppColors.ink2),
+                  const SizedBox(width: 8),
+                  Text('Editar OS', style: GoogleFonts.inter(fontSize: 13)),
+                ]),
+              ),
+            if (os.status == 'Aberta')
+              PopupMenuItem(
+                value: 'excluir',
+                child: Row(children: [
+                  const Icon(Icons.delete_outline, size: 16, color: AppColors.danger),
+                  const SizedBox(width: 8),
+                  Text('Excluir OS', style: GoogleFonts.inter(fontSize: 13, color: AppColors.danger)),
+                ]),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── Desktop: Veículo card ─────────────────────────────────────────────────────
+
+class _DesktopVeiculoCard extends StatelessWidget {
+  const _DesktopVeiculoCard({required this.os});
+  final OrdemServicoDetalhe os;
+
+  @override
+  Widget build(BuildContext context) => _Section(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.directions_car_outlined, size: 15, color: AppColors.ink2),
+                const SizedBox(width: 6),
+                Text('Veículo',
+                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
+                const Spacer(),
+                // placeholder Histórico do veículo
+                TextButton(
+                  onPressed: () {},
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.accent,
+                    textStyle: GoogleFonts.inter(fontSize: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  ),
+                  child: const Text('Histórico'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _MetaCell('MODELO', os.veiculoDescricao),
+                if (os.veiculoCor != null) ...[
+                  const SizedBox(width: 24),
+                  _MetaCell('COR', os.veiculoCor!),
+                ],
+                if (os.veiculoPlaca != null) ...[
+                  const SizedBox(width: 24),
+                  _MetaCell('PLACA', os.veiculoPlaca!, mono: true),
+                ],
+              ],
+            ),
+          ],
+        ),
+      );
+}
+
+class _MetaCell extends StatelessWidget {
+  const _MetaCell(this.label, this.value, {this.mono = false});
+  final String label;
+  final String value;
+  final bool mono;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700,
+                  color: AppColors.ink3, letterSpacing: 0.4)),
+          const SizedBox(height: 2),
+          Text(value,
+              style: mono
+                  ? const TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.ink,
+                      letterSpacing: 1.2,
+                    )
+                  : GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
+        ],
+      );
+}
+
+// ── Desktop: Cliente card ─────────────────────────────────────────────────────
+
+class _DesktopClienteCard extends StatelessWidget {
+  const _DesktopClienteCard({
+    required this.os,
+    required this.podeEditar,
+    required this.onEditar,
+  });
+  final OrdemServicoDetalhe os;
+  final bool podeEditar;
+  final VoidCallback onEditar;
+
+  @override
+  Widget build(BuildContext context) => _Section(
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: AppColors.accentSoft,
+              child: Text(
+                os.clienteNome.isNotEmpty ? os.clienteNome[0].toUpperCase() : '?',
+                style: GoogleFonts.inter(
+                    fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.accent),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(os.clienteNome,
+                      style: GoogleFonts.inter(
+                          fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                  if (os.clienteTelefone != null)
+                    Text(os.clienteTelefone!,
+                        style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
+                ],
+              ),
+            ),
+            if (os.clienteTelefone != null)
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.message_outlined, size: 14),
+                label: const Text('WhatsApp'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.ok,
+                  side: const BorderSide(color: AppColors.ok),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            if (podeEditar) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: onEditar,
+                icon: const Icon(Icons.edit_outlined, size: 17),
+                color: AppColors.ink2,
+                tooltip: 'Editar OS',
+              ),
+            ],
+          ],
+        ),
+      );
+}
+
+// ── Sidebar: Resumo financeiro ────────────────────────────────────────────────
+
+class _ResumoFinanceiroCard extends StatelessWidget {
+  const _ResumoFinanceiroCard({
+    required this.os,
+    required this.podeEditar,
+    required this.onAdicionarDesconto,
+    required this.onRemoverDesconto,
+  });
+  final OrdemServicoDetalhe os;
+  final bool podeEditar;
+  final VoidCallback onAdicionarDesconto;
+  final void Function(DescontoOs) onRemoverDesconto;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = os.total - os.totalDescontos;
+    final pagamentoPendente = os.formaPagamento == null && os.status != 'Entregue';
+
+    return _Section(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Resumo financeiro',
+                  style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+              const Spacer(),
+              if (podeEditar)
+                GestureDetector(
+                  onTap: onAdicionarDesconto,
+                  child: Text('+ Desconto',
+                      style: GoogleFonts.inter(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _TotalRow('Serviços', os.totalServicos),
+          const SizedBox(height: 4),
+          _TotalRow('Peças', os.totalPecas),
+          if (os.descontos.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            for (final d in os.descontos)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: _DescontoTile(
+                  desconto: d,
+                  onRemove: podeEditar ? () => onRemoverDesconto(d) : null,
+                ),
+              ),
+          ],
+          const Divider(height: 20),
+          Row(
+            children: [
+              Text('Total',
+                  style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink)),
+              const Spacer(),
+              Text(
+                'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}',
+                style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.ink),
+              ),
+            ],
+          ),
+          if (pagamentoPendente) ...[
+            const SizedBox(height: 6),
+            Text('PAGAMENTO PENDENTE',
+                style: GoogleFonts.inter(
+                    fontSize: 10, fontWeight: FontWeight.w700,
+                    color: AppColors.ink3, letterSpacing: 0.5)),
+          ] else if (os.formaPagamento != null) ...[
+            const SizedBox(height: 6),
+            Text(_formasPagamentoLabels[os.formaPagamento] ?? os.formaPagamento!,
+                style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink2)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── Sidebar: Histórico ────────────────────────────────────────────────────────
+
+class _HistoricoCard extends StatelessWidget {
+  const _HistoricoCard();
+
+  @override
+  Widget build(BuildContext context) => _Section(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.timeline_outlined, size: 15, color: AppColors.ink2),
+                const SizedBox(width: 6),
+                Text('Histórico',
+                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text('Status da OS no tempo',
+                      style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink3),
+                      overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Text('Em breve',
+                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink3)),
+            ),
+            const SizedBox(height: 4),
+          ],
+        ),
+      );
+}
+
+// ── Sidebar: Responsável ──────────────────────────────────────────────────────
+
+class _ResponsavelCard extends StatelessWidget {
+  const _ResponsavelCard({
+    required this.os,
+    required this.podeEditar,
+    required this.onIngressar,
+    required this.onAdicionarMecanico,
+    required this.onRemoverMecanico,
+  });
+  final OrdemServicoDetalhe os;
+  final bool podeEditar;
+  final VoidCallback onIngressar;
+  final VoidCallback onAdicionarMecanico;
+  final void Function(OsMecanico) onRemoverMecanico;
+
+  @override
+  Widget build(BuildContext context) => _Section(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              children: [
+                Text('Responsável',
+                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                if (podeEditar)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: onIngressar,
+                        child: Text('Ingressar',
+                            style: GoogleFonts.inter(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600)),
+                      ),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: onAdicionarMecanico,
+                        child: Text('+ Adicionar',
+                            style: GoogleFonts.inter(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+            if (os.mecanicos.isEmpty) ...[
+              const SizedBox(height: 10),
+              Text('Nenhum mecânico atribuído.',
+                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink3)),
+            ] else ...[
+              const SizedBox(height: 8),
+              for (int i = 0; i < os.mecanicos.length; i++) ...[
+                if (i > 0) const Divider(height: 12),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 15,
+                      backgroundColor: AppColors.accentSoft,
+                      child: Text(os.mecanicos[i].nome[0].toUpperCase(),
+                          style: GoogleFonts.inter(
+                              fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.accent)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(os.mecanicos[i].nome,
+                              style: GoogleFonts.inter(
+                                  fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                          Text(os.mecanicos[i].cargo,
+                              style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink2)),
+                        ],
+                      ),
+                    ),
+                    if (podeEditar)
+                      TextButton(
+                        onPressed: () => onRemoverMecanico(os.mecanicos[i]),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.ink2,
+                          textStyle: GoogleFonts.inter(fontSize: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        ),
+                        child: const Text('Trocar'),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ],
+        ),
+      );
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -662,9 +1674,9 @@ class _Section extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.line),
         ),
         child: child,
       );
@@ -678,7 +1690,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: [
-          Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink)),
           const Spacer(),
           ...actions,
         ],
@@ -697,7 +1709,7 @@ class _HeaderBtn extends StatelessWidget {
         icon: Icon(icon, size: 15),
         label: Text(label, style: const TextStyle(fontSize: 13)),
         style: TextButton.styleFrom(
-            foregroundColor: AppColors.primary,
+            foregroundColor: AppColors.accent,
             padding: const EdgeInsets.symmetric(horizontal: 6)),
       );
 }
@@ -709,7 +1721,7 @@ class _EmptyHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Text(text, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+        child: Text(text, style: const TextStyle(fontSize: 13, color: AppColors.ink2)),
       );
 }
 
@@ -723,19 +1735,19 @@ class _DetailRow extends StatelessWidget {
   Widget build(BuildContext context) => Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: AppColors.textSecondary),
+          Icon(icon, size: 16, color: AppColors.ink2),
           const SizedBox(width: 8),
-          Text('$label: ', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          Text('$label: ', style: const TextStyle(fontSize: 13, color: AppColors.ink2)),
           Expanded(
             child: Text(value,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
           ),
         ],
       );
 }
 
 class _InfoTag extends StatelessWidget {
-  const _InfoTag(this.icon, this.text, {this.color = AppColors.textSecondary});
+  const _InfoTag(this.icon, this.text, {this.color = AppColors.ink2});
   final IconData icon;
   final String text;
   final Color color;
@@ -760,7 +1772,7 @@ class _TotalRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? (bold ? AppColors.textPrimary : AppColors.textSecondary);
+    final effectiveColor = color ?? (bold ? AppColors.ink : AppColors.ink2);
     final absValue = value.abs();
     final prefix = value < 0 ? '- R\$ ' : 'R\$ ';
     return Row(
@@ -793,21 +1805,21 @@ class _DescontoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: [
-          const Icon(Icons.remove_circle_outline, size: 14, color: AppColors.error),
+          const Icon(Icons.remove_circle_outline, size: 14, color: AppColors.danger),
           const SizedBox(width: 6),
           Expanded(
             child: Text(desconto.descricao,
-                style: const TextStyle(fontSize: 13, color: AppColors.textPrimary)),
+                style: const TextStyle(fontSize: 13, color: AppColors.ink)),
           ),
           Text(
             '- R\$ ${desconto.valor.toStringAsFixed(2).replaceAll('.', ',')}',
-            style: const TextStyle(fontSize: 13, color: AppColors.error, fontWeight: FontWeight.w500),
+            style: const TextStyle(fontSize: 13, color: AppColors.danger, fontWeight: FontWeight.w500),
           ),
           const SizedBox(width: 4),
           IconButton(
             onPressed: onRemove,
             icon: const Icon(Icons.close, size: 14),
-            color: AppColors.textSecondary,
+            color: AppColors.ink2,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -827,9 +1839,9 @@ class _MecanicoTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              backgroundColor: AppColors.accentSoft,
               child: Text(mecanico.nome[0].toUpperCase(),
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accent)),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -837,15 +1849,15 @@ class _MecanicoTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(mecanico.nome,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                  Text(mecanico.cargo, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                  Text(mecanico.cargo, style: const TextStyle(fontSize: 11, color: AppColors.ink2)),
                 ],
               ),
             ),
             IconButton(
               onPressed: onRemove,
               icon: const Icon(Icons.close, size: 16),
-              color: AppColors.textSecondary,
+              color: AppColors.ink2,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
@@ -869,27 +1881,27 @@ class _ItemTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(item.descricao,
-                      style: const TextStyle(fontSize: 13, color: AppColors.textPrimary)),
+                      style: const TextStyle(fontSize: 13, color: AppColors.ink)),
                   Text(
                     '${item.quantidade % 1 == 0 ? item.quantidade.toInt() : item.quantidade} × R\$ ${item.valorUnitario.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    style: const TextStyle(fontSize: 11, color: AppColors.ink2),
                   ),
                   if (item.origemPeca != null)
                     Text(_origensLabels[item.origemPeca] ?? item.origemPeca!,
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        style: const TextStyle(fontSize: 11, color: AppColors.ink2)),
                 ],
               ),
             ),
             const SizedBox(width: 8),
             Text(
               'R\$ ${item.subtotal.toStringAsFixed(2).replaceAll('.', ',')}',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink),
             ),
             const SizedBox(width: 4),
             IconButton(
               onPressed: onRemove,
               icon: const Icon(Icons.close, size: 16),
-              color: AppColors.textSecondary,
+              color: AppColors.ink2,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
@@ -914,23 +1926,22 @@ class _StatusBottomSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
             Center(
               child: Container(
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: AppColors.line,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             const SizedBox(height: 20),
             const Text('Alterar status',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
             const SizedBox(height: 6),
             Text('Status atual: ${_statusLabels[statusAtual]}',
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                style: const TextStyle(fontSize: 13, color: AppColors.ink2)),
             const SizedBox(height: 20),
             for (final s in proximos) ...[
               GestureDetector(
@@ -940,9 +1951,9 @@ class _StatusBottomSheet extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   decoration: BoxDecoration(
-                    color: (_statusColors[s] ?? AppColors.primary).withValues(alpha: 0.08),
+                    color: (_statusColors[s] ?? AppColors.accent).withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: (_statusColors[s] ?? AppColors.primary).withValues(alpha: 0.3)),
+                    border: Border.all(color: (_statusColors[s] ?? AppColors.accent).withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -950,7 +1961,7 @@ class _StatusBottomSheet extends StatelessWidget {
                         width: 10,
                         height: 10,
                         decoration: BoxDecoration(
-                          color: _statusColors[s] ?? AppColors.primary,
+                          color: _statusColors[s] ?? AppColors.accent,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -960,11 +1971,11 @@ class _StatusBottomSheet extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: _statusColors[s] ?? AppColors.primary,
+                          color: _statusColors[s] ?? AppColors.accent,
                         ),
                       ),
                       const Spacer(),
-                      Icon(Icons.arrow_forward_ios, size: 14, color: _statusColors[s] ?? AppColors.primary),
+                      Icon(Icons.arrow_forward_ios, size: 14, color: _statusColors[s] ?? AppColors.accent),
                     ],
                   ),
                 ),
@@ -972,7 +1983,7 @@ class _StatusBottomSheet extends StatelessWidget {
             ],
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text('Cancelar', style: TextStyle(color: AppColors.ink2)),
             ),
           ],
         ),
@@ -1011,7 +2022,7 @@ class _MecanicoPickerDialogState extends ConsumerState<_MecanicoPickerDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Adicionar mecânico',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
                 const SizedBox(height: 16),
                 GamaSearchableSelect<Funcionario>(
                   label: 'Mecânico',
@@ -1026,12 +2037,11 @@ class _MecanicoPickerDialogState extends ConsumerState<_MecanicoPickerDialog> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+                      child: const Text('Cancelar', style: TextStyle(color: AppColors.ink2)),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: _selecionado == null ? null : () => Navigator.pop(context, _selecionado),
-                      style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
                       child: const Text('Adicionar'),
                     ),
                   ],
@@ -1071,14 +2081,14 @@ class _DescontoFormDialogState extends State<_DescontoFormDialog> {
 
   InputDecoration _dec(String label) => InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        labelStyle: const TextStyle(color: AppColors.ink2, fontSize: 13),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.border)),
+            borderSide: const BorderSide(color: AppColors.line)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+            borderSide: const BorderSide(color: AppColors.accent, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         filled: true,
         fillColor: Colors.white,
@@ -1101,7 +2111,7 @@ class _DescontoFormDialogState extends State<_DescontoFormDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('Novo desconto',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
               const SizedBox(height: 16),
               TextField(controller: _descCtrl, decoration: _dec('Descrição'), autofocus: true),
               const SizedBox(height: 10),
@@ -1116,7 +2126,7 @@ class _DescontoFormDialogState extends State<_DescontoFormDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+                    child: const Text('Cancelar', style: TextStyle(color: AppColors.ink2)),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
@@ -1126,7 +2136,6 @@ class _DescontoFormDialogState extends State<_DescontoFormDialog> {
                               'valor': double.tryParse(_valorCtrl.text.replaceAll(',', '.')) ?? 0,
                             })
                         : null,
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
                     child: const Text('Adicionar'),
                   ),
                 ],
@@ -1200,26 +2209,26 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.line),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.textSecondary),
+              const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.ink2),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   value != null ? _fmtDate(value) : label,
                   style: TextStyle(
                     fontSize: 13,
-                    color: value != null ? AppColors.textPrimary : AppColors.textSecondary,
+                    color: value != null ? AppColors.ink : AppColors.ink2,
                   ),
                 ),
               ),
               if (canClear && value != null)
                 GestureDetector(
                   onTap: () => setState(() => _previsaoEntrega = null),
-                  child: const Icon(Icons.close, size: 14, color: AppColors.textSecondary),
+                  child: const Icon(Icons.close, size: 14, color: AppColors.ink2),
                 ),
             ],
           ),
@@ -1228,14 +2237,14 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
 
   InputDecoration _dec(String label) => InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        labelStyle: const TextStyle(color: AppColors.ink2, fontSize: 13),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.border)),
+            borderSide: const BorderSide(color: AppColors.line)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+            borderSide: const BorderSide(color: AppColors.accent, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         filled: true,
         fillColor: Colors.white,
@@ -1257,7 +2266,7 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('Editar OS',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -1265,7 +2274,7 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Data de entrada', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        const Text('Data de entrada', style: TextStyle(fontSize: 11, color: AppColors.ink2)),
                         const SizedBox(height: 4),
                         _datePicker('Data entrada', _dataEntrada, _pickDataEntrada),
                       ],
@@ -1276,7 +2285,7 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Previsão entrega', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        const Text('Previsão entrega', style: TextStyle(fontSize: 11, color: AppColors.ink2)),
                         const SizedBox(height: 4),
                         _datePicker('Sem previsão', _previsaoEntrega, _pickPrevisao, canClear: true),
                       ],
@@ -1305,7 +2314,7 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+                    child: const Text('Cancelar', style: TextStyle(color: AppColors.ink2)),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
@@ -1315,7 +2324,6 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
                               'previsaoEntrega': _previsaoEntrega?.toIso8601String(),
                               'dataEntrada': _dataEntrada.toIso8601String(),
                             }),
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
                     child: const Text('Salvar'),
                   ),
                 ],
@@ -1390,12 +2398,12 @@ class _ItemFormDialogState extends ConsumerState<_ItemFormDialog> {
 
   InputDecoration _dec(String label) => InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        labelStyle: const TextStyle(color: AppColors.ink2, fontSize: 13),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+            borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.line)),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+            borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.accent, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         filled: true,
         fillColor: Colors.white,
@@ -1420,7 +2428,7 @@ class _ItemFormDialogState extends ConsumerState<_ItemFormDialog> {
             children: [
               Text(
                 _tipo == 'Peca' ? 'Nova peça' : 'Novo serviço',
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink),
               ),
               const SizedBox(height: 16),
               if (_isEstoque)
@@ -1472,12 +2480,11 @@ class _ItemFormDialogState extends ConsumerState<_ItemFormDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+                    child: const Text('Cancelar', style: TextStyle(color: AppColors.ink2)),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: canSave ? _salvar : null,
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
                     child: const Text('Adicionar'),
                   ),
                 ],

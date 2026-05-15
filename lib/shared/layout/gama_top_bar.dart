@@ -135,15 +135,111 @@ class _MobileTopBar extends StatelessWidget {
     if (effectiveTitle == null && (slot == null || !slot!.hasContent)) {
       return const SizedBox.shrink();
     }
+
+    final isDark = slot?.mobileStyle == MobileTopBarStyle.dark;
+    return isDark
+        ? _DarkMobileHeader(slot: slot, title: effectiveTitle)
+        : _LightMobileHeader(
+            slot: slot,
+            title: effectiveTitle,
+            hasNotification: hasNotification,
+          );
+  }
+}
+
+// ── Dark variant: detail pages (OS detalhe, etc.) ────────────────
+class _DarkMobileHeader extends StatelessWidget {
+  const _DarkMobileHeader({this.slot, this.title});
+  final TopBarSlot? slot;
+  final String? title;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobileAction = slot?.mobileAction ?? slot?.action;
+    final hasSubtitle = slot?.mobileSubtitle != null;
+
+    return Container(
+      decoration: const BoxDecoration(color: AppColors.sidebarBg),
+      padding: const EdgeInsets.fromLTRB(4, 0, 12, 0),
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: hasSubtitle ? 68 : 56,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Leading (back button) — recolored white
+              if (slot?.leading != null)
+                IconTheme(
+                  data: const IconThemeData(color: Colors.white),
+                  child: slot!.leading!,
+                )
+              else
+                const SizedBox(width: 16),
+              const SizedBox(width: 4),
+              // Title block
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (hasSubtitle)
+                      Text(
+                        slot!.mobileSubtitle!,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.accent,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    if (title != null)
+                      Text(
+                        title!,
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -0.3,
+                          height: 1.15,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+              // Trailing actions
+              ?mobileAction,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Light variant: forms, wizards, and main screens ───────────────
+class _LightMobileHeader extends StatelessWidget {
+  const _LightMobileHeader({
+    this.slot,
+    this.title,
+    required this.hasNotification,
+  });
+  final TopBarSlot? slot;
+  final String? title;
+  final bool hasNotification;
+
+  @override
+  Widget build(BuildContext context) {
     final hasSearch = slot?.hasSearch == true;
     final mobileAction = slot?.mobileAction ?? slot?.action;
+    final hasSubtitle = slot?.mobileSubtitle != null;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Row 1: leading/hamburger + title + notification + action
         Container(
-          height: 56,
           decoration: BoxDecoration(
             color: AppColors.surface,
             border: Border(
@@ -152,36 +248,58 @@ class _MobileTopBar extends StatelessWidget {
               ),
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              if (slot?.leading != null)
-                slot!.leading!,
-              const SizedBox(width: 10),
-              if (effectiveTitle != null)
-                Expanded(
-                  child: Text(
-                    effectiveTitle,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink,
-                      letterSpacing: -0.2,
+          padding: const EdgeInsets.fromLTRB(4, 0, 12, 0),
+          child: SafeArea(
+            bottom: false,
+            child: SizedBox(
+              height: hasSubtitle ? 64 : 56,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (slot?.leading != null)
+                    slot!.leading!
+                  else
+                    const SizedBox(width: 12),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (hasSubtitle)
+                          Text(
+                            slot!.mobileSubtitle!,
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.accent,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        if (title != null)
+                          Text(
+                            title!,
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                              letterSpacing: -0.2,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                )
-              else
-                const Spacer(),
-              NotificationBell(hasNotification: hasNotification),
-              if (mobileAction != null) ...[
-                const SizedBox(width: 8),
-                mobileAction,
-              ],
-            ],
+                  NotificationBell(hasNotification: hasNotification),
+                  if (mobileAction != null) ...[
+                    const SizedBox(width: 8),
+                    mobileAction,
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
-        // Row 2: search (only when slot has search)
         if (hasSearch)
           Container(
             height: 52,

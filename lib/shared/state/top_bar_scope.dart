@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+enum MobileTopBarStyle { light, dark }
+
 /// Slot that each screen fills to inject content into the shared topbar.
 class TopBarSlot {
   const TopBarSlot({
@@ -8,6 +10,8 @@ class TopBarSlot {
     this.leading,
     this.action,
     this.mobileAction,
+    this.mobileStyle = MobileTopBarStyle.light,
+    this.mobileSubtitle,
     this.searchController,
     this.searchHint,
     this.onSearchChanged,
@@ -20,7 +24,16 @@ class TopBarSlot {
   final Widget? leading;
 
   final Widget? action;
+
+  /// Trailing widget(s) for mobile. Pass a Row for multiple buttons.
   final Widget? mobileAction;
+
+  /// Dark (detail pages) or light (forms/wizards). Default: light.
+  final MobileTopBarStyle mobileStyle;
+
+  /// Small text above the title on mobile (e.g. "OS #1247" or "ORDENS / NOVA").
+  final String? mobileSubtitle;
+
   final TextEditingController? searchController;
   final String? searchHint;
   final ValueChanged<String>? onSearchChanged;
