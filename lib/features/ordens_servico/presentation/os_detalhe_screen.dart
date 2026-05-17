@@ -17,8 +17,11 @@ import '../domain/item_os.dart';
 import '../domain/ordem_servico_detalhe.dart';
 import '../domain/os_mecanico.dart';
 import 'ordens_servico_notifier.dart';
+import 'os_orcamento_pdf.dart';
+import '../../auth/presentation/auth_notifier.dart';
 import '../../estoque/data/estoque_remote_data_source.dart';
 import '../../estoque/domain/estoque.dart';
+import '../../oficinas/presentation/oficinas_notifier.dart';
 
 const _statusTransicoes = {
   'Aberta':           ['EmAndamento'],
@@ -142,6 +145,15 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
                 color: AppColors.line,
                 borderRadius: BorderRadius.circular(2),
               ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.print_outlined, color: AppColors.ink2),
+              title: Text('Imprimir',
+                  style: GoogleFonts.inter(fontSize: 15, color: AppColors.ink)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _imprimirOs(os);
+              },
             ),
             if (os.status != 'Entregue')
               ListTile(
@@ -341,6 +353,13 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
     }
   }
 
+  Future<void> _imprimirOs(OrdemServicoDetalhe os) async {
+    final authState = ref.read(authNotifierProvider).valueOrNull;
+    final oficinas = await ref.read(oficinasNotifierProvider.future);
+    final oficina = oficinas.where((o) => o.id == authState?.oficinaId).firstOrNull;
+    await imprimirOs(os, oficina);
+  }
+
   Future<void> _editarConclusao(OrdemServicoDetalhe os) async {
     final data = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -416,6 +435,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
               os: os,
               loading: _actionLoading,
               primaryLabel: _primaryActionLabel(os.status),
+              onImprimir: () => _imprimirOs(os),
               onAlterarStatus: () => _alterarStatus(os),
               onPrimaryAction: () {
                 final target = _primaryActionTarget(os.status);
@@ -1210,6 +1230,7 @@ class _DesktopActions extends StatelessWidget {
     required this.os,
     required this.loading,
     required this.primaryLabel,
+    required this.onImprimir,
     required this.onAlterarStatus,
     required this.onPrimaryAction,
     required this.onExcluir,
@@ -1219,6 +1240,7 @@ class _DesktopActions extends StatelessWidget {
   final OrdemServicoDetalhe os;
   final bool loading;
   final String? primaryLabel;
+  final VoidCallback onImprimir;
   final VoidCallback onAlterarStatus;
   final VoidCallback onPrimaryAction;
   final VoidCallback onExcluir;
@@ -1234,7 +1256,7 @@ class _DesktopActions extends StatelessWidget {
       children: [
         // Imprimir
         OutlinedButton.icon(
-          onPressed: () {},
+          onPressed: onImprimir,
           icon: const Icon(Icons.print_outlined, size: 15),
           label: const Text('Imprimir'),
           style: OutlinedButton.styleFrom(

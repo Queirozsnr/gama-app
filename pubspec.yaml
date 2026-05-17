@@ -43,6 +43,8 @@ dependencies:
   json_annotation: ^4.9.0
   google_fonts: ^6.2.1
   file_picker: ^8.1.4
+  pdf: ^3.11.1
+  printing: ^5.13.2
 
 dev_dependencies:
   flutter_test:
