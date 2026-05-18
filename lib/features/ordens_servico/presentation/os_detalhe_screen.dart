@@ -155,6 +155,16 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
                 _imprimirOs(os);
               },
             ),
+            if (os.status == 'Concluida' || os.status == 'Entregue')
+              ListTile(
+                leading: Icon(Icons.receipt_long_outlined, color: Colors.green.shade700),
+                title: Text('Gerar Recibo',
+                    style: GoogleFonts.inter(fontSize: 15, color: Colors.green.shade700)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _gerarRecibo(os);
+                },
+              ),
             if (os.status != 'Entregue')
               ListTile(
                 leading: const Icon(Icons.edit_outlined, color: AppColors.ink2),
@@ -360,6 +370,13 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
     await imprimirOs(os, oficina);
   }
 
+  Future<void> _gerarRecibo(OrdemServicoDetalhe os) async {
+    final authState = ref.read(authNotifierProvider).valueOrNull;
+    final oficinas = await ref.read(oficinasNotifierProvider.future);
+    final oficina = oficinas.where((o) => o.id == authState?.oficinaId).firstOrNull;
+    await gerarRecibo(os, oficina);
+  }
+
   Future<void> _editarConclusao(OrdemServicoDetalhe os) async {
     final data = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -436,6 +453,9 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
               loading: _actionLoading,
               primaryLabel: _primaryActionLabel(os.status),
               onImprimir: () => _imprimirOs(os),
+              onRecibo: (os.status == 'Concluida' || os.status == 'Entregue')
+                  ? () => _gerarRecibo(os)
+                  : null,
               onAlterarStatus: () => _alterarStatus(os),
               onPrimaryAction: () {
                 final target = _primaryActionTarget(os.status);
@@ -1235,12 +1255,14 @@ class _DesktopActions extends StatelessWidget {
     required this.onPrimaryAction,
     required this.onExcluir,
     required this.onEditarConclusao,
+    this.onRecibo,
   });
 
   final OrdemServicoDetalhe os;
   final bool loading;
   final String? primaryLabel;
   final VoidCallback onImprimir;
+  final VoidCallback? onRecibo;
   final VoidCallback onAlterarStatus;
   final VoidCallback onPrimaryAction;
   final VoidCallback onExcluir;
@@ -1267,6 +1289,21 @@ class _DesktopActions extends StatelessWidget {
             textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
           ),
         ),
+        if (onRecibo != null) ...[
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: onRecibo,
+            icon: const Icon(Icons.receipt_long_outlined, size: 15),
+            label: const Text('Recibo'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.green.shade700,
+              side: BorderSide(color: Colors.green.shade400),
+              shape: _btnShape,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
         if (proximos.isNotEmpty) ...[
           const SizedBox(width: 8),
           OutlinedButton.icon(

@@ -12,8 +12,15 @@ import '../domain/ordem_servico_detalhe.dart';
 
 Future<void> imprimirOs(OrdemServicoDetalhe os, OficinaModel? oficina) async {
   await Printing.layoutPdf(
-    onLayout: (format) async => _buildPdf(format, os, oficina),
+    onLayout: (format) async => _buildPdf(format, os, oficina, isRecibo: false),
     name: 'OS-${os.id.toString().padLeft(6, '0')}',
+  );
+}
+
+Future<void> gerarRecibo(OrdemServicoDetalhe os, OficinaModel? oficina) async {
+  await Printing.layoutPdf(
+    onLayout: (format) async => _buildRecibo(format, os, oficina),
+    name: 'Recibo-OS-${os.id.toString().padLeft(6, '0')}',
   );
 }
 
@@ -22,8 +29,10 @@ Future<void> imprimirOs(OrdemServicoDetalhe os, OficinaModel? oficina) async {
 Future<Uint8List> _buildPdf(
   PdfPageFormat format,
   OrdemServicoDetalhe os,
-  OficinaModel? oficina,
-) async {
+  OficinaModel? oficina, {
+  required bool isRecibo,
+}) async {
+  final isPago = os.status == 'Entregue';
   final fontRegular = await PdfGoogleFonts.interRegular();
   final fontBold = await PdfGoogleFonts.interBold();
   final fontItalic = await PdfGoogleFonts.interItalic();
@@ -60,7 +69,7 @@ Future<Uint8List> _buildPdf(
     header: (ctx) => _header(oficina, logo, color),
     footer: (ctx) => _footer(ctx, oficina, color),
     build: (ctx) => [
-      _titleBand(os, color),
+      _titleBand(os, color, isRecibo: isRecibo, isPago: isPago),
       pw.SizedBox(height: 10),
       _clientBlock(os, color),
       pw.SizedBox(height: 10),
@@ -80,12 +89,12 @@ Future<Uint8List> _buildPdf(
         _itemsTable(pecas, color),
         pw.SizedBox(height: 10),
       ],
-      _totals(os, color),
+      _totals(os, color, isPago: isPago),
       pw.SizedBox(height: 10),
-      if (os.formaPagamento != null || (os.observacoes?.isNotEmpty ?? false)) ...[
-        _sectionHeader('Pagamento', color),
+      if (isRecibo || os.formaPagamento != null || (os.observacoes?.isNotEmpty ?? false)) ...[
+        _sectionHeader(isRecibo ? 'Pagamento' : 'Pagamento', color),
         pw.SizedBox(height: 6),
-        _paymentContent(os),
+        _paymentContent(os, isRecibo: isRecibo),
         pw.SizedBox(height: 10),
       ],
       pw.SizedBox(height: 28),
@@ -96,6 +105,357 @@ Future<Uint8List> _buildPdf(
   ));
 
   return doc.save();
+}
+
+// ─── Recibo ───────────────────────────────────────────────────────────────────
+
+Future<Uint8List> _buildRecibo(
+  PdfPageFormat format,
+  OrdemServicoDetalhe os,
+  OficinaModel? oficina,
+) async {
+  final isPago = os.status == 'Entregue';
+  final fontRegular = await PdfGoogleFonts.interRegular();
+  final fontBold = await PdfGoogleFonts.interBold();
+  final fontItalic = await PdfGoogleFonts.interItalic();
+  final theme = pw.ThemeData.withFont(
+    base: fontRegular,
+    bold: fontBold,
+    italic: fontItalic,
+  );
+
+  final doc = pw.Document();
+  final color = _hexColor(oficina?.corPadrao) ?? PdfColors.blueGrey800;
+
+  pw.MemoryImage? logo;
+  final logoUrl = oficina?.logoUrl;
+  if (logoUrl != null) {
+    try {
+      final res = await Dio().get<List<int>>(
+        '$kBaseUrl$logoUrl',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      if (res.data != null) {
+        logo = pw.MemoryImage(Uint8List.fromList(res.data!));
+      }
+    } catch (_) {}
+  }
+
+  doc.addPage(pw.MultiPage(
+    pageFormat: format,
+    theme: theme,
+    margin: const pw.EdgeInsets.symmetric(horizontal: 48, vertical: 28),
+    header: (ctx) => _header(oficina, logo, color),
+    footer: (ctx) => _footer(ctx, oficina, color),
+    build: (ctx) => [
+      _reciboTitle(os, color),
+      pw.SizedBox(height: 18),
+      _reciboClienteBox(os),
+      pw.SizedBox(height: 14),
+      _reciboValorBox(os, color, isPago),
+      pw.SizedBox(height: 18),
+      _reciboItens(os, color),
+      pw.SizedBox(height: 14),
+      _reciboInfoPagamento(os),
+      pw.SizedBox(height: 24),
+      if (isPago) ...[
+        _pagoBadge(),
+        pw.SizedBox(height: 24),
+      ],
+      _signatures(os.clienteNome, color),
+      pw.SizedBox(height: 18),
+      _thankYou(),
+    ],
+  ));
+
+  return doc.save();
+}
+
+pw.Widget _reciboTitle(OrdemServicoDetalhe os, PdfColor color) {
+  final numero = os.id.toString().padLeft(6, '0');
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.center,
+    children: [
+      pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.center,
+        children: [
+          pw.Expanded(
+            child: pw.Divider(color: color, thickness: 1.5),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 14),
+            child: pw.Text(
+              'RECIBO DE PAGAMENTO',
+              style: pw.TextStyle(
+                fontSize: 15,
+                fontWeight: pw.FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Divider(color: color, thickness: 1.5),
+          ),
+        ],
+      ),
+      pw.SizedBox(height: 4),
+      pw.Text(
+        'N${String.fromCharCode(0xBA)} $numero',
+        style: pw.TextStyle(fontSize: 9, color: PdfColors.grey500),
+      ),
+    ],
+  );
+}
+
+pw.Widget _reciboClienteBox(OrdemServicoDetalhe os) {
+  return pw.Container(
+    width: double.infinity,
+    padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: pw.BoxDecoration(
+      color: PdfColors.grey50,
+      border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
+      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.RichText(
+          text: pw.TextSpan(children: [
+            pw.TextSpan(
+              text: 'Recebi do(a) Sr.(a):  ',
+              style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+            ),
+            pw.TextSpan(
+              text: os.clienteNome,
+              style: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ]),
+        ),
+        if (os.clienteTelefone != null) ...[
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'Telefone: ${os.clienteTelefone}',
+            style: pw.TextStyle(fontSize: 8.5, color: PdfColors.grey600),
+          ),
+        ],
+        pw.SizedBox(height: 6),
+        pw.RichText(
+          text: pw.TextSpan(children: [
+            pw.TextSpan(
+              text: 'Veículo:  ',
+              style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+            ),
+            pw.TextSpan(
+              text: os.veiculoDescricao,
+              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+            ),
+            if (os.veiculoPlaca != null)
+              pw.TextSpan(
+                text: '    Placa: ${os.veiculoPlaca}',
+                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+              ),
+          ]),
+        ),
+      ],
+    ),
+  );
+}
+
+pw.Widget _reciboValorBox(
+    OrdemServicoDetalhe os, PdfColor color, bool isPago) {
+  return pw.Container(
+    width: double.infinity,
+    padding: const pw.EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+    decoration: pw.BoxDecoration(
+      color: color,
+      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      children: [
+        pw.Text(
+          isPago ? 'VALOR PAGO' : 'VALOR TOTAL',
+          style: pw.TextStyle(fontSize: 9, color: PdfColors.white),
+        ),
+        pw.SizedBox(height: 6),
+        pw.Text(
+          _fmt(os.total),
+          style: pw.TextStyle(
+            fontSize: 28,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.white,
+          ),
+        ),
+        if (os.totalServicos > 0 && os.totalPecas > 0) ...[
+          pw.SizedBox(height: 8),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.center,
+            children: [
+              _valorTag('Serviços: ${_fmt(os.totalServicos)}'),
+              pw.SizedBox(width: 12),
+              _valorTag('Peças: ${_fmt(os.totalPecas)}'),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+pw.Widget _valorTag(String text) {
+  return pw.Container(
+    padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+    decoration: pw.BoxDecoration(
+      border: pw.Border.all(color: PdfColors.white, width: 0.8),
+      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
+    ),
+    child: pw.Text(
+      text,
+      style: pw.TextStyle(fontSize: 8, color: PdfColors.white),
+    ),
+  );
+}
+
+pw.Widget _reciboItens(OrdemServicoDetalhe os, PdfColor color) {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        'Referente a:',
+        style: pw.TextStyle(
+          fontSize: 9,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.grey600,
+        ),
+      ),
+      pw.SizedBox(height: 8),
+      pw.Container(
+        decoration: pw.BoxDecoration(
+          border: pw.Border(
+            left: pw.BorderSide(color: color, width: 3),
+          ),
+        ),
+        padding: const pw.EdgeInsets.only(left: 12),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: os.itens.map((item) {
+            final qtdStr = item.quantidade == item.quantidade.roundToDouble()
+                ? '${item.quantidade.toInt()}x'
+                : '${item.quantidade.toStringAsFixed(2)}x';
+            return pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 6),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Expanded(
+                    child: pw.Text(
+                      '$qtdStr  ${item.descricao}',
+                      style: pw.TextStyle(fontSize: 9),
+                    ),
+                  ),
+                  pw.Text(
+                    _fmt(item.subtotal),
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+      if (os.descontos.isNotEmpty) ...[
+        pw.SizedBox(height: 6),
+        ...os.descontos.map(
+          (d) => pw.Padding(
+            padding: const pw.EdgeInsets.only(left: 15, bottom: 4),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  d.descricao,
+                  style: pw.TextStyle(
+                    fontSize: 9,
+                    fontStyle: pw.FontStyle.italic,
+                    color: PdfColors.grey700,
+                  ),
+                ),
+                pw.Text(
+                  '- ${_fmt(d.valor)}',
+                  style: pw.TextStyle(fontSize: 9, color: PdfColors.red800),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ],
+  );
+}
+
+pw.Widget _reciboInfoPagamento(OrdemServicoDetalhe os) {
+  final items = <(String, String)>[];
+  if (os.formaPagamento != null) {
+    items.add(('Forma de pagamento', os.formaPagamento!));
+  }
+  if (os.dataConclusao != null) {
+    items.add(('Data de pagamento', _fmtDate(os.dataConclusao)));
+  } else {
+    items.add(('Data de emissão', _fmtDate(DateTime.now())));
+  }
+
+  return pw.Row(
+    children: items.map((pair) {
+      return pw.Expanded(
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              pair.$1,
+              style: pw.TextStyle(fontSize: 8, color: PdfColors.grey500),
+            ),
+            pw.SizedBox(height: 2),
+            pw.Text(
+              pair.$2,
+              style: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList(),
+  );
+}
+
+pw.Widget _pagoBadge() {
+  return pw.Center(
+    child: pw.Transform.rotate(
+      angle: -0.25,
+      child: pw.Container(
+        padding:
+            const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColors.green800, width: 3),
+          borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+        ),
+        child: pw.Text(
+          'PAGO',
+          style: pw.TextStyle(
+            fontSize: 34,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.green800,
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 // ─── Header (every page) ─────────────────────────────────────────────────────
@@ -246,18 +606,49 @@ pw.Widget _footer(pw.Context ctx, OficinaModel? oficina, PdfColor color) {
 
 // ─── Title band ───────────────────────────────────────────────────────────────
 
-pw.Widget _titleBand(OrdemServicoDetalhe os, PdfColor color) {
+pw.Widget _titleBand(
+  OrdemServicoDetalhe os,
+  PdfColor color, {
+  bool isRecibo = false,
+  bool isPago = false,
+}) {
+  final titulo = isRecibo
+      ? 'Recibo de Servicos  —  OS No ${os.id.toString().padLeft(3, '0')}-${os.dataEntrada.year}'
+      : 'Orcamento ${os.id.toString().padLeft(3, '0')}-${os.dataEntrada.year}';
+
   return pw.Container(
     width: double.infinity,
     padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 9),
     color: color,
-    child: pw.Text(
-      'Orçamento ${os.id.toString().padLeft(3, '0')}-${os.dataEntrada.year}',
-      style: pw.TextStyle(
-        color: PdfColors.white,
-        fontSize: 14,
-        fontWeight: pw.FontWeight.bold,
-      ),
+    child: pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      children: [
+        pw.Text(
+          titulo,
+          style: pw.TextStyle(
+            color: PdfColors.white,
+            fontSize: 13,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        if (isPago)
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.white,
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+            ),
+            child: pw.Text(
+              'PAGO',
+              style: pw.TextStyle(
+                color: PdfColors.green800,
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+      ],
     ),
   );
 }
@@ -430,7 +821,7 @@ pw.Widget _itemsTable(List<ItemOs> itens, PdfColor color) {
 
 // ─── Totals ───────────────────────────────────────────────────────────────────
 
-pw.Widget _totals(OrdemServicoDetalhe os, PdfColor color) {
+pw.Widget _totals(OrdemServicoDetalhe os, PdfColor color, {bool isPago = false}) {
   final rows = <pw.Widget>[];
 
   void addRow(String label, String value, {bool isTotal = false}) {
@@ -468,7 +859,7 @@ pw.Widget _totals(OrdemServicoDetalhe os, PdfColor color) {
   for (final d in os.descontos) {
     addRow(d.descricao, '- ${_fmt(d.valor)}');
   }
-  addRow('Total', _fmt(os.total), isTotal: true);
+  addRow(isPago ? 'Total Pago' : 'Total', _fmt(os.total), isTotal: true);
 
   return pw.Align(
     alignment: pw.Alignment.centerRight,
@@ -484,15 +875,41 @@ pw.Widget _totals(OrdemServicoDetalhe os, PdfColor color) {
 
 // ─── Payment / Observations ───────────────────────────────────────────────────
 
-pw.Widget _paymentContent(OrdemServicoDetalhe os) {
+pw.Widget _paymentContent(OrdemServicoDetalhe os, {bool isRecibo = false}) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
       if (os.formaPagamento != null)
-        pw.Text(os.formaPagamento!, style: pw.TextStyle(fontSize: 8.5)),
+        pw.RichText(
+          text: pw.TextSpan(children: [
+            pw.TextSpan(
+              text: 'Forma de pagamento: ',
+              style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.TextSpan(
+              text: os.formaPagamento!,
+              style: pw.TextStyle(fontSize: 8.5),
+            ),
+          ]),
+        ),
+      if (isRecibo && os.dataConclusao != null) ...[
+        pw.SizedBox(height: 4),
+        pw.RichText(
+          text: pw.TextSpan(children: [
+            pw.TextSpan(
+              text: 'Data de conclusao: ',
+              style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.TextSpan(
+              text: _fmtDate(os.dataConclusao),
+              style: pw.TextStyle(fontSize: 8.5),
+            ),
+          ]),
+        ),
+      ],
       if (os.observacoes?.isNotEmpty ?? false) ...[
-        if (os.formaPagamento != null) pw.SizedBox(height: 4),
-        pw.Text('Observações:', style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold)),
+        pw.SizedBox(height: 4),
+        pw.Text('Observacoes:', style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold)),
         pw.Text(os.observacoes!, style: pw.TextStyle(fontSize: 8.5)),
       ],
     ],
