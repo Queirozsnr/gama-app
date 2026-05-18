@@ -431,7 +431,13 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: 'OS #${widget.osId}',
       pageTitle: primeiroServico ?? 'Ordem de Serviço',
-      leading: BackButton(onPressed: () => context.go('/ordens-servico')),
+      leading: BackButton(onPressed: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/ordens-servico');
+        }
+      }),
       mobileAction: _actionLoading
           ? const Padding(
               padding: EdgeInsets.only(right: 16),

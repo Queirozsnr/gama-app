@@ -46,7 +46,8 @@ class _ItemInput {
 
 // ── Screen ─────────────────────────────────────────────────────────────────────
 class OsNovaScreen extends ConsumerStatefulWidget {
-  const OsNovaScreen({super.key});
+  const OsNovaScreen({super.key, this.clienteIdInicial});
+  final int? clienteIdInicial;
 
   @override
   ConsumerState<OsNovaScreen> createState() => _OsNovaScreenState();
@@ -77,6 +78,21 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
     'Busque do estoque ou marque como compra externa',
     'Conferir prazo e atribuir mecânico (opcional)',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.clienteIdInicial != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          final c = await ref
+              .read(clientesRemoteDataSourceProvider)
+              .obter(widget.clienteIdInicial!);
+          if (mounted) setState(() => _cliente = c);
+        } catch (_) {}
+      });
+    }
+  }
 
   @override
   void dispose() {

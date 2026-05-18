@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
 import '../domain/cliente.dart';
+import '../domain/cliente_detalhe.dart';
 
 class ClientesRemoteDataSource {
   ClientesRemoteDataSource(this._dio);
@@ -29,6 +30,11 @@ class ClientesRemoteDataSource {
 
   Future<void> excluir(int id) async {
     await _dio.delete('/clientes/$id');
+  }
+
+  Future<ClienteDetalhe> obterDetalhe(int id) async {
+    final response = await _dio.get('/clientes/$id/ficha');
+    return ClienteDetalhe.fromJson(response.data as Map<String, dynamic>);
   }
 }
 

@@ -11,6 +11,7 @@ import '../../features/ordens_servico/presentation/ordens_servico_screen.dart';
 import '../../features/ordens_servico/presentation/os_detalhe_screen.dart';
 import '../../features/ordens_servico/presentation/os_nova_screen.dart';
 import '../../features/clientes/presentation/clientes_screen.dart';
+import '../../features/clientes/presentation/cliente_detalhe_screen.dart';
 import '../../features/veiculos/presentation/veiculos_screen.dart';
 import '../../features/estoque/presentation/estoque_screen.dart';
 import '../../features/estoque/presentation/fornecedores_screen.dart';
@@ -33,7 +34,8 @@ abstract final class AppRoutes {
   static const ordensServico        = '/ordens-servico';
   static const ordensServicoNova    = '/ordens-servico/nova';
   static const ordensServicoDetalhe = '/ordens-servico/:id';
-  static const clientes       = '/clientes';
+  static const clientes         = '/clientes';
+  static const clientesDetalhe  = '/clientes/:id';
   static const veiculos       = '/veiculos';
   static const estoque        = '/estoque';
   static const fornecedores   = '/fornecedores';
@@ -126,10 +128,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: AppRoutes.home,              pageBuilder: _fade((ctx, st) => const HomeScreen())),
           GoRoute(path: AppRoutes.ordensServico,     pageBuilder: _fade((ctx, st) => const OrdensServicoScreen())),
-          GoRoute(path: AppRoutes.ordensServicoNova, pageBuilder: _fade((ctx, st) => const OsNovaScreen())),
+          GoRoute(path: AppRoutes.ordensServicoNova, pageBuilder: _fade((ctx, st) =>
+              OsNovaScreen(clienteIdInicial: st.extra as int?))),
           GoRoute(path: AppRoutes.ordensServicoDetalhe, pageBuilder: _fade((ctx, st) =>
               OsDetalheScreen(osId: int.parse(st.pathParameters['id']!)))),
           GoRoute(path: AppRoutes.clientes,          pageBuilder: _fade((ctx, st) => const ClientesScreen())),
+          GoRoute(path: AppRoutes.clientesDetalhe,   pageBuilder: _fade((ctx, st) =>
+              ClienteDetalheScreen(clienteId: int.parse(st.pathParameters['id']!)))),
           GoRoute(path: AppRoutes.veiculos,          pageBuilder: _fade((ctx, st) => const VeiculosScreen())),
           GoRoute(path: AppRoutes.estoque,               pageBuilder: _fade((ctx, st) => const EstoqueScreen())),
           GoRoute(path: AppRoutes.estoqueProdutoNovo,    pageBuilder: _fade((ctx, st) => const NovoProdutoScreen())),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/router/app_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
@@ -55,6 +57,9 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen>
     setTopBarSlot(TopBarSlot(
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
+      searchController: _searchController,
+      searchHint: 'Buscar nome, telefone, placa…',
+      onSearchChanged: _onSearch,
       mobileAction: IconButton(
         icon: const Icon(Icons.tune_outlined, color: Colors.white, size: 20),
         onPressed: () {},
@@ -216,7 +221,12 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen>
                         padding: const EdgeInsets.only(bottom: 8),
                         child: _ClienteDesktopRow(
                           cliente: c,
-                          onTap: () => _openForm(cliente: c),
+                          onTap: () => context.go(
+                            AppRoutes.clientesDetalhe.replaceAll(':id', '${c.id}'),
+                          ),
+                          onEdit: () => context.go(
+                            AppRoutes.clientesDetalhe.replaceAll(':id', '${c.id}'),
+                          ),
                           onLongPress: () => _excluir(c),
                           onAddVeiculo: () => _openVeiculoForm(c.id),
                           onEditVeiculo: _openEditVeiculo,
@@ -262,7 +272,9 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen>
                     if (filtrados.isEmpty) return const _EmptyView();
                     return _ClienteMobileList(
                       lista: filtrados,
-                      onTap: (c) => _openForm(cliente: c),
+                      onTap: (c) => context.go(
+                        AppRoutes.clientesDetalhe.replaceAll(':id', '${c.id}'),
+                      ),
                       onDelete: _excluir,
                       onAddVeiculo: (c) => _openVeiculoForm(c.id),
                       onEditVeiculo: _openEditVeiculo,
@@ -423,6 +435,7 @@ class _ClienteDesktopRow extends StatelessWidget {
   const _ClienteDesktopRow({
     required this.cliente,
     this.onTap,
+    this.onEdit,
     this.onLongPress,
     this.onAddVeiculo,
     this.onEditVeiculo,
@@ -430,6 +443,7 @@ class _ClienteDesktopRow extends StatelessWidget {
   });
   final Cliente cliente;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
   final VoidCallback? onLongPress;
   final VoidCallback? onAddVeiculo;
   final void Function(VeiculoResumo)? onEditVeiculo;
@@ -519,7 +533,7 @@ class _ClienteDesktopRow extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             IconButton(
-              onPressed: onTap,
+              onPressed: onEdit,
               icon: const Icon(Icons.edit_outlined, size: 16),
               color: AppColors.ink3,
               tooltip: 'Editar',
