@@ -7,6 +7,10 @@ import '../../../../shared/state/top_bar_scope.dart';
 import '../../../../shared/widgets/chips/status_chip.dart';
 import '../../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
+import '../../../../shared/widgets/gama_fab.dart';
+import '../../auth/presentation/auth_notifier.dart';
+import '../../oficinas/domain/oficina_model.dart';
+import '../../oficinas/presentation/oficinas_notifier.dart';
 import '../domain/ordem_servico.dart';
 import 'ordens_servico_notifier.dart';
 import 'widgets/os_card.dart';
@@ -46,27 +50,50 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
   bool _ordenarAsc = true;
   final _buscaCtrl = TextEditingController();
   String _busca = '';
+  bool _searchOpen = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _syncSlot();
+  }
+
+  void _syncSlot() {
+    final authState = ref.read(authNotifierProvider).valueOrNull;
+    final oficinas =
+        ref.read(oficinasNotifierProvider).valueOrNull ?? <OficinaModel>[];
+    final nome = oficinas
+        .where((o) => o.id == authState?.oficinaId)
+        .firstOrNull
+        ?.nome;
     setTopBarSlot(TopBarSlot(
-      searchController: _buscaCtrl,
-      searchHint: 'Buscar por cliente, veículo ou placa…',
-      onSearchChanged: (v) => setState(() => _busca = v.toLowerCase()),
+      mobileStyle: MobileTopBarStyle.dark,
+      mobileSubtitle: nome != null ? '• $nome' : null,
+      mobileAction: IconButton(
+        onPressed: _toggleSearch,
+        icon: Icon(
+          _searchOpen ? Icons.close : Icons.search,
+          color: _searchOpen ? AppColors.accent : Colors.white,
+          size: 20,
+        ),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+      ),
       action: FilledButton.icon(
         onPressed: () => context.go('/ordens-servico/nova'),
         icon: const Icon(Icons.add, size: 17),
         label: const Text('Nova OS'),
       ),
-      mobileAction: IconButton(
-        onPressed: () => context.go('/ordens-servico/nova'),
-        icon: const Icon(Icons.add),
-        color: AppColors.accent,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(),
-      ),
     ));
+  }
+
+  void _toggleSearch() {
+    setState(() => _searchOpen = !_searchOpen);
+    if (!_searchOpen) {
+      _buscaCtrl.clear();
+      setState(() => _busca = '');
+    }
+    _syncSlot();
   }
 
   @override
@@ -89,11 +116,13 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
   void _setCliente(String? v) => setState(() => _filtroCliente = v);
 
   void _setOrdenar(String campo, bool asc) =>
-      setState(() { _ordenarCampo = campo; _ordenarAsc = asc; });
+      setState(() {
+        _ordenarCampo = campo;
+        _ordenarAsc = asc;
+      });
 
   List<OrdemServico> _aplicarFiltros(List<OrdemServico> lista) {
     var r = lista;
-
     if (_busca.isNotEmpty) {
       r = r.where((os) =>
         os.clienteNome.toLowerCase().contains(_busca) ||
@@ -107,21 +136,19 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
     if (_filtroCliente != null) {
       r = r.where((os) => os.clienteNome == _filtroCliente).toList();
     }
-
     r.sort((a, b) {
       final cmp = switch (_ordenarCampo) {
-        'id'   => a.id.compareTo(b.id),
+        'id'    => a.id.compareTo(b.id),
         'prazo' => () {
             if (a.previsaoEntrega == null && b.previsaoEntrega == null) return 0;
             if (a.previsaoEntrega == null) return 1;
             if (b.previsaoEntrega == null) return -1;
             return a.previsaoEntrega!.compareTo(b.previsaoEntrega!);
           }(),
-        _      => 0,
+        _       => 0,
       };
       return _ordenarAsc ? cmp : -cmp;
     });
-
     return r;
   }
 
@@ -148,7 +175,10 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
     final isDesktop = MediaQuery.of(context).size.width >= 800;
     final lista = osAsync.valueOrNull ?? const [];
 
-    // Unique options extracted from loaded list for local filters
+    // Keep slot subtitle fresh when providers load
+    ref.listen(authNotifierProvider, (_, _) { if (mounted) _syncSlot(); });
+    ref.listen(oficinasNotifierProvider, (_, _) { if (mounted) _syncSlot(); });
+
     final mecanicos = lista
         .expand((os) => os.mecanicoNomes)
         .toSet()
@@ -158,34 +188,35 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
         .toSet()
         .toList()..sort();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _PeriodBar(periodo: _periodo, onChanged: _setPeriodo),
-        _FiltrosBar(
-          filtroStatus: _filtroStatus,
-          filtroMecanico: _filtroMecanico,
-          filtroCliente: _filtroCliente,
-          ordenarCampo: _ordenarCampo,
-          ordenarAsc: _ordenarAsc,
-          mecanicos: mecanicos,
-          clientes: clientes,
-          onStatusChanged: _setStatus,
-          onMecanicoChanged: _setMecanico,
-          onClienteChanged: _setCliente,
-          onOrdenarChanged: _setOrdenar,
-        ),
-        if (!isDesktop) _KpiCards(lista: lista, periodo: _periodo),
-        Expanded(
-          child: osAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, st) => _ErrorState(
-              onRetry: () =>
-                  ref.read(ordensServicoNotifierProvider.notifier).recarregar(),
-            ),
-            data: (loaded) {
-              final rows = _aplicarFiltros(loaded);
-              if (isDesktop) {
+    final filtersBar = _FiltrosBar(
+      filtroStatus: _filtroStatus,
+      filtroMecanico: _filtroMecanico,
+      filtroCliente: _filtroCliente,
+      ordenarCampo: _ordenarCampo,
+      ordenarAsc: _ordenarAsc,
+      mecanicos: mecanicos,
+      clientes: clientes,
+      onStatusChanged: _setStatus,
+      onMecanicoChanged: _setMecanico,
+      onClienteChanged: _setCliente,
+      onOrdenarChanged: _setOrdenar,
+    );
+
+    if (isDesktop) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _PeriodBar(periodo: _periodo, onChanged: _setPeriodo),
+          filtersBar,
+          Expanded(
+            child: osAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, st) => _ErrorState(
+                onRetry: () =>
+                    ref.read(ordensServicoNotifierProvider.notifier).recarregar(),
+              ),
+              data: (loaded) {
+                final rows = _aplicarFiltros(loaded);
                 return SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   child: Column(
@@ -194,24 +225,63 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
                       _KpiCards(lista: loaded, periodo: _periodo),
                       _OsTable(
                         lista: rows,
-                        onTap: (os) =>
-                            context.go('/ordens-servico/${os.id}'),
+                        onTap: (os) => context.go('/ordens-servico/${os.id}'),
                         onDelete: _excluir,
                       ),
                     ],
                   ),
                 );
-              }
-              return _OsMobileList(
-                lista: rows,
-                onTap: (os) => context.go('/ordens-servico/${os.id}'),
-                onDelete: _excluir,
-                onRefresh: () => ref
-                    .read(ordensServicoNotifierProvider.notifier)
-                    .recarregar(),
-              );
-            },
+              },
+            ),
           ),
+        ],
+      );
+    }
+
+    // Mobile layout
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _MobileDarkStats(lista: lista, periodo: _periodo),
+              if (_searchOpen)
+                _MobileSearchRow(
+                  controller: _buscaCtrl,
+                  onChanged: (v) => setState(() => _busca = v.toLowerCase()),
+                ),
+              _PeriodBar(periodo: _periodo, onChanged: _setPeriodo),
+              filtersBar,
+              Expanded(
+                child: osAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (err, st) => _ErrorState(
+                    onRetry: () => ref
+                        .read(ordensServicoNotifierProvider.notifier)
+                        .recarregar(),
+                  ),
+                  data: (loaded) {
+                    final rows = _aplicarFiltros(loaded);
+                    return _OsMobileList(
+                      lista: rows,
+                      onTap: (os) => context.go('/ordens-servico/${os.id}'),
+                      onDelete: _excluir,
+                      onRefresh: () => ref
+                          .read(ordensServicoNotifierProvider.notifier)
+                          .recarregar(),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          right: 16,
+          bottom: MediaQuery.of(context).padding.bottom + 16,
+          child: GamaFab(label: 'Nova OS', onTap: () => context.go('/ordens-servico/nova')),
         ),
       ],
     );
@@ -1055,20 +1125,216 @@ class _OsMobileList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (lista.isEmpty) return const _EmptyState();
 
+    // Group by date label
+    final groups = <String, List<OrdemServico>>{};
+    for (final os in lista) {
+      groups.putIfAbsent(_groupLabel(os.dataEntrada), () => []).add(os);
+    }
+
+    // Flat list: header item + card items
+    final items = <({String? header, OrdemServico? os, int? count})>[];
+    for (final e in groups.entries) {
+      items.add((header: e.key, os: null, count: e.value.length));
+      for (final os in e.value) {
+        items.add((header: null, os: os, count: null));
+      }
+    }
+
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        itemCount: lista.length,
-        separatorBuilder: (_, i) => const SizedBox(height: 10),
+      child: ListView.builder(
+        padding: EdgeInsets.fromLTRB(
+          16, 8, 16,
+          MediaQuery.of(context).padding.bottom + 80,
+        ),
+        itemCount: items.length,
         itemBuilder: (_, i) {
-          final os = lista[i];
-          return OsCard(
-            os: os,
-            onTap: () => onTap(os),
-            onLongPress: os.status == 'Aberta' ? () => onDelete(os) : null,
+          final item = items[i];
+          if (item.header != null) {
+            return _DateGroupHeader(label: item.header!, count: item.count!);
+          }
+          final os = item.os!;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: OsCard(
+              os: os,
+              onTap: () => onTap(os),
+              onLongPress: os.status == 'Aberta' ? () => onDelete(os) : null,
+            ),
           );
         },
+      ),
+    );
+  }
+
+  static String _groupLabel(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final d = DateTime(dt.year, dt.month, dt.day);
+    final diff = d.difference(today).inDays;
+    final dd = dt.day.toString().padLeft(2, '0');
+    final mm = dt.month.toString().padLeft(2, '0');
+    if (diff == 0) return 'HOJE · $dd/$mm';
+    if (diff == -1) return 'ONTEM · $dd/$mm';
+    if (diff == 1) return 'AMANHÃ · $dd/$mm';
+    return '$dd/$mm/${dt.year}';
+  }
+}
+
+// ── Mobile dark stats ──────────────────────────────────────────────────────────
+
+class _MobileDarkStats extends StatelessWidget {
+  const _MobileDarkStats({required this.lista, required this.periodo});
+  final List<OrdemServico> lista;
+  final OsPeriodo periodo;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalOs = lista.length;
+    final abertas = lista.where((os) => os.status == 'Aberta').length;
+    final prontas = lista.where((os) => os.status == 'Concluida').length;
+    final totalValor = lista.fold(0.0, (sum, os) => sum + os.total);
+
+    return Container(
+      color: AppColors.sidebarBg,
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      child: Row(
+        children: [
+          _StatBox(value: '$totalOs', label: 'PERÍODO'),
+          _StatBox(value: '$abertas', label: 'ABERTAS'),
+          _StatBox(value: '$prontas', label: 'PRONTAS'),
+          _StatBox(value: _fmtShort(totalValor), label: 'PREVISTO'),
+        ],
+      ),
+    );
+  }
+
+  static String _fmtShort(double v) {
+    if (v >= 1000) {
+      final k = v / 1000;
+      return 'R\$ ${k % 1 == 0 ? k.toInt() : k.toStringAsFixed(1)}k';
+    }
+    return 'R\$ ${v.toStringAsFixed(0)}';
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  const _StatBox({required this.value, required this.label});
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: AppColors.sidebarText,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Mobile inline search ───────────────────────────────────────────────────────
+
+class _MobileSearchRow extends StatelessWidget {
+  const _MobileSearchRow({required this.controller, required this.onChanged});
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.sidebarBg,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Container(
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppColors.sidebarLine,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.search, size: 16, color: AppColors.sidebarText),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onChanged: onChanged,
+                autofocus: true,
+                style: GoogleFonts.inter(fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Cliente, veículo ou placa…',
+                  hintStyle: GoogleFonts.inter(
+                      fontSize: 13, color: AppColors.sidebarText),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                  filled: false,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Date group header ──────────────────────────────────────────────────────────
+
+class _DateGroupHeader extends StatelessWidget {
+  const _DateGroupHeader({required this.label, required this.count});
+  final String label;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink3,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            '$count',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.ink3,
+            ),
+          ),
+        ],
       ),
     );
   }
