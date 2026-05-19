@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../../core/storage/secure_storage_provider.dart';
+import '../../../core/storage/token_storage.dart';
 import '../domain/auth_response.dart';
 import '../domain/auth_state.dart';
 import 'auth_remote_data_source.dart';
@@ -9,12 +8,12 @@ class AuthRepository {
   AuthRepository(this._dataSource, this._storage);
 
   final AuthRemoteDataSource _dataSource;
-  final FlutterSecureStorage _storage;
+  final TokenStorage _storage;
 
   Future<LoginResponse> login(String email, String senha) async {
     final response = await _dataSource.login(LoginRequest(email: email, senha: senha));
     if (response.token != null) {
-      await _storage.write(key: kTokenStorageKey, value: response.token);
+      await _storage.write(response.token!);
     }
     return response;
   }
@@ -24,7 +23,7 @@ class AuthRepository {
       SelectGroupRequest(userId: userId, grupoOficinaId: grupoOficinaId),
     );
     if (response.token != null) {
-      await _storage.write(key: kTokenStorageKey, value: response.token);
+      await _storage.write(response.token!);
     }
     return response;
   }
@@ -33,7 +32,7 @@ class AuthRepository {
     final response = await _dataSource.selecionarOficina(
       SelectOficinaRequest(oficinaId: oficinaId),
     );
-    await _storage.write(key: kTokenStorageKey, value: response.token);
+    if (response.token != null) await _storage.write(response.token!);
     return response;
   }
 
@@ -47,18 +46,14 @@ class AuthRepository {
     return raw.map((e) => OficinaItem.fromJson(e)).toList();
   }
 
-  Future<void> logout() async {
-    await _storage.delete(key: kTokenStorageKey);
-  }
+  Future<void> logout() async => _storage.delete();
 
-  Future<String?> getStoredToken() async {
-    return _storage.read(key: kTokenStorageKey);
-  }
+  Future<String?> getStoredToken() async => _storage.read();
 }
 
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(
     ref.watch(authRemoteDataSourceProvider),
-    ref.watch(secureStorageProvider),
+    ref.watch(tokenStorageProvider),
   ),
 );
