@@ -990,12 +990,12 @@ class _OsStatusInfo {
 
   static _OsStatusInfo fromString(String s) {
     return switch (s.toLowerCase().replaceAll(' ', '').replaceAll('_', '')) {
-      'emandamento' || 'aberta'   => const _OsStatusInfo(label: 'EM ANDAMENTO', color: Color(0xFF1D7FC4), bgColor: Color(0xFFE0F0FB)),
-      'pronto'                    => const _OsStatusInfo(label: 'PRONTO',       color: Color(0xFF1F8A52), bgColor: Color(0xFFE0F1E6)),
-      'concluida' || 'concluída'  => const _OsStatusInfo(label: 'CONCLUÍDA',    color: Color(0xFF1F8A52), bgColor: Color(0xFFE0F1E6)),
-      'entregue'                  => const _OsStatusInfo(label: 'ENTREGUE',     color: Color(0xFF6B7280), bgColor: Color(0xFFF3F4F6)),
-      'aguardando' || 'pendente'  => const _OsStatusInfo(label: 'AGUARDANDO',   color: Color(0xFFC28012), bgColor: Color(0xFFFBEED1)),
-      _                           => const _OsStatusInfo(label: 'ABERTA',       color: Color(0xFF6B7280), bgColor: Color(0xFFF3F4F6)),
+      'emandamento' || 'aberta'   => const _OsStatusInfo(label: 'EM ANDAMENTO', color: AppColors.info,    bgColor: AppColors.infoSoft),
+      'pronto'                    => const _OsStatusInfo(label: 'PRONTO',       color: AppColors.ok,      bgColor: AppColors.okSoft),
+      'concluida' || 'concluída'  => const _OsStatusInfo(label: 'CONCLUÍDA',    color: AppColors.ok,      bgColor: AppColors.okSoft),
+      'entregue'                  => const _OsStatusInfo(label: 'ENTREGUE',     color: AppColors.ink3,    bgColor: AppColors.bg),
+      'aguardando' || 'pendente'  => const _OsStatusInfo(label: 'AGUARDANDO',   color: AppColors.warn,    bgColor: AppColors.warnSoft),
+      _                           => const _OsStatusInfo(label: 'ABERTA',       color: AppColors.ink3,    bgColor: AppColors.bg),
     };
   }
 }

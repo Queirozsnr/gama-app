@@ -26,6 +26,8 @@ abstract final class AppColors {
   static const warnSoft    = Color(0xFFFBEED1); // light warning fill
   static const danger      = Color(0xFFB83524); // danger red
   static const dangerSoft  = Color(0xFFFBE1DA); // light danger fill
+  static const info        = Color(0xFF1D7FC4); // info blue (in-progress, fixed salary)
+  static const infoSoft    = Color(0xFFE0F0FB); // light info fill
 
   // ── Backward-compat aliases ────────────────────────────────
   static const primary      = accent;

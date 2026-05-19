@@ -19,6 +19,7 @@ import '../../features/estoque/presentation/novo_produto_screen.dart';
 import '../../features/estoque/presentation/produto_detalhe_screen.dart';
 import '../../features/estoque/domain/estoque.dart';
 import '../../features/funcionarios/presentation/funcionarios_screen.dart';
+import '../../features/funcionarios/presentation/funcionario_detalhe_screen.dart';
 import '../../features/pagamentos/presentation/pagamentos_screen.dart';
 import '../../features/pagamentos/presentation/receitas_socio_page.dart';
 import '../../features/oficinas/presentation/gerenciar_oficinas_screen.dart';
@@ -39,7 +40,8 @@ abstract final class AppRoutes {
   static const veiculos       = '/veiculos';
   static const estoque        = '/estoque';
   static const fornecedores   = '/fornecedores';
-  static const funcionarios   = '/funcionarios';
+  static const funcionarios        = '/funcionarios';
+  static const funcionariosDetalhe = '/funcionarios/:id';
   static const pagamentos        = '/pagamentos';
   static const receitas          = '/receitas';
   static const gerenciarOficinas    = '/gerenciar-oficinas';
@@ -141,7 +143,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: AppRoutes.estoqueProdutoEditar,  pageBuilder: _fade((ctx, st) => NovoProdutoScreen(produto: st.extra! as ProdutoListagem))),
           GoRoute(path: AppRoutes.estoqueProdutoDetalhe, pageBuilder: _fade((ctx, st) => ProdutoDetalheScreen(produto: st.extra! as ProdutoListagem))),
           GoRoute(path: AppRoutes.fornecedores,          pageBuilder: _fade((ctx, st) => const FornecedoresScreen())),
-          GoRoute(path: AppRoutes.funcionarios,      pageBuilder: _fade((ctx, st) => const FuncionariosScreen())),
+          GoRoute(path: AppRoutes.funcionarios,        pageBuilder: _fade((ctx, st) => const FuncionariosScreen())),
+          GoRoute(path: AppRoutes.funcionariosDetalhe, pageBuilder: _fade((ctx, st) =>
+              FuncionarioDetalheScreen(funcionarioId: int.parse(st.pathParameters['id']!)))),
           GoRoute(path: AppRoutes.pagamentos,        pageBuilder: _fade((ctx, st) => const PagamentosScreen())),
           GoRoute(path: AppRoutes.receitas,          pageBuilder: _fade((ctx, st) => const ReceitasSocioPage())),
           GoRoute(path: AppRoutes.gerenciarOficinas,    pageBuilder: _fade((ctx, st) => const GerenciarOficinasScreen())),
