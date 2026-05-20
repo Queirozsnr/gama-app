@@ -7,24 +7,13 @@ import '../../../../shared/widgets/gama_button.dart';
 import '../../../../shared/widgets/gama_searchable_select.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
 import '../../domain/funcionario.dart';
+import '../../domain/remuneracao.dart';
 import '../funcionarios_notifier.dart';
 
 const _cargos = [
   'Gerente', 'Mecanico', 'Auxiliar', 'Atendente',
   'Lavador', 'Funileiro', 'Eletricista', 'Pintor', 'TecnicoArCondicionado',
 ];
-
-const _cargoLabels = {
-  'Gerente': 'Gerente',
-  'Mecanico': 'Mecânico',
-  'Auxiliar': 'Auxiliar',
-  'Atendente': 'Atendente',
-  'Lavador': 'Lavador',
-  'Funileiro': 'Funileiro',
-  'Eletricista': 'Eletricista',
-  'Pintor': 'Pintor',
-  'TecnicoArCondicionado': 'Técnico AC',
-};
 
 const _tiposRemuneracao = ['Fixo', 'Porcentagem'];
 const _tipoRemuneracaoLabels = {
@@ -87,7 +76,7 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
   }
 
   Future<List<String>> _filtrarCargos(String q) async =>
-      _cargos.where((c) => (_cargoLabels[c] ?? c).toLowerCase().contains(q.toLowerCase())).toList();
+      _cargos.where((c) => cargoLabel(c).toLowerCase().contains(q.toLowerCase())).toList();
 
   Future<List<String>> _filtrarTipos(String q) async =>
       _tiposRemuneracao.where((t) => (_tipoRemuneracaoLabels[t] ?? t).toLowerCase().contains(q.toLowerCase())).toList();
@@ -179,7 +168,7 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                           label: 'Cargo *',
                           selectedValue: _cargo,
                           optionsBuilder: _filtrarCargos,
-                          displayString: (c) => _cargoLabels[c] ?? c,
+                          displayString: cargoLabel,
                           isRequired: true,
                           onChanged: (v) => setState(() {
                             _cargo = v;

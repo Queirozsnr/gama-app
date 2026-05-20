@@ -5,6 +5,7 @@ import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../data/pagamentos_remote_data_source.dart';
 import '../domain/pagamento.dart';
+import '../../funcionarios/domain/remuneracao.dart';
 import 'novo_pagamento_screen.dart';
 import 'pagamentos_notifier.dart';
 
@@ -225,12 +226,8 @@ class _PagamentoDetalheBodyState extends ConsumerState<_PagamentoDetalheBody> {
     );
   }
 
-  String _tipoLabel(String tipo, int? pct) => switch (tipo) {
-        'Porcentagem' => '${pct ?? 0}% comissão',
-        'Fixo' => 'Fixo mensal',
-        'Socio' => 'Sócio',
-        _ => tipo,
-      };
+  String _tipoLabel(String tipo, int? pct) =>
+      tipoRemuneracaoLabel(tipo, porcentagem: pct);
 
   String _formatarData(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';

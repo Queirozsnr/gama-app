@@ -10,6 +10,7 @@ import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_list_tile.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../domain/funcionario.dart';
+import '../domain/remuneracao.dart';
 import 'funcionarios_notifier.dart';
 import 'widgets/funcionario_card.dart';
 import 'widgets/funcionario_form_dialog.dart';
@@ -129,12 +130,6 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
         _       => PaymentType.comissao,
       };
 
-  static const _cargoLabels = {
-    'Gerente': 'Gerente', 'Mecanico': 'Mecânico', 'Auxiliar': 'Auxiliar',
-    'Atendente': 'Atendente', 'Lavador': 'Lavador', 'Funileiro': 'Funileiro',
-    'Eletricista': 'Eletricista', 'Pintor': 'Pintor',
-    'TecnicoArCondicionado': 'Técnico AC',
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -188,13 +183,12 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
               itemCount: funcionarios.length,
               itemBuilder: (_, i) {
                 final f = funcionarios[i];
-                final cargoLabel = _cargoLabels[f.cargo] ?? f.cargo;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: GamaListTile(
                     leading: GamaAvatar(initials: _initials(f), size: 44),
                     title: f.nome,
-                    subtitle: cargoLabel.toUpperCase(),
+                    subtitle: cargoLabel(f.cargo).toUpperCase(),
                     details: [
                       GamaListDetail(icon: Icons.email_outlined, text: f.email),
                       if (f.telefone != null)

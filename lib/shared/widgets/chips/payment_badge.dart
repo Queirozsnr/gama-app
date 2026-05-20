@@ -16,7 +16,7 @@ class PaymentBadge extends StatelessWidget {
   String get _label => switch (type) {
         PaymentType.comissao => percent != null ? '$percent% comissão' : 'Comissão',
         PaymentType.fixo     => 'Fixo mensal',
-        PaymentType.socio    => 'Sócio',
+        PaymentType.socio    => 'Gerente',
       };
 
   Color get _bgColor => switch (type) {

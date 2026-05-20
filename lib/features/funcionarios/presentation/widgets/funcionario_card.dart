@@ -3,18 +3,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/gama_avatar.dart';
 import '../../../../shared/widgets/chips/payment_badge.dart';
 import '../../domain/funcionario.dart';
-
-const _cargoLabels = {
-  'Gerente': 'Gerente',
-  'Mecanico': 'Mecânico',
-  'Auxiliar': 'Auxiliar',
-  'Atendente': 'Atendente',
-  'Lavador': 'Lavador',
-  'Funileiro': 'Funileiro',
-  'Eletricista': 'Eletricista',
-  'Pintor': 'Pintor',
-  'TecnicoArCondicionado': 'Técnico AC',
-};
+import '../../domain/remuneracao.dart';
 
 class FuncionarioCard extends StatelessWidget {
   const FuncionarioCard({
@@ -81,7 +70,7 @@ class FuncionarioCard extends StatelessWidget {
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                       ),
                       Text(
-                        _cargoLabels[funcionario.cargo] ?? funcionario.cargo,
+                        cargoLabel(funcionario.cargo),
                         style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                       if (funcionario.cargo != 'Gerente') ...[

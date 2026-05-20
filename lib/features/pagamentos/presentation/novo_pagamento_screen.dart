@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../data/pagamentos_remote_data_source.dart';
+import '../../funcionarios/domain/remuneracao.dart';
 import '../domain/pagamento.dart';
 import 'pagamento_detalhe_screen.dart';
 import 'pagamentos_notifier.dart';
@@ -148,12 +149,10 @@ class _HeaderFuncionario extends StatelessWidget {
   const _HeaderFuncionario({required this.funcionario});
   final FuncionarioAcumulado funcionario;
 
-  String get _tipoLabel => switch (funcionario.tipoRemuneracao) {
-        'Porcentagem' => '${funcionario.porcentagem ?? 0}% de comissão por OS',
-        'Fixo' => 'Salário fixo mensal',
-        'Socio' => 'Sócio · receita líquida',
-        _ => funcionario.tipoRemuneracao,
-      };
+  String get _tipoLabel => tipoRemuneracaoPagamentoDesc(
+        funcionario.tipoRemuneracao,
+        porcentagem: funcionario.porcentagem?.toInt(),
+      );
 
   @override
   Widget build(BuildContext context) {

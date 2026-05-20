@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_avatar.dart';
 import '../domain/pagamento.dart';
+import '../../funcionarios/domain/remuneracao.dart';
 import 'historico_pagamentos_screen.dart';
 import 'novo_pagamento_screen.dart';
 import 'pagamento_detalhe_screen.dart';
@@ -108,12 +109,10 @@ class _FuncionarioTile extends StatelessWidget {
     return parts[0].substring(0, parts[0].length.clamp(0, 2));
   }
 
-  String get _tipoLabel => switch (funcionario.tipoRemuneracao) {
-        'Porcentagem' => '${funcionario.porcentagem ?? 0}% comissão',
-        'Fixo' => 'Fixo mensal',
-        'Socio' => 'Sócio',
-        _ => funcionario.tipoRemuneracao,
-      };
+  String get _tipoLabel => tipoRemuneracaoLabel(
+        funcionario.tipoRemuneracao,
+        porcentagem: funcionario.porcentagem?.toInt(),
+      );
 
   String get _ultimoPagamento {
     if (funcionario.ultimoPagamentoEm == null) return 'Nunca pago';

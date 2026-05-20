@@ -9,21 +9,11 @@ import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../../../shared/widgets/chips/payment_badge.dart';
 import '../domain/funcionario.dart';
+import '../domain/remuneracao.dart';
 import 'funcionario_detalhe_notifier.dart';
 import 'funcionarios_notifier.dart';
 import 'widgets/funcionario_form_dialog.dart';
 
-const _cargoLabels = {
-  'Gerente': 'Gerente',
-  'Mecanico': 'Mecânico',
-  'Auxiliar': 'Auxiliar',
-  'Atendente': 'Atendente',
-  'Lavador': 'Lavador',
-  'Funileiro': 'Funileiro',
-  'Eletricista': 'Eletricista',
-  'Pintor': 'Pintor',
-  'TecnicoArCondicionado': 'Técnico AC',
-};
 
 class FuncionarioDetalheScreen extends ConsumerStatefulWidget {
   const FuncionarioDetalheScreen({super.key, required this.funcionarioId});
@@ -46,11 +36,11 @@ class _FuncionarioDetalheScreenState
   }
 
   void _syncSlot([Funcionario? f]) {
-    final cargoLabel = f == null ? '' : (_cargoLabels[f.cargo] ?? f.cargo);
+    final label = f == null ? '' : cargoLabel(f.cargo);
     setTopBarSlot(TopBarSlot(
       pageTitle: f?.nome ?? 'Ficha do funcionário',
       mobileStyle: MobileTopBarStyle.dark,
-      mobileSubtitle: f == null ? 'FUNCIONÁRIO' : 'EQUIPE · ${cargoLabel.toUpperCase()}',
+      mobileSubtitle: f == null ? 'FUNCIONÁRIO' : 'EQUIPE · ${label.toUpperCase()}',
       mobileAction: f == null
           ? null
           : IconButton(
@@ -256,8 +246,8 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cargoLabel =
-        _cargoLabels[funcionario.cargo] ?? funcionario.cargo;
+    final label =
+        cargoLabel(funcionario.cargo);
 
     return Container(
       decoration: const BoxDecoration(
@@ -285,7 +275,7 @@ class _ProfileHeader extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    _CargoChip(cargo: funcionario.cargo, label: cargoLabel),
+                    _CargoChip(cargo: funcionario.cargo, label: label),
                     const SizedBox(width: 6),
                     _AtivoChip(ativo: funcionario.ativo),
                   ],
@@ -425,8 +415,8 @@ class _DadosPessoaisCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cargoLabel =
-        _cargoLabels[funcionario.cargo] ?? funcionario.cargo;
+    final label =
+        cargoLabel(funcionario.cargo);
     return _Card(
       icon: Icons.person_outline,
       title: 'Perfil',
@@ -447,7 +437,7 @@ class _DadosPessoaisCard extends StatelessWidget {
             _FieldRow(label: 'E-MAIL', value: funcionario.email),
             if (funcionario.telefone != null)
               _FieldRow(label: 'TELEFONE', value: funcionario.telefone!),
-            _FieldRow(label: 'CARGO', value: cargoLabel),
+            _FieldRow(label: 'CARGO', value: label),
             _FieldRow(
               label: 'DATA DE ADMISSÃO',
               value: _fmtDate(funcionario.criadoEm),
@@ -525,12 +515,10 @@ class _RemuneracaoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tipo = switch (funcionario.tipoRemuneracao) {
-      'Fixo' => 'Salário fixo',
-      'Socio' => 'Sócio',
-      'Porcentagem' => 'Comissão sobre OS',
-      _ => funcionario.tipoRemuneracao,
-    };
+    final tipo = tipoRemuneracaoLabelLong(
+      funcionario.tipoRemuneracao,
+      porcentagem: funcionario.porcentagem?.toInt(),
+    );
 
     return _Card(
       icon: Icons.payments_outlined,
@@ -779,7 +767,7 @@ class _MobileSubHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cargoLabel = _cargoLabels[funcionario.cargo] ?? funcionario.cargo;
+    final label = cargoLabel(funcionario.cargo);
     return Container(
       color: AppColors.sidebarBg,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
@@ -793,15 +781,15 @@ class _MobileSubHeader extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    _CargoChip(cargo: funcionario.cargo, label: cargoLabel),
+                    _CargoChip(cargo: funcionario.cargo, label: label),
                     const SizedBox(width: 6),
                     _AtivoChip(ativo: funcionario.ativo),
                   ],
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  cargoLabel,
-                  style: TextStyle(fontFamily: 'Inter', 
+                  label,
+                  style: TextStyle(fontFamily: 'Inter',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -842,11 +830,7 @@ class _MobileKpiStrip extends StatelessWidget {
     if (funcionario.tipoRemuneracao == 'Porcentagem' && funcionario.porcentagem != null) {
       return '${funcionario.porcentagem!.toInt()}%';
     }
-    return switch (funcionario.tipoRemuneracao) {
-      'Fixo'  => 'FIXO',
-      'Socio' => 'SÓCIO',
-      _       => '—',
-    };
+    return tipoRemuneracaoLabel(funcionario.tipoRemuneracao).toUpperCase();
   }
 
   @override
@@ -861,7 +845,7 @@ class _MobileKpiStrip extends StatelessWidget {
         children: [
           _MobileKpiCell(
             label: 'CARGO',
-            value: (_cargoLabels[funcionario.cargo] ?? funcionario.cargo).toUpperCase(),
+            value: (cargoLabel(funcionario.cargo)).toUpperCase(),
           ),
           _MobileKpiDivider(),
           _MobileKpiCell(
@@ -987,7 +971,7 @@ class _MobilePerfilContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cargoLabel = _cargoLabels[funcionario.cargo] ?? funcionario.cargo;
+    final label = cargoLabel(funcionario.cargo);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Container(
@@ -1042,7 +1026,7 @@ class _MobilePerfilContent extends StatelessWidget {
                   _MobileFieldRow(label: 'E-MAIL', value: funcionario.email),
                   if (funcionario.telefone != null)
                     _MobileFieldRow(label: 'TELEFONE', value: funcionario.telefone!),
-                  _MobileFieldRow(label: 'CARGO', value: cargoLabel),
+                  _MobileFieldRow(label: 'CARGO', value: label),
                   _MobileFieldRow(
                     label: 'ADMISSÃO',
                     value: _fmtDate(funcionario.criadoEm),
@@ -1073,12 +1057,10 @@ class _MobilePagamentoContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tipoLabel = switch (funcionario.tipoRemuneracao) {
-      'Fixo'        => 'Salário fixo',
-      'Socio'       => 'Sócio',
-      'Porcentagem' => 'Comissão sobre OS',
-      _             => funcionario.tipoRemuneracao,
-    };
+    final tipoLabel = tipoRemuneracaoLabelLong(
+      funcionario.tipoRemuneracao,
+      porcentagem: funcionario.porcentagem?.toInt(),
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),

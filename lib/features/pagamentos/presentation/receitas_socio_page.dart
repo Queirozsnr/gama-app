@@ -56,7 +56,7 @@ class ReceitasSocioPage extends ConsumerWidget {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'Cadastre um funcionário com perfil Sócio\npara visualizar as receitas.',
+                    'Cadastre um funcionário com perfil Gerente\npara visualizar as receitas.',
                     style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     textAlign: TextAlign.center,
                   ),
