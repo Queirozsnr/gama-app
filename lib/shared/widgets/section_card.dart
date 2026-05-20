@@ -1,81 +1,82 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 
+/// Card container usado para tabelas e seções de conteúdo.
+/// Aplica border + borderRadius + clipBehavior padronizados.
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
-    required this.title,
     required this.child,
+    this.title,
     this.subtitle,
-    this.actionLabel,
-    this.onAction,
+    this.action,
+    this.padding = EdgeInsets.zero,
   });
 
-  final String title;
   final Widget child;
+
+  /// Título opcional no topo do card (ex.: "Identidade do veículo").
+  final String? title;
+
+  /// Subtítulo abaixo do título.
   final String? subtitle;
-  final String? actionLabel;
-  final VoidCallback? onAction;
+
+  /// Widget de ação no canto superior direito (ex.: botão "Ver todas").
+  final Widget? action;
+
+  /// Padding interno aplicado ao [child]. Padrão: zero (tabelas não precisam).
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
+    final hasHeader = title != null;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.line),
       ),
+      clipBehavior: Clip.hardEdge,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    if (subtitle != null)
+          if (hasHeader) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        subtitle!,
+                        title!,
                         style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink,
                         ),
                       ),
-                  ],
-                ),
-                if (actionLabel != null)
-                  GestureDetector(
-                    onTap: onAction,
-                    child: Text(
-                      actionLabel!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.ink2,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-              ],
+                  ?action,
+                ],
+              ),
             ),
-          ),
-          child,
+            const Divider(height: 24, indent: 16, endIndent: 16),
+          ],
+          Padding(padding: padding, child: child),
         ],
       ),
     );

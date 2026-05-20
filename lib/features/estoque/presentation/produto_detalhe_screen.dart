@@ -45,6 +45,8 @@ class ProdutoDetalheScreen extends ConsumerWidget {
     return TopBarSlotProvider(
       slot: TopBarSlot(
         pageTitle: produto.nome,
+        mobileStyle: MobileTopBarStyle.dark,
+        mobileSubtitle: (_categoriasLabel[produto.categoria] ?? produto.categoria).toUpperCase(),
         leading: BackButton(onPressed: () => context.go('/estoque')),
         action: Row(
           mainAxisSize: MainAxisSize.min,
@@ -73,9 +75,9 @@ class ProdutoDetalheScreen extends ConsumerWidget {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.line),
               ),
               child: Column(
                 children: [
@@ -94,21 +96,21 @@ class ProdutoDetalheScreen extends ConsumerWidget {
                                 Text(produto.codigo,
                                     style: const TextStyle(
                                         fontSize: 12,
-                                        color: AppColors.textSecondary,
-                                        fontFamily: 'monospace')),
+                                        color: AppColors.ink2,
+                                        fontFamily: 'JetBrains Mono')),
                                 const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: AppColors.surface,
+                                    color: AppColors.surface2,
                                     borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: AppColors.border),
+                                    border: Border.all(color: AppColors.line),
                                   ),
                                   child: Text(
                                     _categoriasLabel[produto.categoria] ?? produto.categoria,
                                     style: const TextStyle(
-                                        fontSize: 10, color: AppColors.textSecondary),
+                                        fontSize: 10, color: AppColors.ink2),
                                   ),
                                 ),
                               ],
@@ -193,7 +195,7 @@ class ProdutoDetalheScreen extends ConsumerWidget {
                   style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
+                      color: AppColors.ink2,
                       letterSpacing: 0.8)),
             ),
           ),
@@ -205,7 +207,7 @@ class ProdutoDetalheScreen extends ConsumerWidget {
             error: (_, __) => const SliverToBoxAdapter(
               child: Center(
                 child: Text('Erro ao carregar movimentações',
-                    style: TextStyle(color: AppColors.textSecondary)),
+                    style: TextStyle(color: AppColors.ink2)),
               ),
             ),
             data: (movs) {
@@ -215,7 +217,7 @@ class ProdutoDetalheScreen extends ConsumerWidget {
                     padding: EdgeInsets.all(32),
                     child: Center(
                       child: Text('Nenhuma movimentação registrada',
-                          style: TextStyle(color: AppColors.textSecondary)),
+                          style: TextStyle(color: AppColors.ink2)),
                     ),
                   ),
                 );
@@ -286,7 +288,7 @@ class ProdutoDetalheScreen extends ConsumerWidget {
 }
 
 class _InfoCol extends StatelessWidget {
-  const _InfoCol(this.label, this.value, {this.color = AppColors.textPrimary});
+  const _InfoCol(this.label, this.value, {this.color = AppColors.ink});
   final String label;
   final String value;
   final Color color;
@@ -296,7 +298,7 @@ class _InfoCol extends StatelessWidget {
         child: Column(
           children: [
             Text(label,
-                style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                style: const TextStyle(fontSize: 10, color: AppColors.ink2)),
             const SizedBox(height: 3),
             Text(value,
                 style: TextStyle(
@@ -349,7 +351,7 @@ class _MovimentacaoTile extends StatelessWidget {
                 ),
                 Text(_date(mov.criadoEm),
                     style: const TextStyle(
-                        fontSize: 11, color: AppColors.textSecondary)),
+                        fontSize: 11, color: AppColors.ink2)),
               ],
             ),
           ),
@@ -363,7 +365,7 @@ class _MovimentacaoTile extends StatelessWidget {
                 Text(
                     'R\$ ${mov.precoUnitario!.toStringAsFixed(2).replaceAll('.', ',')}',
                     style: const TextStyle(
-                        fontSize: 11, color: AppColors.textSecondary)),
+                        fontSize: 11, color: AppColors.ink2)),
             ],
           ),
         ],

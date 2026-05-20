@@ -7,6 +7,7 @@ enum MobileTopBarStyle { light, dark }
 class TopBarSlot {
   const TopBarSlot({
     this.pageTitle,
+    this.desktopSubtitle,
     this.leading,
     this.action,
     this.mobileAction,
@@ -19,6 +20,9 @@ class TopBarSlot {
 
   /// Overrides the route-based pageTitle in GamaTopBar when set.
   final String? pageTitle;
+
+  /// Small text below the title on desktop (e.g. "OFICINA CENTRAL · 412 SKUs").
+  final String? desktopSubtitle;
 
   /// Widget shown before the title (e.g. a back button).
   final Widget? leading;

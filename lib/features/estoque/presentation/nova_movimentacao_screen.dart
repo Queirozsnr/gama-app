@@ -72,151 +72,161 @@ class _NovaMovimentacaoScreenState extends ConsumerState<NovaMovimentacaoScreen>
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         title: const Text('Registrar movimentação'),
-        actions: [
-          TextButton(
-            onPressed: _salvando ? null : _salvar,
-            child: _salvando
-                ? const SizedBox(
-                    width: 18, height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('Salvar'),
-          ),
-        ],
       ),
-      body: Form(
-        key: _form,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Produto info
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
+      body: Column(
+        children: [
+          Expanded(
+            child: Form(
+              key: _form,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
                 children: [
-                  const Icon(Icons.inventory_2_outlined,
-                      color: AppColors.primary, size: 22),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // Produto info
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface2,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.line),
+                    ),
+                    child: Row(
                       children: [
-                        Text(widget.produto.nome,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 14)),
-                        Text(
-                          '${widget.produto.codigo} · Estoque atual: ${widget.produto.quantidadeAtual.toStringAsFixed(0)} ${widget.produto.unidade == 'Unidade' ? 'un' : widget.produto.unidade}',
-                          style: const TextStyle(
-                              fontSize: 12, color: AppColors.textSecondary),
+                        const Icon(Icons.inventory_2_outlined,
+                            color: AppColors.accent, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(widget.produto.nome,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600, fontSize: 14)),
+                              Text(
+                                '${widget.produto.codigo} · Estoque atual: ${widget.produto.quantidadeAtual.toStringAsFixed(0)} ${widget.produto.unidade == 'Unidade' ? 'un' : widget.produto.unidade}',
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppColors.ink2),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 20),
+
+                  // Tipo
+                  const Text('TIPO',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink2,
+                          letterSpacing: 0.8)),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      _TipoChip(label: 'Entrada', icon: Icons.add_circle_outline,
+                          color: AppColors.ok, selected: _tipo == 'Entrada',
+                          onTap: () => setState(() => _tipo = 'Entrada')),
+                      const SizedBox(width: 10),
+                      _TipoChip(label: 'Saída', icon: Icons.remove_circle_outline,
+                          color: AppColors.danger, selected: _tipo == 'Saida',
+                          onTap: () => setState(() => _tipo = 'Saida')),
+                      const SizedBox(width: 10),
+                      _TipoChip(label: 'Ajuste', icon: Icons.tune_outlined,
+                          color: AppColors.accent, selected: _tipo == 'Ajuste',
+                          onTap: () => setState(() => _tipo = 'Ajuste')),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Quantidade
+                  TextFormField(
+                    controller: _quantidade,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: 'Quantidade',
+                      suffixText: widget.produto.unidade == 'Unidade'
+                          ? 'un'
+                          : widget.produto.unidade,
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Obrigatório';
+                      final n = double.tryParse(v);
+                      if (n == null || n <= 0) return 'Valor inválido';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Preço unitário (só entrada)
+                  if (_tipo == 'Entrada') ...[
+                    TextFormField(
+                      controller: _preco,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Preço unitário (opcional)',
+                        prefixText: 'R\$ ',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Fornecedor
+                    GamaSearchableSelect<FornecedorEstoque>(
+                      label: 'Fornecedor (opcional)',
+                      selectedValue: _fornecedor,
+                      displayString: (f) => f.nome,
+                      optionsBuilder: (query) async {
+                        final all = ref.read(fornecedoresEstoqueProvider).value ?? [];
+                        return all
+                            .where((f) => f.nome.toLowerCase().contains(query.toLowerCase()))
+                            .toList();
+                      },
+                      onChanged: (f) => setState(() => _fornecedor = f),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // Observação
+                  TextFormField(
+                    controller: _observacao,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Observação (opcional)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Tipo
-            const Text('TIPO',
-                style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 0.8)),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _TipoChip(label: 'Entrada', icon: Icons.add_circle_outline,
-                    color: AppColors.success, selected: _tipo == 'Entrada',
-                    onTap: () => setState(() => _tipo = 'Entrada')),
-                const SizedBox(width: 10),
-                _TipoChip(label: 'Saída', icon: Icons.remove_circle_outline,
-                    color: AppColors.error, selected: _tipo == 'Saida',
-                    onTap: () => setState(() => _tipo = 'Saida')),
-                const SizedBox(width: 10),
-                _TipoChip(label: 'Ajuste', icon: Icons.tune_outlined,
-                    color: AppColors.primary, selected: _tipo == 'Ajuste',
-                    onTap: () => setState(() => _tipo = 'Ajuste')),
-              ],
+          ),
+          Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              border: Border(top: BorderSide(color: AppColors.line)),
             ),
-            const SizedBox(height: 20),
-
-            // Quantidade
-            TextFormField(
-              controller: _quantidade,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: _inputDec('Quantidade',
-                  suffix: widget.produto.unidade == 'Unidade'
-                      ? 'un'
-                      : widget.produto.unidade),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Obrigatório';
-                final n = double.tryParse(v);
-                if (n == null || n <= 0) return 'Valor inválido';
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-
-            // Preço unitário (só entrada)
-            if (_tipo == 'Entrada') ...[
-              TextFormField(
-                controller: _preco,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: _inputDec('Preço unitário (opcional)', prefix: 'R\$ '),
+            padding: EdgeInsets.fromLTRB(
+                16, 10, 16, 10 + MediaQuery.of(context).padding.bottom),
+            child: FilledButton(
+              onPressed: _salvando ? null : _salvar,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.black,
+                minimumSize: const Size(double.infinity, 44),
               ),
-              const SizedBox(height: 12),
-
-              // Fornecedor
-              GamaSearchableSelect<FornecedorEstoque>(
-                label: 'Fornecedor (opcional)',
-                selectedValue: _fornecedor,
-                displayString: (f) => f.nome,
-                optionsBuilder: (query) async {
-                  final all = ref.read(fornecedoresEstoqueProvider).value ?? [];
-                  return all
-                      .where((f) => f.nome.toLowerCase().contains(query.toLowerCase()))
-                      .toList();
-                },
-                onChanged: (f) => setState(() => _fornecedor = f),
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // Observação
-            TextFormField(
-              controller: _observacao,
-              maxLines: 2,
-              decoration: _inputDec('Observação (opcional)'),
+              child: _salvando
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.black54),
+                    )
+                  : const Text('Registrar'),
             ),
-            const SizedBox(height: 32),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-
-  InputDecoration _inputDec(String label, {String? prefix, String? suffix}) =>
-      InputDecoration(
-        labelText: label,
-        prefixText: prefix,
-        suffixText: suffix,
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-      );
 }
 
 class _TipoChip extends StatelessWidget {
@@ -242,22 +252,22 @@ class _TipoChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? color.withAlpha(20) : Colors.white,
+            color: selected ? color.withAlpha(20) : AppColors.surface2,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: selected ? color : AppColors.border,
+              color: selected ? color : AppColors.line,
               width: selected ? 1.5 : 1,
             ),
           ),
           child: Column(
             children: [
-              Icon(icon, color: selected ? color : AppColors.textSecondary, size: 22),
+              Icon(icon, color: selected ? color : AppColors.ink3, size: 22),
               const SizedBox(height: 4),
               Text(label,
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                      color: selected ? color : AppColors.textSecondary)),
+                      color: selected ? color : AppColors.ink2)),
             ],
           ),
         ),

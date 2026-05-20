@@ -118,10 +118,12 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen>
   Widget build(BuildContext context) {
     if (!_editando) ref.watch(fornecedoresEstoqueProvider);
 
+    final isMobile = MediaQuery.sizeOf(context).width < 800;
+
     setTopBarSlot(TopBarSlot(
       pageTitle: _editando ? 'Editar produto' : 'Novo produto',
       leading: BackButton(onPressed: () => context.go('/estoque')),
-      action: TextButton(
+      action: isMobile ? null : TextButton(
         onPressed: _salvando ? null : _salvar,
         child: _salvando
             ? const SizedBox(width: 18, height: 18,
@@ -130,104 +132,116 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen>
       ),
     ));
 
-    return Form(
-        key: _form,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _Section('Identificação'),
-            _Field(controller: _nome, label: 'Nome do produto',
-                validator: (v) => v!.trim().isEmpty ? 'Obrigatório' : null),
-            const SizedBox(height: 12),
-            _Field(controller: _codigo, label: 'Código (ex: PF-1042)',
-                hint: 'Será convertido para maiúsculas',
-                validator: (v) => v!.trim().isEmpty ? 'Obrigatório' : null),
-            const SizedBox(height: 20),
-            _Section('Classificação'),
-            GamaSearchableSelect<(String, String)>(
-              label: 'Categoria',
-              isRequired: true,
-              selectedValue: _categorias.where((c) => c.$1 == _categoria).firstOrNull,
-              displayString: (c) => c.$2,
-              optionsBuilder: (query) async => _categorias
-                  .where((c) => c.$2.toLowerCase().contains(query.toLowerCase()))
-                  .toList(),
-              onChanged: (c) { if (c != null) setState(() => _categoria = c.$1); },
-            ),
-            const SizedBox(height: 12),
-            GamaSearchableSelect<(String, String)>(
-              label: 'Unidade de medida',
-              isRequired: true,
-              selectedValue: _unidades.where((u) => u.$1 == _unidade).firstOrNull,
-              displayString: (u) => u.$2,
-              optionsBuilder: (query) async => _unidades
-                  .where((u) => u.$2.toLowerCase().contains(query.toLowerCase()))
-                  .toList(),
-              onChanged: (u) { if (u != null) setState(() => _unidade = u.$1); },
-            ),
-            const SizedBox(height: 20),
-            _Section('Estoque'),
-            Row(
-              children: [
-                if (!_editando) ...[
-                  Expanded(
-                    child: _Field(
-                      controller: _qtdInicial, label: 'Qtd. inicial',
-                      keyboardType: TextInputType.number,
-                      hint: '0',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
+    final form = Form(
+      key: _form,
+      child: ListView(
+        padding: EdgeInsets.fromLTRB(16, 16, 16, isMobile ? 8 : 32),
+        children: [
+          _Section('Identificação'),
+          _Field(controller: _nome, label: 'Nome do produto',
+              validator: (v) => v!.trim().isEmpty ? 'Obrigatório' : null),
+          const SizedBox(height: 12),
+          _Field(controller: _codigo, label: 'Código (ex: PF-1042)',
+              hint: 'Será convertido para maiúsculas',
+              validator: (v) => v!.trim().isEmpty ? 'Obrigatório' : null),
+          const SizedBox(height: 20),
+          _Section('Classificação'),
+          GamaSearchableSelect<(String, String)>(
+            label: 'Categoria',
+            isRequired: true,
+            selectedValue: _categorias.where((c) => c.$1 == _categoria).firstOrNull,
+            displayString: (c) => c.$2,
+            optionsBuilder: (query) async => _categorias
+                .where((c) => c.$2.toLowerCase().contains(query.toLowerCase()))
+                .toList(),
+            onChanged: (c) { if (c != null) setState(() => _categoria = c.$1); },
+          ),
+          const SizedBox(height: 12),
+          GamaSearchableSelect<(String, String)>(
+            label: 'Unidade de medida',
+            isRequired: true,
+            selectedValue: _unidades.where((u) => u.$1 == _unidade).firstOrNull,
+            displayString: (u) => u.$2,
+            optionsBuilder: (query) async => _unidades
+                .where((u) => u.$2.toLowerCase().contains(query.toLowerCase()))
+                .toList(),
+            onChanged: (u) { if (u != null) setState(() => _unidade = u.$1); },
+          ),
+          const SizedBox(height: 20),
+          _Section('Estoque'),
+          Row(
+            children: [
+              if (!_editando) ...[
                 Expanded(
                   child: _Field(
-                    controller: _qtdMinima, label: 'Qtd. mínima',
+                    controller: _qtdInicial, label: 'Qtd. inicial',
                     keyboardType: TextInputType.number,
-                    validator: (v) => v!.trim().isEmpty ? 'Obrigatório' : null,
-                  ),
-                ),
-              ],
-            ),
-            if (!_editando) ...[
-              const SizedBox(height: 12),
-              GamaSearchableSelect<FornecedorEstoque>(
-                label: 'Fornecedor (opcional)',
-                selectedValue: _fornecedor,
-                displayString: (f) => f.nome,
-                optionsBuilder: (query) async {
-                  final all = ref.read(fornecedoresEstoqueProvider).value ?? [];
-                  return all
-                      .where((f) => f.nome.toLowerCase().contains(query.toLowerCase()))
-                      .toList();
-                },
-                onChanged: (f) => setState(() => _fornecedor = f),
-              ),
-            ],
-            const SizedBox(height: 20),
-            _Section('Preços'),
-            Row(
-              children: [
-                Expanded(
-                  child: _Field(
-                    controller: _precoCusto, label: 'Preço de custo',
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    prefix: 'R\$ ',
+                    hint: '0',
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: _Field(
-                    controller: _precoVenda, label: 'Preço de venda',
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    prefix: 'R\$ ',
-                    validator: (v) => v!.trim().isEmpty ? 'Obrigatório' : null,
-                  ),
-                ),
               ],
+              Expanded(
+                child: _Field(
+                  controller: _qtdMinima, label: 'Qtd. mínima',
+                  keyboardType: TextInputType.number,
+                  validator: (v) => v!.trim().isEmpty ? 'Obrigatório' : null,
+                ),
+              ),
+            ],
+          ),
+          if (!_editando) ...[
+            const SizedBox(height: 12),
+            GamaSearchableSelect<FornecedorEstoque>(
+              label: 'Fornecedor (opcional)',
+              selectedValue: _fornecedor,
+              displayString: (f) => f.nome,
+              optionsBuilder: (query) async {
+                final all = ref.read(fornecedoresEstoqueProvider).value ?? [];
+                return all
+                    .where((f) => f.nome.toLowerCase().contains(query.toLowerCase()))
+                    .toList();
+              },
+              onChanged: (f) => setState(() => _fornecedor = f),
             ),
-            const SizedBox(height: 32),
           ],
+          const SizedBox(height: 20),
+          _Section('Preços'),
+          Row(
+            children: [
+              Expanded(
+                child: _Field(
+                  controller: _precoCusto, label: 'Preço de custo',
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  prefix: 'R\$ ',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _Field(
+                  controller: _precoVenda, label: 'Preço de venda',
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  prefix: 'R\$ ',
+                  validator: (v) => v!.trim().isEmpty ? 'Obrigatório' : null,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (!isMobile) return form;
+
+    return Column(
+      children: [
+        Expanded(child: form),
+        _MobileSaveBar(
+          salvando: _salvando,
+          editando: _editando,
+          onSalvar: _salvar,
         ),
+      ],
     );
   }
 }
@@ -244,7 +258,7 @@ class _Section extends StatelessWidget {
             style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: AppColors.ink2,
                 letterSpacing: 0.8)),
       );
 }
@@ -275,17 +289,47 @@ class _Field extends StatelessWidget {
           labelText: label,
           hintText: hint,
           prefixText: prefix,
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
         ),
       );
+}
+
+class _MobileSaveBar extends StatelessWidget {
+  const _MobileSaveBar({
+    required this.salvando,
+    required this.editando,
+    required this.onSalvar,
+  });
+
+  final bool salvando;
+  final bool editando;
+  final VoidCallback onSalvar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.line)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+          16, 10, 16, 10 + MediaQuery.of(context).padding.bottom),
+      child: FilledButton(
+        onPressed: salvando ? null : onSalvar,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.accent,
+          foregroundColor: Colors.black,
+          minimumSize: const Size(double.infinity, 44),
+        ),
+        child: salvando
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.black54),
+              )
+            : Text(editando ? 'Salvar alterações' : 'Criar produto'),
+      ),
+    );
+  }
 }
 

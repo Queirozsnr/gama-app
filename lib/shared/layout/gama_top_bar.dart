@@ -85,10 +85,10 @@ class _DesktopTopBar extends StatelessWidget {
                     letterSpacing: -0.3,
                   ),
                 ),
-                if (pageSubtitle != null)
+                if (slot?.desktopSubtitle != null || pageSubtitle != null)
                   Text(
-                    pageSubtitle!,
-                    style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink2),
+                    slot?.desktopSubtitle ?? pageSubtitle!,
+                    style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink2, fontWeight: FontWeight.w500),
                   ),
               ],
             ),

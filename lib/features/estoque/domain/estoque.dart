@@ -6,6 +6,7 @@ class ResumoEstoque {
     required this.itensCriticos,
     required this.entradasUltimos7Dias,
     required this.saidasUltimos7Dias,
+    this.comprasPendentes = 0,
   });
 
   final double totalEmEstoque;
@@ -14,6 +15,7 @@ class ResumoEstoque {
   final int itensCriticos;
   final int entradasUltimos7Dias;
   final int saidasUltimos7Dias;
+  final int comprasPendentes;
 
   factory ResumoEstoque.fromJson(Map<String, dynamic> json) => ResumoEstoque(
         totalEmEstoque: (json['totalEmEstoque'] as num).toDouble(),
@@ -22,6 +24,7 @@ class ResumoEstoque {
         itensCriticos: json['itensCriticos'] as int,
         entradasUltimos7Dias: json['entradasUltimos7Dias'] as int,
         saidasUltimos7Dias: json['saidasUltimos7Dias'] as int,
+        comprasPendentes: json['comprasPendentes'] as int? ?? 0,
       );
 }
 

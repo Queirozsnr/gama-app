@@ -7,6 +7,7 @@ import '../../../../shared/widgets/chips/status_chip.dart';
 import '../../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
 import '../../../../shared/widgets/gama_fab.dart';
+import '../../../../shared/widgets/section_card.dart';
 import '../../auth/presentation/auth_notifier.dart';
 import '../../oficinas/domain/oficina_model.dart';
 import '../../oficinas/presentation/oficinas_notifier.dart';
@@ -774,34 +775,30 @@ class _OsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     if (lista.isEmpty) return const _EmptyState();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.line),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _TableHeader(),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
-            itemCount: lista.length,
-            itemBuilder: (_, i) => _TableRow(
-              os: lista[i],
-              isLast: i == lista.length - 1,
-              isEven: i.isEven,
-              onTap: () => onTap(lista[i]),
-              onDelete: lista[i].status == 'Aberta'
-                  ? () => onDelete(lista[i])
-                  : null,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: SectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _TableHeader(),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              itemCount: lista.length,
+              itemBuilder: (_, i) => _TableRow(
+                os: lista[i],
+                isLast: i == lista.length - 1,
+                isEven: i.isEven,
+                onTap: () => onTap(lista[i]),
+                onDelete: lista[i].status == 'Aberta'
+                    ? () => onDelete(lista[i])
+                    : null,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
