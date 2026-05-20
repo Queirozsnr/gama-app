@@ -19,7 +19,7 @@ class GamaBottomNav extends ConsumerWidget {
     _Item('Fornecedores', Icons.local_shipping_outlined,    '/fornecedores'),
     _Item('Pagamentos',   Icons.payments_outlined,          '/pagamentos'),
     _Item('Receitas',     Icons.trending_up_outlined,       '/receitas'),
-    _Item('Configurações',Icons.settings_outlined,          '/configuracoes'),
+    _Item('Configurações',Icons.settings_outlined,          '/configuracoes-oficina'),
   ];
 
   bool _isMainActive(String route, String current) =>

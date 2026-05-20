@@ -9,6 +9,17 @@ import '../../funcionarios/domain/remuneracao.dart';
 import 'novo_pagamento_screen.dart';
 import 'pagamentos_notifier.dart';
 
+String _fmt(double v) {
+  final parts = v.toStringAsFixed(2).split('.');
+  final intPart = parts[0].replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+  return 'R\$ $intPart,${parts[1]}';
+}
+
+String _fmtData(DateTime d) =>
+    '${d.day.toString().padLeft(2, '0')}/'
+    '${d.month.toString().padLeft(2, '0')}/${d.year}';
+
 class PagamentoDetalheScreen extends ConsumerWidget {
   const PagamentoDetalheScreen({super.key, required this.pagamentoId});
   final int pagamentoId;
@@ -18,16 +29,24 @@ class PagamentoDetalheScreen extends ConsumerWidget {
     final asyncData = ref.watch(pagamentoDetalheProvider(pagamentoId));
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: const Text('Detalhe do pagamento'),
         backgroundColor: AppColors.sidebarBg,
+        foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       body: asyncData.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
-          child: Text('Erro: $e', style: const TextStyle(color: AppColors.textSecondary)),
+          child: Text('Erro: $e',
+              style: const TextStyle(color: AppColors.ink2)),
         ),
         data: (p) => _PagamentoDetalheBody(pagamento: p),
       ),
@@ -40,10 +59,12 @@ class _PagamentoDetalheBody extends ConsumerStatefulWidget {
   final PagamentoDetalhe pagamento;
 
   @override
-  ConsumerState<_PagamentoDetalheBody> createState() => _PagamentoDetalheBodyState();
+  ConsumerState<_PagamentoDetalheBody> createState() =>
+      _PagamentoDetalheBodyState();
 }
 
-class _PagamentoDetalheBodyState extends ConsumerState<_PagamentoDetalheBody> {
+class _PagamentoDetalheBodyState
+    extends ConsumerState<_PagamentoDetalheBody> {
   bool _loading = false;
 
   PagamentoDetalhe get p => widget.pagamento;
@@ -53,7 +74,7 @@ class _PagamentoDetalheBodyState extends ConsumerState<_PagamentoDetalheBody> {
     final confirmar = await GamaConfirmDialog.show(
       context,
       title: 'Marcar como pago',
-      message: 'Confirmar pagamento de R\$ ${p.valor.toStringAsFixed(2).replaceAll('.', ',')} para ${p.funcionarioNome}?',
+      message: 'Confirmar pagamento de ${_fmt(p.valor)} para ${p.funcionarioNome}?',
       confirmLabel: 'Confirmar',
     );
     if (!confirmar || !mounted) return;
@@ -83,7 +104,8 @@ class _PagamentoDetalheBodyState extends ConsumerState<_PagamentoDetalheBody> {
     );
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => NovoPagamentoScreen(funcionario: acumulado)),
+      MaterialPageRoute(
+          builder: (_) => NovoPagamentoScreen(funcionario: acumulado)),
     );
   }
 
@@ -91,9 +113,10 @@ class _PagamentoDetalheBodyState extends ConsumerState<_PagamentoDetalheBody> {
     final confirmar = await GamaConfirmDialog.show(
       context,
       title: 'Excluir pagamento',
-      message: 'Excluir este pagamento? As OS voltarão a aparecer nos próximos cálculos.',
+      message:
+          'Excluir este pagamento? As OS voltarão a aparecer nos próximos cálculos.',
       confirmLabel: 'Excluir',
-      confirmColor: AppColors.error,
+      confirmColor: AppColors.danger,
     );
     if (!confirmar || !mounted) return;
 
@@ -112,126 +135,110 @@ class _PagamentoDetalheBodyState extends ConsumerState<_PagamentoDetalheBody> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Header do pagamento
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          color: AppColors.sidebarBg,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.funcionarioNome,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${p.cargo} · ${_tipoLabel(p.tipoRemuneracao, p.porcentagem)}',
-                          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _StatusBadge(status: p.status),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'R\$ ${p.valor.toStringAsFixed(2).replaceAll('.', ',')}',
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 4),
-              if (p.pagoEm != null)
-                Text(
-                  'Pago em ${_formatarData(p.pagoEm!)}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.success),
-                )
-              else
-                Text(
-                  'Gerado em ${_formatarData(p.criadoEm)}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                ),
-            ],
-          ),
-        ),
-
-        // Lista de OS incluídas
+        _Header(pagamento: p),
         Expanded(
           child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  'OS incluídas',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.5),
+              const Text(
+                'OS INCLUÍDAS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink3,
+                  letterSpacing: 0.8,
                 ),
               ),
+              const SizedBox(height: 10),
               ...p.itens.map((item) => _OsItemTile(item: item)),
-              const SizedBox(height: 80),
             ],
           ),
         ),
-
-        // Ações (só se Pendente)
-        if (_isPendente)
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            decoration: const BoxDecoration(
-              color: AppColors.sidebarBg,
-              border: Border(top: BorderSide(color: AppColors.border)),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: _loading ? null : _excluir,
-                  icon: const Icon(Icons.delete_outline),
-                  color: AppColors.error,
-                  tooltip: 'Excluir',
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _loading ? null : _editar,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text('Editar'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton(
-                    onPressed: _loading ? null : _pagar,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: _loading
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Marcar como pago', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        if (_isPendente) _Rodape(loading: _loading, onEditar: _editar, onPagar: _pagar, onExcluir: _excluir),
       ],
     );
   }
-
-  String _tipoLabel(String tipo, int? pct) =>
-      tipoRemuneracaoLabel(tipo, porcentagem: pct);
-
-  String _formatarData(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 }
+
+// ── header ────────────────────────────────────────────────────────────────────
+
+class _Header extends StatelessWidget {
+  const _Header({required this.pagamento});
+  final PagamentoDetalhe pagamento;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPago = pagamento.status == 'Pago';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      color: AppColors.sidebarBg,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pagamento.funcionarioNome,
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${cargoLabel(pagamento.cargo)} · '
+                      '${tipoRemuneracaoLabel(pagamento.tipoRemuneracao, porcentagem: pagamento.porcentagem)}',
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.sidebarText),
+                    ),
+                  ],
+                ),
+              ),
+              _StatusBadge(status: pagamento.status),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _fmt(pagamento.valor),
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(
+                isPago ? Icons.check_circle_outline : Icons.schedule_outlined,
+                size: 13,
+                color: isPago ? AppColors.ok : AppColors.sidebarText,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                isPago
+                    ? 'Pago em ${_fmtData(pagamento.pagoEm!)}'
+                    : 'Gerado em ${_fmtData(pagamento.criadoEm)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isPago ? AppColors.ok : AppColors.sidebarText,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── status badge ──────────────────────────────────────────────────────────────
 
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.status});
@@ -243,7 +250,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isPago ? AppColors.successLight : AppColors.warningLight,
+        color: isPago ? AppColors.okSoft : AppColors.warnSoft,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -251,60 +258,146 @@ class _StatusBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: isPago ? AppColors.success : AppColors.warning,
+          color: isPago ? AppColors.ok : AppColors.warn,
         ),
       ),
     );
   }
 }
 
+// ── OS item tile ──────────────────────────────────────────────────────────────
+
 class _OsItemTile extends StatelessWidget {
   const _OsItemTile({required this.item});
   final PagamentoItemDetalhe item;
 
-  String get _dataFormatada {
-    final d = item.dataEntrada;
-    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.sidebarBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: [
+          Text(
+            '#${item.ordemServicoId}',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.ink3,
+              fontFamily: 'JetBrains Mono',
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.clienteNome,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: AppColors.ink),
                 ),
                 const SizedBox(height: 2),
-                Text(item.veiculoInfo, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                Text(_dataFormatada, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text(
+                  '${item.veiculoInfo} · ${_fmtData(item.dataEntrada)}',
+                  style:
+                      const TextStyle(fontSize: 11, color: AppColors.ink2),
+                ),
               ],
             ),
           ),
+          const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'R\$ ${item.valorContribuicao.toStringAsFixed(2).replaceAll('.', ',')}',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success),
+                '+${_fmt(item.valorContribuicao)}',
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ok),
               ),
               Text(
-                'de R\$ ${item.totalOS.toStringAsFixed(2).replaceAll('.', ',')}',
-                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                'de ${_fmt(item.totalOS)}',
+                style:
+                    const TextStyle(fontSize: 10, color: AppColors.ink3),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── rodapé de ações ───────────────────────────────────────────────────────────
+
+class _Rodape extends StatelessWidget {
+  const _Rodape({
+    required this.loading,
+    required this.onEditar,
+    required this.onPagar,
+    required this.onExcluir,
+  });
+
+  final bool loading;
+  final VoidCallback onEditar;
+  final VoidCallback onPagar;
+  final VoidCallback onExcluir;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPad = MediaQuery.paddingOf(context).bottom;
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomPad),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.line)),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: loading ? null : onExcluir,
+            icon: const Icon(Icons.delete_outline),
+            color: AppColors.danger,
+            tooltip: 'Excluir',
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: loading ? null : onEditar,
+              style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14)),
+              child: const Text('Editar'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: FilledButton(
+              onPressed: loading ? null : onPagar,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.ok,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: loading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Marcar como pago',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
           ),
         ],
       ),

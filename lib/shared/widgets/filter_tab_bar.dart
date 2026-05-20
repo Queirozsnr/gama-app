@@ -7,11 +7,19 @@ class FilterTabBar extends StatelessWidget {
     required this.tabs,
     required this.selectedIndex,
     required this.onTabSelected,
+    this.selectedColor = AppColors.ink,
+    this.selectedTextColor = Colors.white,
   });
 
   final List<String> tabs;
   final int selectedIndex;
   final ValueChanged<int> onTabSelected;
+
+  /// Cor de fundo do chip selecionado. Padrão: AppColors.ink (escuro).
+  final Color selectedColor;
+
+  /// Cor do texto do chip selecionado. Padrão: Colors.white.
+  final Color selectedTextColor;
 
   @override
   Widget build(BuildContext context) {
@@ -26,20 +34,22 @@ class FilterTabBar extends StatelessWidget {
               onTap: () => onTabSelected(i),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : Colors.white,
+                  color: selected ? selectedColor : AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: selected ? AppColors.primary : AppColors.border,
+                    color: selected ? selectedColor : AppColors.line,
                   ),
                 ),
                 child: Text(
                   tabs[i],
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: selected ? Colors.white : AppColors.textPrimary,
+                    fontWeight:
+                        selected ? FontWeight.w600 : FontWeight.w500,
+                    color: selected ? selectedTextColor : AppColors.ink2,
                   ),
                 ),
               ),

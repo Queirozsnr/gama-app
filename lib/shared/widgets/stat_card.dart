@@ -6,33 +6,35 @@ class StatCard extends StatelessWidget {
     super.key,
     required this.label,
     required this.value,
-    this.icon,
-    this.iconBgColor,
+    this.subtitle,
     this.badge,
     this.badgeColor,
+    this.badgeBgColor,
   });
 
   final String label;
   final String value;
-  final IconData? icon;
-  final Color? iconBgColor;
+
+  /// Texto pequeno abaixo do valor (ex.: "4 funcionários pendentes").
+  final String? subtitle;
+
+  /// Texto do chip no canto superior direito (ex.: "PRONTO").
   final String? badge;
+
+  /// Cor do texto do badge. Padrão: AppColors.ok.
   final Color? badgeColor;
+
+  /// Cor de fundo do badge. Padrão: AppColors.okSoft.
+  final Color? badgeBgColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,52 +42,52 @@ class StatCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (icon != null)
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: iconBgColor ?? AppColors.surface,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, size: 20, color: AppColors.textSecondary),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink2,
+                  letterSpacing: 0.5,
                 ),
+              ),
               if (badge != null)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.arrow_upward, size: 12, color: badgeColor ?? AppColors.success),
-                    const SizedBox(width: 2),
-                    Text(
-                      badge!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: badgeColor ?? AppColors.success,
-                        fontWeight: FontWeight.w600,
-                      ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: badgeBgColor ?? AppColors.okSoft,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: badgeColor ?? AppColors.ok,
+                      letterSpacing: 0.3,
                     ),
-                  ],
+                  ),
                 ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             value,
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: AppColors.ink,
+              letterSpacing: -0.5,
             ),
           ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitle!,
+              style: const TextStyle(fontSize: 11, color: AppColors.ink2),
+            ),
+          ],
         ],
       ),
     );
