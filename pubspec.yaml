@@ -42,8 +42,14 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "web/favicon.png"
+  image_path: "assets/icon/icon_windows.png"
+  adaptive_icon_background: "#FF7A1A"
+  adaptive_icon_foreground: "assets/icon/icon_android.png"
   min_sdk_android: 21
+  windows:
+    generate: true
+    image_path: "assets/icon/icon_windows.png"
+    icon_size: 48
 
 flutter:
 
