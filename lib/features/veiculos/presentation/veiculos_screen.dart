@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_confirm_dialog.dart';
@@ -146,7 +147,7 @@ class _VeiculosScreenState extends ConsumerState<VeiculosScreen>
                   km: _formatKm(v.quilometragem),
                   visitas: 0,
                   proprietario: v.clienteNome,
-                  onTap: () => _openForm(veiculo: v),
+                  onTap: () => context.go('/veiculos/${v.id}'),
                   onLongPress: () => _excluir(v),
                 );
               },

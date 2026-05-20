@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api_constants.dart';
 import 'auth_interceptor.dart';
-import '../storage/secure_storage_provider.dart';
+import '../storage/token_storage.dart';
 
 final dioClientProvider = Provider<Dio>((ref) {
   final dio = Dio(
@@ -15,7 +15,7 @@ final dioClientProvider = Provider<Dio>((ref) {
     ),
   );
 
-  dio.interceptors.add(AuthInterceptor(ref.read(secureStorageProvider)));
+  dio.interceptors.add(AuthInterceptor(ref.read(tokenStorageProvider)));
 
   if (kDebugMode) {
     dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));

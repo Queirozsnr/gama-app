@@ -1,7 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'token_storage_web.dart' if (dart.library.io) 'token_storage_stub.dart';
+import 'secure_storage_provider.dart';
 
 const kTokenStorageKey = 'gama_auth_token';
 
@@ -11,20 +9,23 @@ abstract class TokenStorage {
   Future<void> delete();
 }
 
-class _NativeTokenStorage implements TokenStorage {
-  final _storage = const FlutterSecureStorage();
+class _SecureTokenStorage implements TokenStorage {
+  _SecureTokenStorage(this._ref);
+  final Ref _ref;
 
   @override
-  Future<String?> read() => _storage.read(key: kTokenStorageKey);
+  Future<String?> read() =>
+      _ref.read(secureStorageProvider).read(key: kTokenStorageKey);
 
   @override
   Future<void> write(String token) =>
-      _storage.write(key: kTokenStorageKey, value: token);
+      _ref.read(secureStorageProvider).write(key: kTokenStorageKey, value: token);
 
   @override
-  Future<void> delete() => _storage.delete(key: kTokenStorageKey);
+  Future<void> delete() =>
+      _ref.read(secureStorageProvider).delete(key: kTokenStorageKey);
 }
 
 final tokenStorageProvider = Provider<TokenStorage>(
-  (ref) => kIsWeb ? createWebTokenStorage() : _NativeTokenStorage(),
+  (ref) => _SecureTokenStorage(ref),
 );

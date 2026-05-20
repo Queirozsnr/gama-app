@@ -1,18 +1,17 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../storage/secure_storage_provider.dart';
+import '../storage/token_storage.dart';
 
 class AuthInterceptor extends Interceptor {
   AuthInterceptor(this._storage);
 
-  final FlutterSecureStorage _storage;
+  final TokenStorage _storage;
 
   @override
   Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await _storage.read(key: kTokenStorageKey);
+    final token = await _storage.read();
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }

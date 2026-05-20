@@ -13,6 +13,7 @@ import '../../features/ordens_servico/presentation/os_nova_screen.dart';
 import '../../features/clientes/presentation/clientes_screen.dart';
 import '../../features/clientes/presentation/cliente_detalhe_screen.dart';
 import '../../features/veiculos/presentation/veiculos_screen.dart';
+import '../../features/veiculos/presentation/veiculo_detalhe_screen.dart';
 import '../../features/estoque/presentation/estoque_screen.dart';
 import '../../features/estoque/presentation/fornecedores_screen.dart';
 import '../../features/estoque/presentation/novo_produto_screen.dart';
@@ -37,7 +38,8 @@ abstract final class AppRoutes {
   static const ordensServicoDetalhe = '/ordens-servico/:id';
   static const clientes         = '/clientes';
   static const clientesDetalhe  = '/clientes/:id';
-  static const veiculos       = '/veiculos';
+  static const veiculos        = '/veiculos';
+  static const veiculosDetalhe = '/veiculos/:id';
   static const estoque        = '/estoque';
   static const fornecedores   = '/fornecedores';
   static const funcionarios        = '/funcionarios';
@@ -138,6 +140,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: AppRoutes.clientesDetalhe,   pageBuilder: _fade((ctx, st) =>
               ClienteDetalheScreen(clienteId: int.parse(st.pathParameters['id']!)))),
           GoRoute(path: AppRoutes.veiculos,          pageBuilder: _fade((ctx, st) => const VeiculosScreen())),
+          GoRoute(path: AppRoutes.veiculosDetalhe,   pageBuilder: _fade((ctx, st) =>
+              VeiculoDetalheScreen(veiculoId: int.parse(st.pathParameters['id']!)))),
           GoRoute(path: AppRoutes.estoque,               pageBuilder: _fade((ctx, st) => const EstoqueScreen())),
           GoRoute(path: AppRoutes.estoqueProdutoNovo,    pageBuilder: _fade((ctx, st) => const NovoProdutoScreen())),
           GoRoute(path: AppRoutes.estoqueProdutoEditar,  pageBuilder: _fade((ctx, st) => NovoProdutoScreen(produto: st.extra! as ProdutoListagem))),
