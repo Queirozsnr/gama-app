@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/state/top_bar_scope.dart';
 import '../../../../shared/widgets/chips/status_chip.dart';
@@ -329,7 +328,7 @@ class _PeriodBar extends StatelessWidget {
           children: [
             Text(
               'PERÍODO',
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink3,
@@ -355,7 +354,7 @@ class _PeriodBar extends StatelessWidget {
                     ),
                     child: Text(
                       opt.label,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: isActive ? Colors.white : AppColors.ink2,
@@ -380,7 +379,7 @@ class _PeriodBar extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     _dateRangeLabel(periodo),
-                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2),
                   ),
                 ],
               ),
@@ -429,7 +428,7 @@ class _FilterDropdown extends StatelessWidget {
           value: opt.value ?? '\x00',
           child: Text(
             opt.label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 13,
               fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
               color: isSel ? AppColors.accent : AppColors.ink,
@@ -450,7 +449,7 @@ class _FilterDropdown extends StatelessWidget {
           children: [
             Text(
               '$label: $_displayLabel',
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: isActive ? AppColors.accent : AppColors.ink2,
@@ -518,7 +517,7 @@ class _FiltrosBar extends StatelessWidget {
               child: Row(
                 children: [
                   Text('FILTROS',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 10, fontWeight: FontWeight.w700,
                           color: AppColors.ink3, letterSpacing: 0.8)),
                   const SizedBox(width: 10),
@@ -574,7 +573,7 @@ class _FiltrosBar extends StatelessWidget {
                   .map((e) => PopupMenuItem<int>(
                         value: e.key,
                         child: Text(e.value.label,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: 'Inter', 
                                 fontSize: 13,
                                 fontWeight: (e.value.campo == ordenarCampo &&
                                         e.value.asc == ordenarAsc)
@@ -588,11 +587,11 @@ class _FiltrosBar extends StatelessWidget {
                   .toList(),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('ORDENAR: ',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 10, fontWeight: FontWeight.w700,
                         color: AppColors.ink3, letterSpacing: 0.8)),
                 Text(_ordenarLabel,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 11, fontWeight: FontWeight.w700,
                         color: AppColors.ink2)),
               ]),
@@ -729,7 +728,7 @@ class _KpiCard extends StatelessWidget {
         children: [
           Text(
             data.label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: AppColors.ink3,
@@ -739,7 +738,7 @@ class _KpiCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             data.value,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 22,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
@@ -749,7 +748,7 @@ class _KpiCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             data.subtitle,
-            style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink2),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink2),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -842,7 +841,7 @@ class _ColLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: GoogleFonts.inter(
+        style: TextStyle(fontFamily: 'Inter', 
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: AppColors.ink3,
@@ -920,7 +919,7 @@ class _TableRowState extends State<_TableRow> {
                   ),
                   Text(
                     _fmtShort(os.dataEntrada),
-                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink3),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink3),
                   ),
                 ],
               ),
@@ -943,7 +942,7 @@ class _TableRowState extends State<_TableRow> {
                   if (os.primeiroServico != null)
                     Text(
                       os.primeiroServico!,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: AppColors.ink,
@@ -975,7 +974,7 @@ class _TableRowState extends State<_TableRow> {
                       Expanded(
                         child: Text(
                           os.veiculoDescricao,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 11,
                             color: AppColors.ink2,
                           ),
@@ -993,7 +992,7 @@ class _TableRowState extends State<_TableRow> {
             Expanded(
               child: Text(
                 os.clienteNome,
-                style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1002,7 +1001,7 @@ class _TableRowState extends State<_TableRow> {
             // Mecânico com avatar
             Expanded(
               child: os.mecanicoNomes.isEmpty
-                  ? Text('—', style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink3))
+                  ? Text('—', style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3))
                   : Row(
                       children: [
                         _Avatar(nome: os.mecanicoNomes.first),
@@ -1012,7 +1011,7 @@ class _TableRowState extends State<_TableRow> {
                             os.mecanicoNomes.length == 1
                                 ? os.mecanicoNomes.first
                                 : '${os.mecanicoNomes.first} +${os.mecanicoNomes.length - 1}',
-                            style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+                            style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1026,7 +1025,7 @@ class _TableRowState extends State<_TableRow> {
               width: 90,
               child: Text(
                 _fmtBrl(os.total),
-                style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink, fontWeight: FontWeight.w500),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink, fontWeight: FontWeight.w500),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1036,10 +1035,10 @@ class _TableRowState extends State<_TableRow> {
             SizedBox(
               width: 90,
               child: os.previsaoEntrega == null
-                  ? Text('—', style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink3))
+                  ? Text('—', style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3))
                   : Text(
                       _fmtDate(os.previsaoEntrega!),
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 13,
                         fontWeight: atrasada ? FontWeight.w600 : FontWeight.w400,
                         color: atrasada ? AppColors.danger : AppColors.ink2,
@@ -1097,7 +1096,7 @@ class _Avatar extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         initials,
-        style: GoogleFonts.inter(
+        style: TextStyle(fontFamily: 'Inter', 
           fontSize: 9,
           fontWeight: FontWeight.w700,
           color: AppColors.ink2,
@@ -1231,7 +1230,7 @@ class _StatBox extends StatelessWidget {
         children: [
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -1241,7 +1240,7 @@ class _StatBox extends StatelessWidget {
           const SizedBox(height: 1),
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 9,
               fontWeight: FontWeight.w600,
               color: AppColors.sidebarText,
@@ -1282,10 +1281,10 @@ class _MobileSearchRow extends StatelessWidget {
                 controller: controller,
                 onChanged: onChanged,
                 autofocus: true,
-                style: GoogleFonts.inter(fontSize: 13, color: Colors.white),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'Cliente, veículo ou placa…',
-                  hintStyle: GoogleFonts.inter(
+                  hintStyle: TextStyle(fontFamily: 'Inter', 
                       fontSize: 13, color: AppColors.sidebarText),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
@@ -1318,7 +1317,7 @@ class _DateGroupHeader extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: AppColors.ink3,
@@ -1328,7 +1327,7 @@ class _DateGroupHeader extends StatelessWidget {
           const Spacer(),
           Text(
             '$count',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.ink3,
@@ -1354,7 +1353,7 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Nenhuma OS encontrada',
-              style: GoogleFonts.inter(fontSize: 15, color: AppColors.ink2),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: AppColors.ink2),
             ),
           ],
         ),
@@ -1374,7 +1373,7 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Erro ao carregar ordens de serviço',
-              style: GoogleFonts.inter(fontSize: 15, color: AppColors.ink2),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: AppColors.ink2),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(

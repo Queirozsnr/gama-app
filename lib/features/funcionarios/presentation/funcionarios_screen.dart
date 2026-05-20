@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
@@ -303,7 +302,7 @@ class _AtivoChip extends StatelessWidget {
       ),
       child: Text(
         ativo ? 'ATIVO' : 'INATIVO',
-        style: GoogleFonts.inter(
+        style: TextStyle(fontFamily: 'Inter', 
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: ativo ? AppColors.ok : AppColors.ink3,

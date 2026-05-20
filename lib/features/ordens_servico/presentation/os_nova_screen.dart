@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/state/top_bar_scope.dart';
 import '../../../../shared/widgets/gama_avatar.dart';
@@ -287,11 +286,11 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(_sectionTitles[idx],
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                               fontSize: 14, fontWeight: FontWeight.w700,
                               color: isPending ? AppColors.ink2 : AppColors.ink)),
                       Text(_sectionSubtitles[idx],
-                          style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink3)),
+                          style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink3)),
                     ],
                   ),
                 ),
@@ -299,7 +298,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
                   GestureDetector(
                     onTap: () => _goToSection(idx),
                     child: Text('Editar',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent)),
                   ),
               ],
@@ -337,14 +336,14 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(_cliente!.nome,
-              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
           if (_veiculo != null)
             Row(children: [
               _SmallPlate(placa: _veiculo!.placa ?? ''),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(_veiculo!.modeloNome,
-                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2),
                     overflow: TextOverflow.ellipsis),
               ),
             ]),
@@ -448,7 +447,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
             const SizedBox(width: 8),
             Expanded(
               child: Text('Peças do estoque serão baixadas ao criar a OS.',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.accent)),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.accent)),
             ),
           ]),
         ),
@@ -468,7 +467,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
       ),
       const SizedBox(height: 14),
       Text('Prazo de entrega',
-          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
+          style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
       const SizedBox(height: 6),
       GestureDetector(
         onTap: _pickDate,
@@ -487,7 +486,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
               _previsaoEntrega != null
                   ? '${_previsaoEntrega!.day.toString().padLeft(2, '0')}/${_previsaoEntrega!.month.toString().padLeft(2, '0')}/${_previsaoEntrega!.year}'
                   : 'Selecionar data (opcional)',
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                   fontSize: 14,
                   color: _previsaoEntrega != null ? AppColors.ink : AppColors.ink3),
             ),
@@ -496,14 +495,14 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
       ),
       const SizedBox(height: 14),
       Text('Observações',
-          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
+          style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
       const SizedBox(height: 6),
       TextFormField(
         controller: _obsCtrl,
         maxLines: 3,
         decoration: InputDecoration(
           hintText: 'Notas internas ou relato do cliente…',
-          hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.ink3),
+          hintStyle: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -514,7 +513,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           filled: true, fillColor: AppColors.surface,
         ),
-        style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+        style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
       ),
       const SizedBox(height: 14),
       _ResumoFinanceiro(
@@ -594,15 +593,15 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
               ),
               alignment: Alignment.center,
               child: Text('$num',
-                  style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.accent)),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.accent)),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(title,
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink)),
                 Text(subtitle,
-                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink3)),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink3)),
               ]),
             ),
           ]),
@@ -682,7 +681,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
             const SizedBox(width: 8),
             Expanded(
               child: Text('Ao criar a OS, as peças listadas serão baixadas do estoque automaticamente.',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.accent)),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.accent)),
             ),
           ]),
         ),
@@ -724,7 +723,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
                 Expanded(
                   child: Text(
                     dateStr ?? 'Prazo de entrega (opcional)',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 14, color: dateStr != null ? AppColors.ink : AppColors.ink2),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -753,7 +752,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
       maxLines: 3,
       decoration: InputDecoration(
         hintText: 'Notas internas ou relato do cliente…',
-        hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.ink3),
+        hintStyle: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -764,7 +763,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         filled: true, fillColor: AppColors.surface,
       ),
-      style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+      style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
     );
   }
 }
@@ -830,7 +829,7 @@ class _StepDot extends StatelessWidget {
         const SizedBox(height: 3),
         Text(
           _stepLabels[index],
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: 'Inter', 
             fontSize: 10,
             fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
             color: isActive ? AppColors.accent : isDone ? AppColors.ink2 : AppColors.ink3,
@@ -876,7 +875,7 @@ class _MobileBottomBar extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('TOTAL PARCIAL',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 9, fontWeight: FontWeight.w700,
                     color: AppColors.ink3, letterSpacing: 0.8)),
             const SizedBox(height: 2),
@@ -884,14 +883,14 @@ class _MobileBottomBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(_fmtMoney(totalGeral),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 22, fontWeight: FontWeight.w800,
                         color: AppColors.ink, letterSpacing: -0.5)),
                 const SizedBox(width: 10),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 3),
                   child: Text(countStr,
-                      style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink2)),
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink2)),
                 ),
               ],
             ),
@@ -912,7 +911,7 @@ class _MobileBottomBar extends StatelessWidget {
                           child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
                       : Text(
                           isLast ? 'Criar OS →' : 'Próximo · ${_nextLabels[step]} →',
-                          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700),
+                          style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700),
                         ),
                 ),
               ),
@@ -939,7 +938,7 @@ class _RascunhoChip extends StatelessWidget {
         border: Border.all(color: AppColors.line),
       ),
       child: Text('RASCUNHO',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: 'Inter', 
               fontSize: 10, fontWeight: FontWeight.w700,
               color: AppColors.ink2, letterSpacing: 0.6)),
     );
@@ -965,7 +964,7 @@ class _AddItemButton extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Text(label,
-            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.accent)),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.accent)),
       ),
     );
   }
@@ -985,7 +984,7 @@ class _SmallPlate extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(placa,
-          style: GoogleFonts.jetBrainsMono(
+          style: TextStyle(fontFamily: 'JetBrains Mono', 
               fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.ink)),
     );
   }
@@ -1017,7 +1016,7 @@ class _MobileServicoTileState extends State<_MobileServicoTile> {
 
   InputDecoration _dec(String label) => InputDecoration(
     labelText: label,
-    labelStyle: GoogleFonts.inter(color: AppColors.ink2, fontSize: 13),
+    labelStyle: TextStyle(fontFamily: 'Inter', color: AppColors.ink2, fontSize: 13),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
     enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.line)),
@@ -1045,7 +1044,7 @@ class _MobileServicoTileState extends State<_MobileServicoTile> {
             const Icon(Icons.build_circle_outlined, size: 15, color: AppColors.ink2),
             const SizedBox(width: 6),
             Text('Serviço',
-                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
             const Spacer(),
             GestureDetector(
               onTap: widget.onRemove,
@@ -1059,7 +1058,7 @@ class _MobileServicoTileState extends State<_MobileServicoTile> {
               child: TextField(
                 controller: _desc,
                 decoration: _dec('Descrição'),
-                style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
                 onChanged: (v) { widget.item.descricao = v; widget.onChanged(); },
               ),
             ),
@@ -1070,7 +1069,7 @@ class _MobileServicoTileState extends State<_MobileServicoTile> {
                 controller: _valor,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: _dec('R\$'),
-                style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
                 onChanged: (v) {
                   widget.item.valorUnitario = double.tryParse(v.replaceAll(',', '.')) ?? 0;
                   widget.onChanged();
@@ -1111,7 +1110,7 @@ class _MobilePecaTileState extends State<_MobilePecaTile> {
 
   InputDecoration _dec(String label) => InputDecoration(
     labelText: label,
-    labelStyle: GoogleFonts.inter(color: AppColors.ink2, fontSize: 13),
+    labelStyle: TextStyle(fontFamily: 'Inter', color: AppColors.ink2, fontSize: 13),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
     enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.line)),
@@ -1148,14 +1147,14 @@ class _MobilePecaTileState extends State<_MobilePecaTile> {
             const Icon(Icons.inventory_2_outlined, size: 15, color: AppColors.ink2),
             const SizedBox(width: 6),
             Text('Peça',
-                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink2)),
             if (isEstoque) ...[
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(color: AppColors.accentSoft, borderRadius: BorderRadius.circular(4)),
                 child: Text('Estoque',
-                    style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.accent)),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.accent)),
               ),
             ],
             const Spacer(),
@@ -1167,24 +1166,24 @@ class _MobilePecaTileState extends State<_MobilePecaTile> {
           const SizedBox(height: 8),
           if (isEstoque) ...[
             Text(widget.item.descricao,
-                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
             const SizedBox(height: 3),
             Row(children: [
               if (widget.item.produtoCodigo != null)
                 Text(widget.item.produtoCodigo!,
-                    style: GoogleFonts.jetBrainsMono(fontSize: 11, color: AppColors.ink2)),
+                    style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, color: AppColors.ink2)),
               if (widget.item.produtoEstoque != null) ...[
                 const SizedBox(width: 4),
                 Text('· estoque ${widget.item.produtoEstoque!.toInt()}',
-                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink3)),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink3)),
               ],
               const Spacer(),
               Text(_fmtMoney(widget.item.valorUnitario * widget.item.quantidade),
-                  style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink)),
             ]),
             const SizedBox(height: 8),
             Row(children: [
-              Text('Qtd:', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
+              Text('Qtd:', style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2)),
               const SizedBox(width: 8),
               _QtyControl(controller: _qtd, onInc: () => _incQty(1), onDec: () => _incQty(-1)),
             ]),
@@ -1195,7 +1194,7 @@ class _MobilePecaTileState extends State<_MobilePecaTile> {
                 child: TextField(
                   controller: _desc,
                   decoration: _dec('Descrição'),
-                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
                   onChanged: (v) { widget.item.descricao = v; widget.onChanged(); },
                 ),
               ),
@@ -1206,7 +1205,7 @@ class _MobilePecaTileState extends State<_MobilePecaTile> {
                   controller: _qtd,
                   keyboardType: TextInputType.number,
                   decoration: _dec('Qtd'),
-                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
                   onChanged: (v) { widget.item.quantidade = double.tryParse(v) ?? 1; widget.onChanged(); },
                 ),
               ),
@@ -1217,7 +1216,7 @@ class _MobilePecaTileState extends State<_MobilePecaTile> {
                   controller: _valor,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: _dec('R\$'),
-                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
                   onChanged: (v) {
                     widget.item.valorUnitario = double.tryParse(v.replaceAll(',', '.')) ?? 0;
                     widget.onChanged();
@@ -1227,7 +1226,7 @@ class _MobilePecaTileState extends State<_MobilePecaTile> {
             ]),
             const SizedBox(height: 8),
             Row(children: [
-              Text('Origem:', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
+              Text('Origem:', style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2)),
               const SizedBox(width: 8),
               _OrigemToggle(
                 value: widget.item.origemPeca ?? 'Comprado',
@@ -1259,7 +1258,7 @@ class _QtyControl extends StatelessWidget {
           textAlign: TextAlign.center,
           decoration: const InputDecoration(
               border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
-          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
+          style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
         ),
       ),
       _QtyBtn(icon: Icons.add, onTap: onInc),
@@ -1317,10 +1316,10 @@ class _ResumoFinanceiro extends StatelessWidget {
         ),
         Row(children: [
           Text('Total',
-              style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.ink)),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.ink)),
           const Spacer(),
           Text(_fmtMoney(totalGeral),
-              style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.ink)),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.ink)),
         ]),
       ]),
     );
@@ -1335,9 +1334,9 @@ class _FinRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Text(label, style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink2)),
+      Text(label, style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink2)),
       const Spacer(),
-      Text(_fmtMoney(value), style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink)),
+      Text(_fmtMoney(value), style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink)),
     ]);
   }
 }
@@ -1369,7 +1368,7 @@ class _DeskServicoRowState extends State<_DeskServicoRow> {
 
   InputDecoration _dec(String hint) => InputDecoration(
     hintText: hint,
-    hintStyle: GoogleFonts.inter(color: AppColors.ink3, fontSize: 13),
+    hintStyle: TextStyle(fontFamily: 'Inter', color: AppColors.ink3, fontSize: 13),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
     enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.line)),
@@ -1396,7 +1395,7 @@ class _DeskServicoRowState extends State<_DeskServicoRow> {
           child: TextField(
             controller: _desc,
             decoration: _dec('Descrição do serviço'),
-            style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
             onChanged: (v) { widget.item.descricao = v; widget.onChanged(); },
           ),
         ),
@@ -1407,7 +1406,7 @@ class _DeskServicoRowState extends State<_DeskServicoRow> {
             controller: _qtd,
             keyboardType: TextInputType.number,
             decoration: _dec('Qtd'),
-            style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
             onChanged: (v) { widget.item.quantidade = double.tryParse(v) ?? 1; widget.onChanged(); },
           ),
         ),
@@ -1418,7 +1417,7 @@ class _DeskServicoRowState extends State<_DeskServicoRow> {
             controller: _valor,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: _dec('R\$'),
-            style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
             onChanged: (v) {
               widget.item.valorUnitario = double.tryParse(v.replaceAll(',', '.')) ?? 0;
               widget.onChanged();
@@ -1430,7 +1429,7 @@ class _DeskServicoRowState extends State<_DeskServicoRow> {
           width: 80,
           child: Text(
             _fmtMoney(widget.item.quantidade * widget.item.valorUnitario),
-            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink),
             textAlign: TextAlign.right,
           ),
         ),
@@ -1474,7 +1473,7 @@ class _DeskPecaRowState extends State<_DeskPecaRow> {
 
   InputDecoration _dec(String hint) => InputDecoration(
     hintText: hint,
-    hintStyle: GoogleFonts.inter(color: AppColors.ink3, fontSize: 13),
+    hintStyle: TextStyle(fontFamily: 'Inter', color: AppColors.ink3, fontSize: 13),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
     enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.line)),
@@ -1513,20 +1512,20 @@ class _DeskPecaRowState extends State<_DeskPecaRow> {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(color: AppColors.accentSoft, borderRadius: BorderRadius.circular(4)),
         child: Text('Estoque',
-            style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.accent)),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.accent)),
       ),
       const SizedBox(width: 10),
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(widget.item.descricao,
-              style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
           if (widget.item.produtoCodigo != null)
             Row(children: [
               Text(widget.item.produtoCodigo!,
-                  style: GoogleFonts.jetBrainsMono(fontSize: 11, color: AppColors.ink2)),
+                  style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, color: AppColors.ink2)),
               if (widget.item.produtoEstoque != null)
                 Text(' · estoque: ${widget.item.produtoEstoque!.toInt()} un',
-                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink3)),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink3)),
             ]),
         ]),
       ),
@@ -1537,7 +1536,7 @@ class _DeskPecaRowState extends State<_DeskPecaRow> {
         width: 90,
         child: Text(
           _fmtMoney(widget.item.valorUnitario * widget.item.quantidade),
-          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink),
+          style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink),
           textAlign: TextAlign.right,
         ),
       ),
@@ -1559,7 +1558,7 @@ class _DeskPecaRowState extends State<_DeskPecaRow> {
           child: TextField(
             controller: _desc,
             decoration: _dec('Descrição da peça'),
-            style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
             onChanged: (v) { widget.item.descricao = v; widget.onChanged(); },
           ),
         ),
@@ -1570,7 +1569,7 @@ class _DeskPecaRowState extends State<_DeskPecaRow> {
             controller: _qtd,
             keyboardType: TextInputType.number,
             decoration: _dec('Qtd'),
-            style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
             onChanged: (v) { widget.item.quantidade = double.tryParse(v) ?? 1; widget.onChanged(); },
           ),
         ),
@@ -1581,7 +1580,7 @@ class _DeskPecaRowState extends State<_DeskPecaRow> {
             controller: _valor,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: _dec('R\$'),
-            style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
             onChanged: (v) {
               widget.item.valorUnitario = double.tryParse(v.replaceAll(',', '.')) ?? 0;
               widget.onChanged();
@@ -1599,7 +1598,7 @@ class _DeskPecaRowState extends State<_DeskPecaRow> {
       ]),
       const SizedBox(height: 8),
       Row(children: [
-        Text('Origem:', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
+        Text('Origem:', style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2)),
         const SizedBox(width: 8),
         _OrigemToggle(
           value: widget.item.origemPeca ?? 'Comprado',
@@ -1639,7 +1638,7 @@ class _DeskSidebar extends StatelessWidget {
             const Icon(Icons.receipt_long_outlined, size: 16, color: AppColors.ink2),
             const SizedBox(width: 8),
             Text('Resumo da OS',
-                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink)),
           ]),
           const SizedBox(height: 16),
           _FinRow('$nServicos ${nServicos == 1 ? 'serviço' : 'serviços'}', totalServicos),
@@ -1653,10 +1652,10 @@ class _DeskSidebar extends StatelessWidget {
           ),
           Row(children: [
             Text('Total',
-                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.ink)),
             const Spacer(),
             Text(_fmtMoney(totalGeral),
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 20, fontWeight: FontWeight.w800,
                     color: AppColors.ink, letterSpacing: -0.5)),
           ]),
@@ -1673,7 +1672,7 @@ class _DeskSidebar extends StatelessWidget {
             Expanded(
               child: Text(
                   'Ao criar a OS, as peças listadas serão baixadas do estoque automaticamente.',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.accent)),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.accent)),
             ),
           ]),
         ),
@@ -1691,18 +1690,18 @@ class _DeskSidebar extends StatelessWidget {
             ? const SizedBox(width: 20, height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : Text('Criar OS',
-                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700)),
       ),
       TextButton(
         onPressed: null,
         style: TextButton.styleFrom(foregroundColor: AppColors.ink2),
         child: Text('Salvar como rascunho',
-            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600)),
       ),
       TextButton(
         onPressed: onCancelar,
         style: TextButton.styleFrom(foregroundColor: AppColors.ink3),
-        child: Text('Cancelar', style: GoogleFonts.inter(fontSize: 13)),
+        child: Text('Cancelar', style: TextStyle(fontFamily: 'Inter', fontSize: 13)),
       ),
     ]);
   }
@@ -1743,7 +1742,7 @@ class _ToggleBtn extends StatelessWidget {
           border: Border.all(color: active ? AppColors.accent : AppColors.line),
         ),
         child: Text(label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 11, fontWeight: FontWeight.w600,
                 color: active ? Colors.white : AppColors.ink2)),
       ),

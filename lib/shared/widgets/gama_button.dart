@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 
 enum GamaButtonVariant { primary, secondary, danger }
@@ -49,7 +48,7 @@ class GamaButton extends StatelessWidget {
             : Text(label);
 
     final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
-    final labelStyle = GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.5);
+    final labelStyle = TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 13.5);
 
     Widget button = switch (variant) {
       GamaButtonVariant.primary => FilledButton(

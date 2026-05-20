@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
@@ -477,7 +476,7 @@ class _KpiCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: AppColors.ink3,
@@ -487,7 +486,7 @@ class _KpiCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 22,
               fontWeight: FontWeight.w700,
               color: valueColor ?? AppColors.ink,
@@ -497,7 +496,7 @@ class _KpiCard extends StatelessWidget {
           if (sub != null)
             Text(
               sub!,
-              style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink3),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink3),
             ),
         ],
       ),
@@ -598,7 +597,7 @@ class _VeiculoCard extends StatelessWidget {
                   children: [
                     Text(
                       veiculo.modeloNome,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
@@ -618,7 +617,7 @@ class _VeiculoCard extends StatelessWidget {
                               if (veiculo.ano != null) '${veiculo.ano}',
                               if (veiculo.cor != null) veiculo.cor!,
                             ].join(' · '),
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: 'Inter', 
                               fontSize: 11,
                               color: AppColors.ink2,
                             ),
@@ -696,7 +695,7 @@ class _StatusBadge extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             status.label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: status.color,
@@ -728,7 +727,7 @@ class _MetaRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: 'Inter', 
             fontSize: 9,
             fontWeight: FontWeight.w700,
             color: AppColors.ink3,
@@ -738,7 +737,7 @@ class _MetaRow extends StatelessWidget {
         const SizedBox(height: 1),
         Text(
           value,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: 'Inter', 
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppColors.ink,
@@ -747,7 +746,7 @@ class _MetaRow extends StatelessWidget {
         if (sub != null)
           Text(
             sub!,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 10,
               color: subColor ?? AppColors.ink3,
             ),
@@ -863,7 +862,7 @@ class _HeaderCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: GoogleFonts.inter(
+        style: TextStyle(fontFamily: 'Inter', 
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: AppColors.ink2,
@@ -914,7 +913,7 @@ class _OsHistoricoRow extends StatelessWidget {
                 if (os.descricao != null)
                   Text(
                     os.descricao!,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
@@ -932,7 +931,7 @@ class _OsHistoricoRow extends StatelessWidget {
                       if (os.veiculoDescricao != null)
                         Text(
                           os.veiculoDescricao!,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                               fontSize: 11, color: AppColors.ink2),
                         ),
                     ],
@@ -945,7 +944,7 @@ class _OsHistoricoRow extends StatelessWidget {
               width: 80,
               child: Text(
                 os.mecanicoNome ?? '—',
-                style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -954,7 +953,7 @@ class _OsHistoricoRow extends StatelessWidget {
             width: 72,
             child: Text(
               _fmtBrl(os.total),
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
@@ -965,7 +964,7 @@ class _OsHistoricoRow extends StatelessWidget {
             width: 40,
             child: Text(
               '${os.data.day.toString().padLeft(2, '0')}/${os.data.month.toString().padLeft(2, '0')}',
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2),
             ),
           ),
         ],
@@ -1026,7 +1025,7 @@ class _OsStatusChip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             status.label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: status.color,
@@ -1097,7 +1096,7 @@ class _AcaoCard extends StatelessWidget {
               children: [
                 Text(
                   acao.descricao,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
@@ -1106,7 +1105,7 @@ class _AcaoCard extends StatelessWidget {
                 if (acao.detalhe != null)
                   Text(
                     acao.detalhe!,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 11,
                       color: AppColors.ink3,
                       fontWeight: FontWeight.w600,
@@ -1124,7 +1123,7 @@ class _AcaoCard extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text('Agendar',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 12, fontWeight: FontWeight.w600)),
           ),
         ],
@@ -1169,7 +1168,7 @@ class _Sidebar extends StatelessWidget {
                               Flexible(
                                 child: Text(
                                   detalhe.nome,
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: 'Inter', 
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.ink,
@@ -1186,7 +1185,7 @@ class _Sidebar extends StatelessWidget {
                           ),
                           Text(
                             'Cliente desde ${_fmtDate(detalhe.criadoEm)}',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: 'Inter', 
                               fontSize: 11,
                               color: AppColors.ink3,
                             ),
@@ -1237,7 +1236,7 @@ class _Sidebar extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       'Notas internas',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
@@ -1257,7 +1256,7 @@ class _Sidebar extends StatelessWidget {
                 detalhe.notasInternas != null && detalhe.notasInternas!.isNotEmpty
                     ? Text(
                         detalhe.notasInternas!,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 12,
                           color: AppColors.ink2,
                           height: 1.5,
@@ -1265,7 +1264,7 @@ class _Sidebar extends StatelessWidget {
                       )
                     : Text(
                         'Nenhuma nota adicionada.',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 12,
                           color: AppColors.ink3,
                           fontStyle: FontStyle.italic,
@@ -1290,7 +1289,7 @@ class _Sidebar extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         'Preferências',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
@@ -1364,7 +1363,7 @@ class _ContactRow extends StatelessWidget {
           Flexible(
             child: Text(
               text,
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1390,12 +1389,12 @@ class _PrefRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink3),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink3),
             ),
           ),
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
@@ -1419,7 +1418,7 @@ class _VipBadge extends StatelessWidget {
       ),
       child: Text(
         'VIP',
-        style: GoogleFonts.inter(
+        style: TextStyle(fontFamily: 'Inter', 
           fontSize: 9,
           fontWeight: FontWeight.w800,
           color: AppColors.ok,
@@ -1477,7 +1476,7 @@ class _Section extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
@@ -1486,7 +1485,7 @@ class _Section extends StatelessWidget {
                       if (subtitle != null)
                         Text(
                           subtitle!,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 11,
                             color: AppColors.ink3,
                           ),
@@ -1517,7 +1516,7 @@ class _EmptyState extends StatelessWidget {
       child: Center(
         child: Text(
           message,
-          style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink3),
+          style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3),
         ),
       ),
     );
@@ -1540,7 +1539,7 @@ class _ErrorView extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Erro ao carregar ficha do cliente',
-            style: GoogleFonts.inter(fontSize: 15, color: AppColors.ink2),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: AppColors.ink2),
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -1753,7 +1752,7 @@ class _MobileDarkRow extends StatelessWidget {
           Flexible(
             child: Text(
               text,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 12,
                 color: AppColors.sidebarText,
               ),
@@ -1827,7 +1826,7 @@ class _MobileKpiCell extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 9,
               fontWeight: FontWeight.w700,
               color: AppColors.ink3,
@@ -1837,7 +1836,7 @@ class _MobileKpiCell extends StatelessWidget {
           const SizedBox(height: 1),
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
@@ -1896,7 +1895,7 @@ class _MobileTabBar extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   _labels[i],
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: active ? AppColors.accent : AppColors.ink3,
@@ -2104,7 +2103,7 @@ class _MobileVeiculoCard extends StatelessWidget {
                 children: [
                   Text(
                     veiculo.modeloNome,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
@@ -2120,7 +2119,7 @@ class _MobileVeiculoCard extends StatelessWidget {
                       if (veiculo.odometro != null)
                         Text(
                           '${_fmtKm(veiculo.odometro!)} km',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 11,
                             color: AppColors.ink3,
                           ),
@@ -2177,7 +2176,7 @@ class _MobileOsCard extends StatelessWidget {
                 const Spacer(),
                 Text(
                   '${os.data.day.toString().padLeft(2, '0')}/${os.data.month.toString().padLeft(2, '0')}',
-                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink3),
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink3),
                 ),
               ],
             ),
@@ -2185,7 +2184,7 @@ class _MobileOsCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 os.descricao!,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: AppColors.ink,
@@ -2205,7 +2204,7 @@ class _MobileOsCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       os.veiculoDescricao!,
-                      style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink2),
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink2),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -2214,7 +2213,7 @@ class _MobileOsCard extends StatelessWidget {
                   const Spacer(),
                 Text(
                   _fmtBrl(os.total),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
@@ -2249,7 +2248,7 @@ class _MobileSectionHeader extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: 'Inter', 
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: AppColors.ink3,
@@ -2287,7 +2286,7 @@ class _MobileNotasCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 'NOTAS INTERNAS',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: AppColors.ink3,
@@ -2308,7 +2307,7 @@ class _MobileNotasCard extends StatelessWidget {
           notas != null && notas!.isNotEmpty
               ? Text(
                   notas!,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 12,
                     color: AppColors.ink2,
                     height: 1.5,
@@ -2316,7 +2315,7 @@ class _MobileNotasCard extends StatelessWidget {
                 )
               : Text(
                   'Nenhuma nota adicionada.',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 12,
                     color: AppColors.ink3,
                     fontStyle: FontStyle.italic,
@@ -2344,7 +2343,7 @@ class _MobileEmptyCard extends StatelessWidget {
       child: Center(
         child: Text(
           message,
-          style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink3),
+          style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3),
         ),
       ),
     );

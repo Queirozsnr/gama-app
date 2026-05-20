@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/jwt_decoder.dart';
 import '../../features/auth/domain/auth_state.dart';
@@ -91,7 +90,7 @@ class GamaSidebar extends ConsumerWidget {
                       padding: const EdgeInsets.fromLTRB(8, 14, 8, 4),
                       child: Text(
                         section.label.toUpperCase(),
-                        style: GoogleFonts.jetBrainsMono(
+                        style: TextStyle(fontFamily: 'JetBrains Mono', 
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
                           color: AppColors.sidebarText.withValues(alpha: 0.5),
@@ -177,7 +176,7 @@ class _Logo extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   'G',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     color: const Color(0xFF1A1714),
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
@@ -197,7 +196,7 @@ class _Logo extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     'G',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       color: const Color(0xFF1A1714),
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
@@ -210,7 +209,7 @@ class _Logo extends StatelessWidget {
                   children: [
                     Text(
                       'GAMA',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -219,7 +218,7 @@ class _Logo extends StatelessWidget {
                     ),
                     Text(
                       'oficina · v1.0',
-                      style: GoogleFonts.jetBrainsMono(
+                      style: TextStyle(fontFamily: 'JetBrains Mono', 
                         fontSize: 9,
                         color: AppColors.sidebarText,
                         letterSpacing: 1,
@@ -367,7 +366,7 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
                   children: [
                     Text(
                       widget.name,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -376,7 +375,7 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
                     ),
                     Text(
                       widget.oficinaNome ?? 'PLANO PRO',
-                      style: GoogleFonts.jetBrainsMono(
+                      style: TextStyle(fontFamily: 'JetBrains Mono', 
                         fontSize: 9,
                         color: AppColors.accent,
                         letterSpacing: 0.4,
@@ -518,7 +517,7 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
       child: Text(
         label,
-        style: GoogleFonts.jetBrainsMono(
+        style: TextStyle(fontFamily: 'JetBrains Mono', 
           fontSize: 9,
           fontWeight: FontWeight.w700,
           color: AppColors.ink3,
@@ -559,7 +558,7 @@ class _DropdownItem extends StatelessWidget {
             Expanded(
               child: Text(
                 nome,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   fontSize: 13,
                   fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
                   color: AppColors.ink,
@@ -614,7 +613,7 @@ class _DropdownAction extends StatelessWidget {
               const SizedBox(width: 10),
               Text(
                 label,
-                style: GoogleFonts.inter(fontSize: 13, color: color),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: color),
               ),
             ],
           ),
@@ -668,7 +667,7 @@ class _SidebarNavItem extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.label,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 13.5,
                         fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                         color: isActive ? const Color(0xFF1A1714) : AppColors.sidebarText,
@@ -724,7 +723,7 @@ class _UserProfile extends ConsumerWidget {
               children: [
                 Text(
                   name,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -734,7 +733,7 @@ class _UserProfile extends ConsumerWidget {
                 if (role.isNotEmpty)
                   Text(
                     role,
-                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.sidebarText),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.sidebarText),
                   ),
               ],
             ),

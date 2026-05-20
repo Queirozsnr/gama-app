@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../state/top_bar_scope.dart';
 import '../widgets/notification_bell.dart';
@@ -79,7 +78,7 @@ class _DesktopTopBar extends StatelessWidget {
               children: [
                 Text(
                   effectiveTitle,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
@@ -89,7 +88,7 @@ class _DesktopTopBar extends StatelessWidget {
                 if (pageSubtitle != null)
                   Text(
                     pageSubtitle!,
-                    style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink2),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink2),
                   ),
               ],
             ),
@@ -186,7 +185,7 @@ class _DarkMobileHeader extends StatelessWidget {
                     if (hasSubtitle)
                       Text(
                         slot!.mobileSubtitle!,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: AppColors.accent,
@@ -196,7 +195,7 @@ class _DarkMobileHeader extends StatelessWidget {
                     if (title != null)
                       Text(
                         title!,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -269,7 +268,7 @@ class _LightMobileHeader extends StatelessWidget {
                         if (hasSubtitle)
                           Text(
                             slot!.mobileSubtitle!,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: 'Inter', 
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: AppColors.accent,
@@ -279,7 +278,7 @@ class _LightMobileHeader extends StatelessWidget {
                         if (title != null)
                           Text(
                             title!,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: 'Inter', 
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: AppColors.ink,
@@ -345,10 +344,10 @@ class _SearchBar extends StatelessWidget {
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.ink3),
+                hintStyle: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,

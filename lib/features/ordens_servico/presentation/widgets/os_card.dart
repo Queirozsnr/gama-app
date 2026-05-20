@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../shared/widgets/chips/status_chip.dart';
 import '../../domain/ordem_servico.dart';
@@ -64,7 +63,7 @@ class OsCard extends StatelessWidget {
                 if (prazoLabel.isNotEmpty)
                   Text(
                     prazoLabel,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: atrasada ? AppColors.danger : AppColors.ink3,
@@ -77,7 +76,7 @@ class OsCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 os.primeiroServico!,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: AppColors.ink,
@@ -98,7 +97,7 @@ class OsCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '${os.veiculoDescricao} · ${os.clienteNome}',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 12,
                       color: AppColors.ink2,
                     ),
@@ -120,7 +119,7 @@ class OsCard extends StatelessWidget {
                       os.mecanicoNomes.length == 1
                           ? os.mecanicoNomes.first
                           : '${os.mecanicoNomes.first} +${os.mecanicoNomes.length - 1}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 12,
                         color: AppColors.ink2,
                       ),
@@ -132,7 +131,7 @@ class OsCard extends StatelessWidget {
                   const Spacer(),
                 Text(
                   _fmtBrl(os.total),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
@@ -192,7 +191,7 @@ class _DotStatus extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           status.label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: 'Inter', 
             fontSize: 11,
             fontWeight: FontWeight.w700,
             color: status.textColor,
@@ -251,7 +250,7 @@ class _MiniAvatar extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         initials,
-        style: GoogleFonts.inter(
+        style: TextStyle(fontFamily: 'Inter', 
           fontSize: 9,
           fontWeight: FontWeight.w700,
           color: AppColors.ink2,

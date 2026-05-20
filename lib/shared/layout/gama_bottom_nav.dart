@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 
 class GamaBottomNav extends ConsumerWidget {
@@ -96,7 +95,7 @@ class _NavButton extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             item.label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 10,
               fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
               color: color,
@@ -171,7 +170,7 @@ class _MaisItem extends StatelessWidget {
             const SizedBox(width: 14),
             Text(
               item.label,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 14,
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 color: textColor,

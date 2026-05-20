@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Desktop platforms (generated, not used in this project)
+/linux/
+/macos/
+/windows/
+
+# Flutter metadata
+.metadata

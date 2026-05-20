@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 
 /// Generic desktop-width list row card.
@@ -62,7 +61,7 @@ class GamaListTile extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
@@ -73,7 +72,7 @@ class GamaListTile extends StatelessWidget {
                       subtitle!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                         color: AppColors.ink3,
@@ -129,7 +128,7 @@ class _DetailRow extends StatelessWidget {
               detail.text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 12,
                 color: AppColors.ink2,
               ),

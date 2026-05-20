@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_confirm_dialog.dart';
@@ -368,7 +367,7 @@ class _DesktopFilterBar extends StatelessWidget {
                     children: [
                       Text(
                         labels[f]!,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: isActive ? Colors.white : AppColors.ink2,
@@ -377,7 +376,7 @@ class _DesktopFilterBar extends StatelessWidget {
                       const SizedBox(width: 5),
                       Text(
                         '${counts[f]}',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: isActive ? Colors.white70 : AppColors.ink3,
@@ -394,7 +393,7 @@ class _DesktopFilterBar extends StatelessWidget {
             children: [
               Text(
                 'ORDENAR:',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: AppColors.ink3,
@@ -406,7 +405,7 @@ class _DesktopFilterBar extends StatelessWidget {
                 child: DropdownButton<_Ordem>(
                   value: ordem,
                   isDense: true,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
@@ -489,7 +488,7 @@ class _ClienteDesktopRow extends StatelessWidget {
                 children: [
                   Text(
                     'VEÍCULOS · ${veiculos.length}',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink3,
@@ -500,7 +499,7 @@ class _ClienteDesktopRow extends StatelessWidget {
                   if (veiculos.isEmpty)
                     Text(
                       'Sem veículos cadastrados',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 12,
                         color: AppColors.ink3,
                         fontStyle: FontStyle.italic,
@@ -519,7 +518,7 @@ class _ClienteDesktopRow extends StatelessWidget {
                                   v.modeloNome,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: 'Inter', 
                                     fontSize: 12,
                                     color: AppColors.ink2,
                                   ),
@@ -651,10 +650,10 @@ class _ClienteDarkArea extends StatelessWidget {
                   child: TextField(
                     controller: searchController,
                     onChanged: onSearch,
-                    style: GoogleFonts.inter(fontSize: 13, color: Colors.white),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.white),
                     decoration: InputDecoration(
                       hintText: 'Buscar nome, telefone, placa…',
-                      hintStyle: GoogleFonts.inter(
+                      hintStyle: TextStyle(fontFamily: 'Inter', 
                           fontSize: 13, color: AppColors.sidebarText),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
@@ -694,7 +693,7 @@ class _StatBox extends StatelessWidget {
         children: [
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: accent ? AppColors.accent : Colors.white,
@@ -704,7 +703,7 @@ class _StatBox extends StatelessWidget {
           const SizedBox(height: 1),
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 9,
               fontWeight: FontWeight.w600,
               color: AppColors.sidebarText,
@@ -775,7 +774,7 @@ class _FiltroTabs extends StatelessWidget {
                     children: [
                       Text(
                         labels[f]!,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: isActive ? Colors.white : AppColors.ink2,
@@ -784,7 +783,7 @@ class _FiltroTabs extends StatelessWidget {
                       const SizedBox(width: 5),
                       Text(
                         '${counts[f]}',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: isActive ? Colors.white70 : AppColors.ink3,
@@ -879,7 +878,7 @@ class _AlphaHeader extends StatelessWidget {
         children: [
           Text(
             letter,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: AppColors.ink3,
@@ -889,7 +888,7 @@ class _AlphaHeader extends StatelessWidget {
           const Spacer(),
           Text(
             '$count',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.ink3,
@@ -914,7 +913,7 @@ class _EmptyView extends StatelessWidget {
             const Icon(Icons.people_outline, size: 56, color: AppColors.ink3),
             const SizedBox(height: 12),
             Text('Nenhum cliente encontrado',
-                style: GoogleFonts.inter(fontSize: 15, color: AppColors.ink2)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: AppColors.ink2)),
           ],
         ),
       );
@@ -932,7 +931,7 @@ class _ErrorView extends StatelessWidget {
             const Icon(Icons.error_outline, size: 48, color: AppColors.ink3),
             const SizedBox(height: 12),
             Text('Erro ao carregar clientes',
-                style: GoogleFonts.inter(fontSize: 15, color: AppColors.ink2)),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: AppColors.ink2)),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: onRetry,

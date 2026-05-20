@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
@@ -279,7 +278,7 @@ class _ProfileHeader extends StatelessWidget {
                   children: [
                     Text(
                       funcionario.nome,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
@@ -332,7 +331,7 @@ class _InfoTag extends StatelessWidget {
         const SizedBox(width: 5),
         Text(
           text,
-          style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2),
+          style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2),
         ),
       ],
     );
@@ -366,7 +365,7 @@ class _CargoChip extends StatelessWidget {
       ),
       child: Text(
         label.toUpperCase(),
-        style: GoogleFonts.inter(
+        style: TextStyle(fontFamily: 'Inter', 
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: _fg,
@@ -403,7 +402,7 @@ class _AtivoChip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             ativo ? 'ATIVO' : 'INATIVO',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: ativo ? AppColors.ok : AppColors.ink3,
@@ -478,7 +477,7 @@ class _OficinasCard extends StatelessWidget {
         child: oficinas.isEmpty
             ? Text(
                 'Nenhuma oficina atribuída.',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 13,
                     color: AppColors.ink3,
                     fontStyle: FontStyle.italic),
@@ -508,7 +507,7 @@ class _OficinaTag extends StatelessWidget {
       ),
       child: Text(
         nome,
-        style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2),
+        style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2),
       ),
     );
   }
@@ -575,7 +574,7 @@ class _RemuneracaoCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Comissão calculada sobre serviços fechados',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 11,
                             color: AppColors.accentDark,
                           ),
@@ -646,7 +645,7 @@ class _Card extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
@@ -655,7 +654,7 @@ class _Card extends StatelessWidget {
                       if (subtitle case final s?)
                         Text(
                           s,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 11,
                             color: AppColors.ink3,
                           ),
@@ -697,7 +696,7 @@ class _FieldRow extends StatelessWidget {
             width: 140,
             child: Text(
               label,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: AppColors.ink3,
@@ -708,7 +707,7 @@ class _FieldRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: AppColors.ink,
@@ -802,7 +801,7 @@ class _MobileSubHeader extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   cargoLabel,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -816,7 +815,7 @@ class _MobileSubHeader extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       'desde ${_fmtDate(funcionario.criadoEm)}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 11, color: AppColors.sidebarText),
                     ),
                   ],
@@ -893,7 +892,7 @@ class _MobileKpiCell extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 9,
               fontWeight: FontWeight.w700,
               color: AppColors.ink3,
@@ -903,7 +902,7 @@ class _MobileKpiCell extends StatelessWidget {
           const SizedBox(height: 1),
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
@@ -964,7 +963,7 @@ class _MobileTabBar extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   _labels[i],
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: active ? AppColors.accent : AppColors.ink3,
@@ -1008,7 +1007,7 @@ class _MobilePerfilContent extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Perfil',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
@@ -1025,7 +1024,7 @@ class _MobilePerfilContent extends StatelessWidget {
                     ),
                     child: Text(
                       'Editar',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1100,7 +1099,7 @@ class _MobilePagamentoContent extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Pagamento',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
@@ -1174,7 +1173,7 @@ class _MobileOficinasContent extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Oficinas · ${oficinas.length}',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
@@ -1189,7 +1188,7 @@ class _MobileOficinasContent extends StatelessWidget {
               child: oficinas.isEmpty
                   ? Text(
                       'Nenhuma oficina atribuída.',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 13,
                         color: AppColors.ink3,
                         fontStyle: FontStyle.italic,
@@ -1226,7 +1225,7 @@ class _MobileFieldRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: AppColors.ink3,
@@ -1236,7 +1235,7 @@ class _MobileFieldRow extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.ink,
@@ -1264,7 +1263,7 @@ class _ErrorView extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Erro ao carregar ficha do funcionário',
-            style: GoogleFonts.inter(fontSize: 15, color: AppColors.ink2),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 15, color: AppColors.ink2),
           ),
           const SizedBox(height: 16),
           FilledButton.icon(

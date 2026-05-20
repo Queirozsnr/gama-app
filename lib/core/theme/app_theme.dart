@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 abstract final class AppColors {
   // ── Garage palette ─────────────────────────────────────────
@@ -48,6 +47,21 @@ abstract final class AppColors {
   static const surface0      = bg;
 }
 
+const _inter = 'Inter';
+
+TextStyle _i({
+  double? fontSize,
+  FontWeight? fontWeight,
+  Color? color,
+  double? letterSpacing,
+}) => TextStyle(
+  fontFamily: _inter,
+  fontSize: fontSize,
+  fontWeight: fontWeight,
+  color: color,
+  letterSpacing: letterSpacing,
+);
+
 final appTheme = ThemeData(
   useMaterial3: true,
   scaffoldBackgroundColor: AppColors.bg,
@@ -75,15 +89,23 @@ final appTheme = ThemeData(
     outline: AppColors.line,
     outlineVariant: AppColors.lineHard,
   ),
-  textTheme: GoogleFonts.interTextTheme().copyWith(
-    bodyLarge:  GoogleFonts.inter(fontSize: 15, color: AppColors.ink),
-    bodyMedium: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
-    bodySmall:  GoogleFonts.inter(fontSize: 11, color: AppColors.ink2),
-    labelLarge: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
-    titleMedium: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.ink),
-    titleLarge:  GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.ink, letterSpacing: -0.3),
-    headlineSmall:  GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.ink, letterSpacing: -0.5),
-    headlineMedium: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.ink, letterSpacing: -0.6),
+  textTheme: TextTheme(
+    bodyLarge:       _i(fontSize: 15, color: AppColors.ink),
+    bodyMedium:      _i(fontSize: 13, color: AppColors.ink),
+    bodySmall:       _i(fontSize: 11, color: AppColors.ink2),
+    labelLarge:      _i(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
+    titleMedium:     _i(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.ink),
+    titleLarge:      _i(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.ink, letterSpacing: -0.3),
+    headlineSmall:   _i(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.ink, letterSpacing: -0.5),
+    headlineMedium:  _i(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.ink, letterSpacing: -0.6),
+    // defaults
+    displayLarge:    _i(color: AppColors.ink),
+    displayMedium:   _i(color: AppColors.ink),
+    displaySmall:    _i(color: AppColors.ink),
+    headlineLarge:   _i(color: AppColors.ink),
+    titleSmall:      _i(color: AppColors.ink),
+    labelMedium:     _i(color: AppColors.ink),
+    labelSmall:      _i(color: AppColors.ink),
   ),
   cardTheme: CardThemeData(
     color: AppColors.surface,
@@ -97,8 +119,8 @@ final appTheme = ThemeData(
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
     fillColor: AppColors.surface,
-    labelStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.ink2),
-    hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.ink3),
+    labelStyle: _i(fontSize: 13, color: AppColors.ink2),
+    hintStyle:  _i(fontSize: 13, color: AppColors.ink3),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
@@ -127,7 +149,7 @@ final appTheme = ThemeData(
       foregroundColor: const Color(0xFF1A1714),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14),
+      textStyle: _i(fontWeight: FontWeight.w700, fontSize: 14),
     ),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
@@ -136,13 +158,13 @@ final appTheme = ThemeData(
       foregroundColor: AppColors.ink,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+      textStyle: _i(fontWeight: FontWeight.w600, fontSize: 13),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
     style: TextButton.styleFrom(
       foregroundColor: AppColors.accent,
-      textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+      textStyle: _i(fontWeight: FontWeight.w600, fontSize: 13),
     ),
   ),
   dividerTheme: const DividerThemeData(
@@ -154,7 +176,7 @@ final appTheme = ThemeData(
     backgroundColor: AppColors.surface2,
     side: const BorderSide(color: AppColors.line),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-    labelStyle: GoogleFonts.inter(fontSize: 12, color: AppColors.ink),
+    labelStyle: _i(fontSize: 12, color: AppColors.ink),
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
   ),
   dialogTheme: DialogThemeData(
@@ -172,7 +194,7 @@ final appTheme = ThemeData(
   ),
   snackBarTheme: SnackBarThemeData(
     backgroundColor: AppColors.ink,
-    contentTextStyle: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+    contentTextStyle: _i(color: Colors.white, fontSize: 13),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     behavior: SnackBarBehavior.floating,
   ),
@@ -182,7 +204,7 @@ final appTheme = ThemeData(
     foregroundColor: AppColors.ink,
     elevation: 0,
     surfaceTintColor: Colors.transparent,
-    titleTextStyle: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.ink),
+    titleTextStyle: _i(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.ink),
   ),
   popupMenuTheme: PopupMenuThemeData(
     color: AppColors.surface,

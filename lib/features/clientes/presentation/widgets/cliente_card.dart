@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/gama_avatar.dart';
 import '../../domain/cliente.dart';
@@ -65,7 +64,7 @@ class ClienteCard extends StatelessWidget {
                           cliente.nome,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,
@@ -74,7 +73,7 @@ class ClienteCard extends StatelessWidget {
                         if (telefone != null && telefone.isNotEmpty)
                           Text(
                             telefone,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: 'Inter', 
                               fontSize: 12,
                               color: AppColors.ink2,
                             ),
@@ -145,7 +144,7 @@ class _VeiculoRow extends StatelessWidget {
             Expanded(
               child: Text(
                 count > 1 ? '${veiculo.modeloNome} +${count - 1}' : veiculo.modeloNome,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   fontSize: 12,
                   color: AppColors.ink2,
                 ),

@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/gama_button.dart';
 import 'auth_notifier.dart';
@@ -182,7 +181,7 @@ class _BrandPanel extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(
                         'G',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF1A1714),
@@ -195,7 +194,7 @@ class _BrandPanel extends StatelessWidget {
                       children: [
                         Text(
                           'GAMA',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -204,7 +203,7 @@ class _BrandPanel extends StatelessWidget {
                         ),
                         Text(
                           'oficina · sistema',
-                          style: GoogleFonts.jetBrainsMono(
+                          style: TextStyle(fontFamily: 'JetBrains Mono', 
                             fontSize: 10,
                             color: AppColors.sidebarText,
                             letterSpacing: 1,
@@ -218,7 +217,7 @@ class _BrandPanel extends StatelessWidget {
                 // Headline block
                 Text(
                   '── Gestão Automotiva',
-                  style: GoogleFonts.jetBrainsMono(
+                  style: TextStyle(fontFamily: 'JetBrains Mono', 
                     fontSize: 11,
                     color: AppColors.accent,
                     letterSpacing: 1.5,
@@ -227,7 +226,7 @@ class _BrandPanel extends StatelessWidget {
                 const SizedBox(height: 16),
                 RichText(
                   text: TextSpan(
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 52,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
@@ -247,7 +246,7 @@ class _BrandPanel extends StatelessWidget {
                 const SizedBox(height: 24),
                 Text(
                   'Ordens de serviço, clientes, veículos, estoque e equipe em um só lugar — separado por oficina, para você gerenciar todas as suas unidades.',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 15,
                     color: const Color(0xFFD4CBB9),
                     height: 1.6,
@@ -267,7 +266,7 @@ class _BrandPanel extends StatelessWidget {
                         children: [
                           Text(
                             item.$1,
-                            style: GoogleFonts.jetBrainsMono(
+                            style: TextStyle(fontFamily: 'JetBrains Mono', 
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: AppColors.accent,
@@ -277,7 +276,7 @@ class _BrandPanel extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             item.$2.toUpperCase(),
-                            style: GoogleFonts.jetBrainsMono(
+                            style: TextStyle(fontFamily: 'JetBrains Mono', 
                               fontSize: 9,
                               color: AppColors.sidebarText,
                               letterSpacing: 0.5,
@@ -394,7 +393,7 @@ class _MobileLayout extends StatelessWidget {
                         alignment: Alignment.center,
                         child: Text(
                           'G',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF1A1714),
@@ -404,7 +403,7 @@ class _MobileLayout extends StatelessWidget {
                       const SizedBox(height: 16),
                       Text(
                         'GAMA',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 40,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
@@ -414,7 +413,7 @@ class _MobileLayout extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         'Gestão de Oficinas',
-                        style: GoogleFonts.jetBrainsMono(
+                        style: TextStyle(fontFamily: 'JetBrains Mono', 
                           fontSize: 11,
                           color: AppColors.sidebarText,
                           letterSpacing: 1,
@@ -491,7 +490,7 @@ class _LoginForm extends StatelessWidget {
         children: [
           Text(
             '01 · Acesso',
-            style: GoogleFonts.jetBrainsMono(
+            style: TextStyle(fontFamily: 'JetBrains Mono', 
               fontSize: 11,
               color: AppColors.accent,
               letterSpacing: 1.5,
@@ -500,7 +499,7 @@ class _LoginForm extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Bem-vindo de volta',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'Inter', 
               fontSize: 30,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
@@ -510,7 +509,7 @@ class _LoginForm extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Acesse sua conta para abrir o dia.',
-            style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink2),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.ink2),
           ),
           const SizedBox(height: 32),
           if (error != null) ...[
@@ -528,7 +527,7 @@ class _LoginForm extends StatelessWidget {
                   Expanded(
                     child: Text(
                       error!,
-                      style: GoogleFonts.inter(color: AppColors.danger, fontSize: 13),
+                      style: TextStyle(fontFamily: 'Inter', color: AppColors.danger, fontSize: 13),
                     ),
                   ),
                 ],
@@ -541,7 +540,7 @@ class _LoginForm extends StatelessWidget {
           TextFormField(
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
-            style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.ink),
             decoration: InputDecoration(
               hintText: 'seu@email.com.br',
               prefixIcon: const Icon(Icons.alternate_email, size: 18),
@@ -557,7 +556,7 @@ class _LoginForm extends StatelessWidget {
             controller: senhaController,
             obscureText: obscureSenha,
             onFieldSubmitted: (_) => onLogin(),
-            style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.ink),
             decoration: InputDecoration(
               hintText: '••••••••',
               prefixIcon: const Icon(Icons.lock_outline, size: 18),
@@ -587,7 +586,7 @@ class _LoginForm extends StatelessWidget {
                 ),
                 child: Text(
                   'Esqueci a senha',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
@@ -611,7 +610,7 @@ class _LoginForm extends StatelessWidget {
             children: [
               Text(
                 'GAMA v1.0.0',
-                style: GoogleFonts.jetBrainsMono(
+                style: TextStyle(fontFamily: 'JetBrains Mono', 
                   fontSize: 10,
                   color: AppColors.ink3,
                   letterSpacing: 0.5,
@@ -619,7 +618,7 @@ class _LoginForm extends StatelessWidget {
               ),
               Text(
                 'API · OK',
-                style: GoogleFonts.jetBrainsMono(
+                style: TextStyle(fontFamily: 'JetBrains Mono', 
                   fontSize: 10,
                   color: AppColors.ink3,
                   letterSpacing: 0.5,
@@ -641,7 +640,7 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.jetBrainsMono(
+      style: TextStyle(fontFamily: 'JetBrains Mono', 
         fontSize: 11,
         fontWeight: FontWeight.w600,
         color: AppColors.ink2,
