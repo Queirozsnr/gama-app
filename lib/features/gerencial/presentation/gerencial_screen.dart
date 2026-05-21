@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/auth/domain/auth_state.dart';
+import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
+import '../../../shared/widgets/gama_avatar.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../domain/gerencial_dashboard.dart';
 import 'gerencial_notifier.dart';
@@ -120,6 +123,7 @@ class _GerencialScreenState extends ConsumerState<GerencialScreen>
           periodo: _periodo,
           onChanged: (p) => setState(() => _applyPeriodo(p)),
         ),
+        _OficinaBar(onSwitch: () => ref.invalidate(gerencialDashboardProvider)),
         Expanded(
           child: asyncData.when(
             loading: () =>
@@ -210,6 +214,164 @@ class _PeriodoBar extends StatelessWidget {
             );
           }),
         ],
+      ),
+    );
+  }
+}
+
+// ── oficina bar ───────────────────────────────────────────────────────────────
+
+class _OficinaBar extends ConsumerStatefulWidget {
+  const _OficinaBar({required this.onSwitch});
+  final VoidCallback onSwitch;
+
+  @override
+  ConsumerState<_OficinaBar> createState() => _OficinaBarState();
+}
+
+class _OficinaBarState extends ConsumerState<_OficinaBar> {
+  int? _loadingId;
+
+  static String _initials(String nome) {
+    final parts = nome.trim().split(' ');
+    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}';
+    return nome.substring(0, nome.length.clamp(0, 2)).toUpperCase();
+  }
+
+  void _abrir(List<OficinaItem> oficinas, int? currentId) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheet) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.line,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Trocar unidade',
+                      style: TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      )),
+                ),
+              ),
+              const SizedBox(height: 12),
+              for (final o in oficinas) ...[
+                InkWell(
+                  onTap: _loadingId != null
+                      ? null
+                      : () async {
+                          if (o.id == currentId) {
+                            Navigator.pop(ctx);
+                            return;
+                          }
+                          setSheet(() => _loadingId = o.id);
+                          setState(() => _loadingId = o.id);
+                          try {
+                            await ref
+                                .read(authNotifierProvider.notifier)
+                                .selectOficina(o.id);
+                            widget.onSwitch();
+                            if (ctx.mounted) Navigator.pop(ctx);
+                          } finally {
+                            if (mounted) setState(() => _loadingId = null);
+                          }
+                        },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
+                    child: Row(
+                      children: [
+                        GamaAvatar(initials: _initials(o.nome), size: 38),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(o.nome,
+                              style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w600,
+                                color: AppColors.ink,
+                              )),
+                        ),
+                        if (_loadingId == o.id)
+                          const SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        else if (o.id == currentId)
+                          const Icon(Icons.check_circle,
+                              color: AppColors.accent, size: 20)
+                        else
+                          const Icon(Icons.chevron_right,
+                              color: AppColors.ink3, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+                if (o != oficinas.last) const Divider(height: 1, indent: 72),
+              ],
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = ref.watch(authNotifierProvider).valueOrNull;
+    final oficinas = auth?.availableOficinas ?? [];
+    final atual = oficinas.cast<OficinaItem?>().firstWhere(
+        (o) => o!.id == auth?.oficinaId,
+        orElse: () => oficinas.isEmpty ? null : oficinas.first);
+
+    if (oficinas.length <= 1) return const SizedBox.shrink();
+
+    return GestureDetector(
+      onTap: () => _abrir(oficinas, auth?.oficinaId),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+        decoration: const BoxDecoration(
+          color: AppColors.surface2,
+          border: Border(bottom: BorderSide(color: AppColors.line)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.store_outlined, size: 14, color: AppColors.ink3),
+            const SizedBox(width: 6),
+            const Text(
+              'OPERANDO EM',
+              style: TextStyle(
+                fontSize: 10, fontWeight: FontWeight.w700,
+                color: AppColors.ink3, letterSpacing: 0.6,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              atual?.nome ?? '—',
+              style: const TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.expand_more, size: 14, color: AppColors.ink2),
+          ],
+        ),
       ),
     );
   }

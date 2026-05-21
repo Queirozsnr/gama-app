@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/jwt_decoder.dart';
+import '../../../features/auth/domain/auth_state.dart';
 import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/section_card.dart';
@@ -286,13 +287,21 @@ class _Body extends ConsumerWidget {
 
 // ── welcome banner ────────────────────────────────────────────────────────────
 
-class _WelcomeBanner extends StatelessWidget {
+class _WelcomeBanner extends ConsumerWidget {
   const _WelcomeBanner({required this.nome, required this.painel});
   final String nome;
   final PainelOperacional painel;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final auth = ref.watch(authNotifierProvider).valueOrNull;
+    final oficinas = auth?.availableOficinas ?? [];
+    final oficinaAtual = oficinas.isEmpty
+        ? null
+        : oficinas.cast<OficinaItem?>().firstWhere(
+            (o) => o!.id == auth?.oficinaId,
+            orElse: () => oficinas.first);
+
     final prontas =
         painel.osEmAndamento.where((o) => o.status == 'PRONTO').length;
     final aguardando = painel.emAprovacao;
@@ -325,18 +334,47 @@ class _WelcomeBanner extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  [
-                    if (prontas > 0)
-                      '$prontas OS ${prontas == 1 ? 'pronta' : 'prontas'} pra entrega',
-                    if (aguardando > 0)
-                      '$aguardando aguardando aprovação',
-                  ].join(' · ').let((s) => s.isEmpty ? 'Sem pendências' : s),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.sidebarText,
+                if (oficinas.length > 1)
+                  GestureDetector(
+                    onTap: () => _abrirTrocarOficina(context, ref, oficinas, auth?.oficinaId),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          oficinaAtual?.nome ?? '',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.sidebarText,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.expand_more,
+                            size: 16, color: AppColors.sidebarText),
+                      ],
+                    ),
+                  )
+                else
+                  Text(
+                    [
+                      if (prontas > 0)
+                        '$prontas OS ${prontas == 1 ? 'pronta' : 'prontas'} pra entrega',
+                      if (aguardando > 0) '$aguardando aguardando aprovação',
+                    ].join(' · ').let((s) => s.isEmpty ? 'Sem pendências' : s),
+                    style: const TextStyle(
+                        fontSize: 13, color: AppColors.sidebarText),
                   ),
-                ),
+                if (oficinas.length > 1) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    [
+                      if (prontas > 0)
+                        '$prontas OS ${prontas == 1 ? 'pronta' : 'prontas'} pra entrega',
+                      if (aguardando > 0) '$aguardando aguardando aprovação',
+                    ].join(' · ').let((s) => s.isEmpty ? 'Sem pendências' : s),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.ink3),
+                  ),
+                ],
               ],
             ),
           ),
@@ -353,6 +391,146 @@ class _WelcomeBanner extends StatelessWidget {
             label: const Text('Abrir nova OS',
                 style: TextStyle(fontWeight: FontWeight.w600)),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _abrirTrocarOficina(
+    BuildContext context,
+    WidgetRef ref,
+    List<OficinaItem> oficinas,
+    int? currentId,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _TrocarOficinaSheet(
+        oficinas: oficinas,
+        currentId: currentId,
+        onSelect: (id) async {
+          await ref.read(authNotifierProvider.notifier).selectOficina(id);
+          ref.invalidate(painelOperacionalProvider);
+        },
+      ),
+    );
+  }
+}
+
+// ── trocar oficina sheet ──────────────────────────────────────────────────────
+
+class _TrocarOficinaSheet extends StatefulWidget {
+  const _TrocarOficinaSheet({
+    required this.oficinas,
+    required this.currentId,
+    required this.onSelect,
+  });
+
+  final List<OficinaItem> oficinas;
+  final int? currentId;
+  final Future<void> Function(int id) onSelect;
+
+  @override
+  State<_TrocarOficinaSheet> createState() => _TrocarOficinaSheetState();
+}
+
+class _TrocarOficinaSheetState extends State<_TrocarOficinaSheet> {
+  int? _loadingId;
+
+  Future<void> _selecionar(int id) async {
+    if (id == widget.currentId) {
+      Navigator.pop(context);
+      return;
+    }
+    setState(() => _loadingId = id);
+    try {
+      await widget.onSelect(id);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) setState(() => _loadingId = null);
+    }
+  }
+
+  static String _initials(String nome) {
+    final parts = nome.trim().split(' ');
+    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}';
+    return nome.substring(0, nome.length.clamp(0, 2)).toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.line,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Trocar unidade',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (final o in widget.oficinas) ...[
+            InkWell(
+              onTap: _loadingId != null ? null : () => _selecionar(o.id),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 14),
+                child: Row(
+                  children: [
+                    GamaAvatar(initials: _initials(o.nome), size: 38),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        o.nome,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                    if (_loadingId == o.id)
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else if (o.id == widget.currentId)
+                      const Icon(Icons.check_circle,
+                          color: AppColors.accent, size: 20)
+                    else
+                      const Icon(Icons.chevron_right,
+                          color: AppColors.ink3, size: 20),
+                  ],
+                ),
+              ),
+            ),
+            if (o != widget.oficinas.last)
+              const Divider(height: 1, indent: 72),
+          ],
+          const SizedBox(height: 8),
         ],
       ),
     );
