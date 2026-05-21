@@ -56,7 +56,7 @@ abstract final class AppRoutes {
 }
 
 const _pageTitles = <String, String>{
-  AppRoutes.home:          'Dashboard',
+  AppRoutes.home:          'Painel',
   AppRoutes.ordensServico: 'Ordens de Serviço',
   AppRoutes.clientes:      'Clientes',
   AppRoutes.veiculos:      'Veículos',

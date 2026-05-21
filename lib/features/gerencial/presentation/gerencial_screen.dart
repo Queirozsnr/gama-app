@@ -105,37 +105,7 @@ class _GerencialScreenState extends ConsumerState<GerencialScreen>
   }
 
   void _syncSlot() {
-    setTopBarSlot(TopBarSlot(
-      pageTitle: 'Dashboard',
-      action: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.accentSoft,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.circle, size: 8, color: AppColors.accent),
-                SizedBox(width: 5),
-                Text(
-                  'DONO',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.accent,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ));
+    setTopBarSlot(const TopBarSlot(pageTitle: 'Painel'));
   }
 
   @override

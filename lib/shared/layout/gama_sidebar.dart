@@ -15,7 +15,7 @@ class GamaSidebar extends ConsumerWidget {
 
   static const _sections = [
     _NavSection('Principal', [
-      _NavItem('Dashboard',         Icons.space_dashboard_outlined,   '/home'),
+      _NavItem('Painel',            Icons.space_dashboard_outlined,   '/home'),
       _NavItem('Ordens de Serviço', Icons.receipt_long_outlined,      '/ordens-servico'),
       _NavItem('Clientes',          Icons.groups_outlined,            '/clientes'),
       _NavItem('Veículos',          Icons.directions_car_outlined,    '/veiculos'),
