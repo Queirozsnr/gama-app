@@ -434,7 +434,8 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
         if (context.canPop()) {
           context.pop();
         } else {
-          context.go('/ordens-servico');
+          final from = GoRouterState.of(context).uri.queryParameters['from'];
+          context.go(from ?? '/ordens-servico');
         }
       }),
       mobileAction: _actionLoading
