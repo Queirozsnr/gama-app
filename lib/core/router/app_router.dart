@@ -22,7 +22,7 @@ import '../../features/estoque/domain/estoque.dart';
 import '../../features/funcionarios/presentation/funcionarios_screen.dart';
 import '../../features/funcionarios/presentation/funcionario_detalhe_screen.dart';
 import '../../features/pagamentos/presentation/pagamentos_screen.dart';
-import '../../features/pagamentos/presentation/receitas_socio_page.dart';
+import '../../features/receitas/presentation/receitas_screen.dart';
 import '../../features/oficinas/presentation/gerenciar_oficinas_screen.dart';
 import '../../features/oficinas/presentation/configuracoes_oficina_screen.dart';
 import '../../features/auth/presentation/trocar_senha_screen.dart';
@@ -151,7 +151,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: AppRoutes.funcionariosDetalhe, pageBuilder: _fade((ctx, st) =>
               FuncionarioDetalheScreen(funcionarioId: int.parse(st.pathParameters['id']!)))),
           GoRoute(path: AppRoutes.pagamentos,        pageBuilder: _fade((ctx, st) => const PagamentosScreen())),
-          GoRoute(path: AppRoutes.receitas,          pageBuilder: _fade((ctx, st) => const ReceitasSocioPage())),
+          GoRoute(path: AppRoutes.receitas,          pageBuilder: _fade((ctx, st) => const ReceitasScreen())),
           GoRoute(path: AppRoutes.gerenciarOficinas,    pageBuilder: _fade((ctx, st) => const GerenciarOficinasScreen())),
           GoRoute(path: AppRoutes.configuracoesOficina, pageBuilder: _fade((ctx, st) => const ConfiguracoesOficinaScreen())),
         ],
