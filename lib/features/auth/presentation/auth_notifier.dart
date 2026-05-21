@@ -39,13 +39,14 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
       if (response.selecioneOficina != null && response.selecioneOficina!.isNotEmpty) {
         final groups = await _fetchGroups();
+        final oficinas = await _fetchOficinas();
         state = AsyncData(AuthState(
           token: response.token,
           userId: response.userId,
           grupoOficinaId: response.grupoOficinaId,
           pendingOficinaSelection: true,
           availableGroups: groups,
-          availableOficinas: response.selecioneOficina!,
+          availableOficinas: oficinas.isNotEmpty ? oficinas : response.selecioneOficina!,
         ));
         return;
       }
@@ -82,13 +83,14 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
           .selectGroup(current!.userId!, grupoOficinaId);
 
       if (response.selecioneOficina != null && response.selecioneOficina!.isNotEmpty) {
+        final oficinas = await _fetchOficinas();
         state = AsyncData(AuthState(
           token: response.token,
           userId: response.userId,
           grupoOficinaId: response.grupoOficinaId,
           pendingOficinaSelection: true,
           availableGroups: current.availableGroups,
-          availableOficinas: response.selecioneOficina!,
+          availableOficinas: oficinas.isNotEmpty ? oficinas : response.selecioneOficina!,
         ));
         return;
       }

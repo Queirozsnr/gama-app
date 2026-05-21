@@ -189,6 +189,8 @@ OficinaItem _$OficinaItemFromJson(Map<String, dynamic> json) {
 mixin _$OficinaItem {
   int get id => throw _privateConstructorUsedError;
   String get nome => throw _privateConstructorUsedError;
+  int get osAbertas => throw _privateConstructorUsedError;
+  int get equipeCount => throw _privateConstructorUsedError;
 
   /// Serializes this OficinaItem to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -207,7 +209,7 @@ abstract class $OficinaItemCopyWith<$Res> {
     $Res Function(OficinaItem) then,
   ) = _$OficinaItemCopyWithImpl<$Res, OficinaItem>;
   @useResult
-  $Res call({int id, String nome});
+  $Res call({int id, String nome, int osAbertas, int equipeCount});
 }
 
 /// @nodoc
@@ -224,7 +226,12 @@ class _$OficinaItemCopyWithImpl<$Res, $Val extends OficinaItem>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? id = null, Object? nome = null}) {
+  $Res call({
+    Object? id = null,
+    Object? nome = null,
+    Object? osAbertas = null,
+    Object? equipeCount = null,
+  }) {
     return _then(
       _value.copyWith(
             id: null == id
@@ -235,6 +242,14 @@ class _$OficinaItemCopyWithImpl<$Res, $Val extends OficinaItem>
                 ? _value.nome
                 : nome // ignore: cast_nullable_to_non_nullable
                       as String,
+            osAbertas: null == osAbertas
+                ? _value.osAbertas
+                : osAbertas // ignore: cast_nullable_to_non_nullable
+                      as int,
+            equipeCount: null == equipeCount
+                ? _value.equipeCount
+                : equipeCount // ignore: cast_nullable_to_non_nullable
+                      as int,
           )
           as $Val,
     );
@@ -250,7 +265,7 @@ abstract class _$$OficinaItemImplCopyWith<$Res>
   ) = __$$OficinaItemImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int id, String nome});
+  $Res call({int id, String nome, int osAbertas, int equipeCount});
 }
 
 /// @nodoc
@@ -266,7 +281,12 @@ class __$$OficinaItemImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? id = null, Object? nome = null}) {
+  $Res call({
+    Object? id = null,
+    Object? nome = null,
+    Object? osAbertas = null,
+    Object? equipeCount = null,
+  }) {
     return _then(
       _$OficinaItemImpl(
         id: null == id
@@ -277,6 +297,14 @@ class __$$OficinaItemImplCopyWithImpl<$Res>
             ? _value.nome
             : nome // ignore: cast_nullable_to_non_nullable
                   as String,
+        osAbertas: null == osAbertas
+            ? _value.osAbertas
+            : osAbertas // ignore: cast_nullable_to_non_nullable
+                  as int,
+        equipeCount: null == equipeCount
+            ? _value.equipeCount
+            : equipeCount // ignore: cast_nullable_to_non_nullable
+                  as int,
       ),
     );
   }
@@ -285,7 +313,12 @@ class __$$OficinaItemImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$OficinaItemImpl implements _OficinaItem {
-  const _$OficinaItemImpl({required this.id, required this.nome});
+  const _$OficinaItemImpl({
+    required this.id,
+    required this.nome,
+    this.osAbertas = 0,
+    this.equipeCount = 0,
+  });
 
   factory _$OficinaItemImpl.fromJson(Map<String, dynamic> json) =>
       _$$OficinaItemImplFromJson(json);
@@ -294,10 +327,16 @@ class _$OficinaItemImpl implements _OficinaItem {
   final int id;
   @override
   final String nome;
+  @override
+  @JsonKey()
+  final int osAbertas;
+  @override
+  @JsonKey()
+  final int equipeCount;
 
   @override
   String toString() {
-    return 'OficinaItem(id: $id, nome: $nome)';
+    return 'OficinaItem(id: $id, nome: $nome, osAbertas: $osAbertas, equipeCount: $equipeCount)';
   }
 
   @override
@@ -306,12 +345,17 @@ class _$OficinaItemImpl implements _OficinaItem {
         (other.runtimeType == runtimeType &&
             other is _$OficinaItemImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.nome, nome) || other.nome == nome));
+            (identical(other.nome, nome) || other.nome == nome) &&
+            (identical(other.osAbertas, osAbertas) ||
+                other.osAbertas == osAbertas) &&
+            (identical(other.equipeCount, equipeCount) ||
+                other.equipeCount == equipeCount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, nome);
+  int get hashCode =>
+      Object.hash(runtimeType, id, nome, osAbertas, equipeCount);
 
   /// Create a copy of OficinaItem
   /// with the given fields replaced by the non-null parameter values.
@@ -331,6 +375,8 @@ abstract class _OficinaItem implements OficinaItem {
   const factory _OficinaItem({
     required final int id,
     required final String nome,
+    final int osAbertas,
+    final int equipeCount,
   }) = _$OficinaItemImpl;
 
   factory _OficinaItem.fromJson(Map<String, dynamic> json) =
@@ -340,6 +386,10 @@ abstract class _OficinaItem implements OficinaItem {
   int get id;
   @override
   String get nome;
+  @override
+  int get osAbertas;
+  @override
+  int get equipeCount;
 
   /// Create a copy of OficinaItem
   /// with the given fields replaced by the non-null parameter values.

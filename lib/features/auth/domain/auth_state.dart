@@ -19,6 +19,8 @@ class OficinaItem with _$OficinaItem {
   const factory OficinaItem({
     required int id,
     required String nome,
+    @Default(0) int osAbertas,
+    @Default(0) int equipeCount,
   }) = _OficinaItem;
 
   factory OficinaItem.fromJson(Map<String, dynamic> json) =>
