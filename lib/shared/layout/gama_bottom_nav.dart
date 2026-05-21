@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../features/auth/presentation/auth_notifier.dart';
 
 class GamaBottomNav extends ConsumerWidget {
   const GamaBottomNav({super.key});
@@ -107,18 +108,17 @@ class _NavButton extends StatelessWidget {
   }
 }
 
-class _MaisSheet extends StatelessWidget {
+class _MaisSheet extends ConsumerWidget {
   const _MaisSheet({required this.items, required this.current});
   final List<_Item> items;
   final String current;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
           Container(
             width: 36, height: 4,
             margin: const EdgeInsets.symmetric(vertical: 12),
@@ -132,6 +132,32 @@ class _MaisSheet extends StatelessWidget {
             child: Column(
               children: [
                 for (final item in items) _MaisItem(item: item, current: current),
+                const Divider(height: 20),
+                InkWell(
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await ref.read(authNotifierProvider.notifier).logout();
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.logout_outlined, size: 20, color: AppColors.danger),
+                        SizedBox(width: 14),
+                        Text(
+                          'Sair',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.danger,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
