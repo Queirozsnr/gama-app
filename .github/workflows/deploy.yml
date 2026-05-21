@@ -50,19 +50,14 @@ jobs:
 
       - name: Deploy
         uses: appleboy/ssh-action@v1
-        env:
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO_OWNER:   ${{ steps.owner.outputs.value }}
         with:
           host:     ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key:      ${{ secrets.SSH_PRIVATE_KEY }}
-          envs:     GITHUB_ACTOR,GITHUB_TOKEN,REPO_OWNER
           script: |
             cd /home/$USER/gama
-            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-            export GHCR_OWNER="$REPO_OWNER"
+            set -a && source .env && set +a
+            echo "$GHCR_PAT" | docker login ghcr.io -u queirozsnr --password-stdin
             docker compose -f docker-compose.prod.yml pull gama-web
             docker compose -f docker-compose.prod.yml up -d gama-web
             docker image prune -f
