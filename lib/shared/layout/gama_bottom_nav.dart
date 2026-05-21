@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/jwt_decoder.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
 
 class GamaBottomNav extends ConsumerWidget {
@@ -23,6 +24,8 @@ class GamaBottomNav extends ConsumerWidget {
     _Item('Configurações',Icons.settings_outlined,          '/configuracoes-oficina'),
   ];
 
+  static const _adminItem = _Item('Admin', Icons.shield_outlined, '/admin');
+
   bool _isMainActive(String route, String current) =>
       current.startsWith(route) || (route == '/home' && current == '/');
 
@@ -32,6 +35,8 @@ class GamaBottomNav extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = GoRouterState.of(context).matchedLocation;
+    final token = ref.watch(authNotifierProvider).valueOrNull?.token ?? '';
+    final adminMode = token.isNotEmpty && JwtDecoder.isAdmin(token);
 
     return Container(
       decoration: const BoxDecoration(
@@ -55,8 +60,8 @@ class GamaBottomNav extends ConsumerWidget {
               Expanded(
                 child: _NavButton(
                   item: const _Item('Mais', Icons.menu_outlined, ''),
-                  isActive: _isMaisActive(current),
-                  onTap: () => _showMais(context, current),
+                  isActive: _isMaisActive(current) || (adminMode && current.startsWith('/admin')),
+                  onTap: () => _showMais(context, current, adminMode),
                 ),
               ),
             ],
@@ -66,14 +71,15 @@ class GamaBottomNav extends ConsumerWidget {
     );
   }
 
-  void _showMais(BuildContext context, String current) {
+  void _showMais(BuildContext context, String current, bool adminMode) {
+    final items = adminMode ? [..._mais, _adminItem] : _mais;
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => _MaisSheet(items: _mais, current: current),
+      builder: (_) => _MaisSheet(items: items, current: current),
     );
   }
 }

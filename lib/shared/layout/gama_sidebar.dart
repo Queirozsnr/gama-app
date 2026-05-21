@@ -57,6 +57,7 @@ class GamaSidebar extends ConsumerWidget {
     final userName = token.isNotEmpty ? (JwtDecoder.nome(token) ?? 'Usuário') : 'Usuário';
     final userCargo = token.isNotEmpty ? (JwtDecoder.cargoLabel(token) ?? '') : '';
     final userInitials = _initials(userName);
+    final adminMode = token.isNotEmpty && JwtDecoder.isAdmin(token);
 
     return Container(
       decoration: BoxDecoration(
@@ -90,7 +91,7 @@ class GamaSidebar extends ConsumerWidget {
                       padding: const EdgeInsets.fromLTRB(8, 14, 8, 4),
                       child: Text(
                         section.label.toUpperCase(),
-                        style: TextStyle(fontFamily: 'JetBrains Mono', 
+                        style: TextStyle(fontFamily: 'JetBrains Mono',
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
                           color: AppColors.sidebarText.withValues(alpha: 0.5),
@@ -107,6 +108,28 @@ class GamaSidebar extends ConsumerWidget {
                           (item.route == '/home' && currentRoute == '/'),
                       collapsed: collapsed,
                     ),
+                ],
+                if (adminMode) ...[
+                  if (!collapsed)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 14, 8, 4),
+                      child: Text(
+                        'SISTEMA',
+                        style: TextStyle(fontFamily: 'JetBrains Mono',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.accent.withValues(alpha: 0.7),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 12),
+                  _SidebarNavItem(
+                    item: const _NavItem('Admin', Icons.shield_outlined, '/admin'),
+                    isActive: currentRoute.startsWith('/admin'),
+                    collapsed: collapsed,
+                  ),
                 ],
               ],
             ),

@@ -1,0 +1,53 @@
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/network/dio_client.dart';
+import '../domain/admin_models.dart';
+
+class AdminRemoteDataSource {
+  AdminRemoteDataSource(this._dio);
+  final Dio _dio;
+
+  Future<List<GrupoAdminItem>> listarGrupos() async {
+    final response = await _dio.get('/admin/grupos');
+    return (response.data as List)
+        .map((e) => GrupoAdminItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> atualizarCliente({
+    required int grupoId,
+    required String plano,
+    required DateTime expiraEm,
+    required int userId,
+    required String nomeUsuario,
+    required String email,
+    String? novaSenha,
+  }) async {
+    await _dio.put('/admin/grupos/$grupoId', data: {
+      'plano': plano,
+      'expiraEm': expiraEm.toIso8601String(),
+      'userId': userId,
+      'nomeUsuario': nomeUsuario,
+      'email': email,
+      'novaSenha': novaSenha,
+    });
+  }
+
+  Future<void> registrar({
+    required String nomeGrupo,
+    required String nomeUsuario,
+    required String email,
+    required String senha,
+  }) async {
+    await _dio.post('/admin/registrar', data: {
+      'nomeGrupoOficina': nomeGrupo,
+      'nomeUsuario': nomeUsuario,
+      'email': email,
+      'senha': senha,
+    });
+  }
+}
+
+final adminRemoteDataSourceProvider = Provider<AdminRemoteDataSource>(
+  (ref) => AdminRemoteDataSource(ref.watch(dioClientProvider)),
+);

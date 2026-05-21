@@ -26,6 +26,7 @@ import '../../features/receitas/presentation/receitas_screen.dart';
 import '../../features/oficinas/presentation/gerenciar_oficinas_screen.dart';
 import '../../features/oficinas/presentation/configuracoes_oficina_screen.dart';
 import '../../features/auth/presentation/trocar_senha_screen.dart';
+import '../../features/admin/presentation/admin_screen.dart';
 import '../../shared/layout/gama_scaffold.dart';
 
 abstract final class AppRoutes {
@@ -48,6 +49,7 @@ abstract final class AppRoutes {
   static const receitas          = '/receitas';
   static const gerenciarOficinas    = '/gerenciar-oficinas';
   static const configuracoesOficina = '/configuracoes-oficina';
+  static const admin             = '/admin';
   static const selectOficina    = '/select-oficina';
   static const trocarSenha      = '/trocar-senha';
   static const estoqueProdutoNovo    = '/estoque/produto/novo';
@@ -67,6 +69,7 @@ const _pageTitles = <String, String>{
   AppRoutes.receitas:          'Receitas',
   AppRoutes.gerenciarOficinas:    'Gerenciar Oficinas',
   AppRoutes.configuracoesOficina: 'Configurações da Oficina',
+  AppRoutes.admin: 'Admin',
 };
 
 class _RouterNotifier extends ChangeNotifier {
@@ -154,6 +157,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: AppRoutes.receitas,          pageBuilder: _fade((ctx, st) => const ReceitasScreen())),
           GoRoute(path: AppRoutes.gerenciarOficinas,    pageBuilder: _fade((ctx, st) => const GerenciarOficinasScreen())),
           GoRoute(path: AppRoutes.configuracoesOficina, pageBuilder: _fade((ctx, st) => const ConfiguracoesOficinaScreen())),
+          GoRoute(path: AppRoutes.admin,                pageBuilder: _fade((ctx, st) => const AdminScreen())),
         ],
       ),
     ],

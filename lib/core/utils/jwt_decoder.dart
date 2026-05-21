@@ -34,4 +34,7 @@ abstract final class JwtDecoder {
 
   static bool permissaoGerenciarOficinas(String token) =>
       _claims(token)['gerenciarOficinas'] == 'true';
+
+  static bool isAdmin(String token) =>
+      _claims(token)['role'] == '0';
 }
