@@ -63,16 +63,18 @@ class _GamaScaffoldState extends State<GamaScaffold> {
 
     final loc = GoRouterState.of(context).matchedLocation;
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
+    return BackButtonListener(
+      onBackButtonPressed: () async {
         final router = GoRouter.of(context);
         if (router.canPop()) {
           router.pop();
-        } else if (loc != '/home') {
-          context.go('/home');
+          return true;
         }
+        if (loc != '/home') {
+          context.go('/home');
+          return true;
+        }
+        return false; // na home: deixa o sistema fechar o app
       },
       child: Scaffold(
         key: _scaffoldKey,
