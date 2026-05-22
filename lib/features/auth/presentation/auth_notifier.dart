@@ -65,9 +65,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       ));
     } on DioException catch (e) {
       final data = e.response?.data;
-      throw (data is Map && data['error'] != null)
-          ? data['error'] as String
-          : 'Erro ao realizar login.';
+      if (data is Map && data['error'] != null) throw data['error'] as String;
+      throw 'Erro ao realizar login.';
     } catch (_) {
       throw 'Erro inesperado.';
     }

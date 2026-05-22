@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../state/top_bar_scope.dart';
 import 'gama_bottom_nav.dart';
 import 'gama_sidebar.dart';
@@ -60,21 +61,35 @@ class _GamaScaffoldState extends State<GamaScaffold> {
       );
     }
 
-    return Scaffold(
-      key: _scaffoldKey,
-      bottomNavigationBar: const GamaBottomNav(),
-      body: TopBarScope(
-        notifier: _topBarNotifier,
-        child: SafeArea(
-          child: Column(
-            children: [
-              GamaTopBar(
-                isDesktop: false,
-                pageTitle: widget.pageTitle,
-                pageSubtitle: widget.pageSubtitle,
-              ),
-              Expanded(child: widget.body),
-            ],
+    final loc = GoRouterState.of(context).matchedLocation;
+
+    return PopScope(
+      canPop: loc == '/home',
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        final router = GoRouter.of(context);
+        if (router.canPop()) {
+          router.pop();
+        } else {
+          context.go('/home');
+        }
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        bottomNavigationBar: const GamaBottomNav(),
+        body: TopBarScope(
+          notifier: _topBarNotifier,
+          child: SafeArea(
+            child: Column(
+              children: [
+                GamaTopBar(
+                  isDesktop: false,
+                  pageTitle: widget.pageTitle,
+                  pageSubtitle: widget.pageSubtitle,
+                ),
+                Expanded(child: widget.body),
+              ],
+            ),
           ),
         ),
       ),
