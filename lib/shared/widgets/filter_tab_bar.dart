@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -23,7 +24,11 @@ class FilterTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(
+        dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+      ),
+      child: SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: List.generate(tabs.length, (i) {
@@ -56,6 +61,7 @@ class FilterTabBar extends StatelessWidget {
             ),
           );
         }),
+      ),
       ),
     );
   }
