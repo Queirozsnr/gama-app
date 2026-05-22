@@ -64,13 +64,13 @@ class _GamaScaffoldState extends State<GamaScaffold> {
     final loc = GoRouterState.of(context).matchedLocation;
 
     return PopScope(
-      canPop: loc == '/home',
+      canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         final router = GoRouter.of(context);
         if (router.canPop()) {
           router.pop();
-        } else {
+        } else if (loc != '/home') {
           context.go('/home');
         }
       },
