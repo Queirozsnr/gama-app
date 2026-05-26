@@ -518,7 +518,7 @@ class _ClienteDesktopRow extends StatelessWidget {
                                   v.modeloNome,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontFamily: 'Inter', 
+                                  style: TextStyle(fontFamily: 'Inter',
                                     fontSize: 12,
                                     color: AppColors.ink2,
                                   ),

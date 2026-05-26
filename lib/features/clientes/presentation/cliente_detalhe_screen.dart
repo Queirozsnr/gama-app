@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -239,8 +240,12 @@ class _ClienteDetalheScreenState extends ConsumerState<ClienteDetalheScreen>
         ref.invalidate(clienteDetalheProvider(widget.clienteId));
         GamaSnackBar.success(context, 'Veículo excluído.');
       }
-    } catch (_) {
-      if (mounted) GamaSnackBar.error(context, 'Erro ao excluir veículo.');
+    } catch (e) {
+      if (mounted) {
+        final dio = e is DioException ? e : null;
+        final serverMsg = dio?.response?.data is Map ? dio?.response?.data['error'] as String? : null;
+        GamaSnackBar.error(context, serverMsg ?? 'Erro ao excluir veículo.');
+      }
     }
   }
 
@@ -1990,6 +1995,7 @@ class _MobileResumoContent extends StatelessWidget {
                     veiculo: v,
                     onTap: () => onEditarVeiculo(v.id),
                     onLongPress: () => onExcluirVeiculo(v.id, v.modeloNome),
+                    onExcluir: () => onExcluirVeiculo(v.id, v.modeloNome),
                   ),
                 )),
           const SizedBox(height: 20),
@@ -2057,6 +2063,7 @@ class _MobileVeiculosContent extends StatelessWidget {
                     veiculo: v,
                     onTap: () => onEditarVeiculo(v.id),
                     onLongPress: () => onExcluirVeiculo(v.id, v.modeloNome),
+                    onExcluir: () => onExcluirVeiculo(v.id, v.modeloNome),
                   ),
                 )),
           const SizedBox(height: 8),
@@ -2104,10 +2111,11 @@ class _MobileOsContent extends StatelessWidget {
 // ── Mobile cards ───────────────────────────────────────────────────────────────
 
 class _MobileVeiculoCard extends StatelessWidget {
-  const _MobileVeiculoCard({required this.veiculo, this.onTap, this.onLongPress});
+  const _MobileVeiculoCard({required this.veiculo, this.onTap, this.onLongPress, this.onExcluir});
   final VeiculoDetalhe veiculo;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onExcluir;
 
   @override
   Widget build(BuildContext context) {
@@ -2115,7 +2123,7 @@ class _MobileVeiculoCard extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(10),
@@ -2140,7 +2148,7 @@ class _MobileVeiculoCard extends StatelessWidget {
                 children: [
                   Text(
                     veiculo.modeloNome,
-                    style: TextStyle(fontFamily: 'Inter', 
+                    style: TextStyle(fontFamily: 'Inter',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
@@ -2156,7 +2164,7 @@ class _MobileVeiculoCard extends StatelessWidget {
                       if (veiculo.odometro != null)
                         Text(
                           '${_fmtKm(veiculo.odometro!)} km',
-                          style: TextStyle(fontFamily: 'Inter', 
+                          style: TextStyle(fontFamily: 'Inter',
                             fontSize: 11,
                             color: AppColors.ink3,
                           ),
@@ -2167,6 +2175,22 @@ class _MobileVeiculoCard extends StatelessWidget {
               ),
             ),
             _StatusBadge(status: veiculo.status),
+            if (onExcluir != null)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 18, color: AppColors.ink3),
+                padding: EdgeInsets.zero,
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'excluir',
+                    child: Row(children: [
+                      Icon(Icons.delete_outline, size: 16, color: AppColors.danger),
+                      const SizedBox(width: 8),
+                      Text('Excluir', style: TextStyle(color: AppColors.danger)),
+                    ]),
+                  ),
+                ],
+                onSelected: (val) { if (val == 'excluir') onExcluir!(); },
+              ),
           ],
         ),
       ),

@@ -144,10 +144,7 @@ class _VeiculoRow extends StatelessWidget {
             Expanded(
               child: Text(
                 count > 1 ? '${veiculo.modeloNome} +${count - 1}' : veiculo.modeloNome,
-                style: TextStyle(fontFamily: 'Inter', 
-                  fontSize: 12,
-                  color: AppColors.ink2,
-                ),
+                style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

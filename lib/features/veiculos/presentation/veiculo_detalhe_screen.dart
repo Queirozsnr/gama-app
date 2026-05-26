@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
+import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../../ordens_servico/data/ordens_servico_remote_data_source.dart';
 import '../../ordens_servico/domain/ordem_servico.dart';
@@ -87,6 +89,21 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
                   icon: const Icon(Icons.add, size: 16),
                   label: const Text('Nova OS pra este veículo'),
                 ),
+                const SizedBox(width: 4),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_horiz),
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'excluir',
+                      child: Row(children: [
+                        Icon(Icons.delete_outline, size: 16, color: AppColors.danger),
+                        const SizedBox(width: 8),
+                        Text('Excluir veículo', style: TextStyle(color: AppColors.danger)),
+                      ]),
+                    ),
+                  ],
+                  onSelected: (val) { if (val == 'excluir') _excluir(v); },
+                ),
               ],
             ),
     ));
@@ -107,10 +124,48 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
                 _editar(v);
               },
             ),
+            ListTile(
+              leading: Icon(Icons.delete_outline, color: AppColors.danger),
+              title: Text('Excluir veículo', style: TextStyle(color: AppColors.danger)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _excluir(v);
+              },
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _excluir(Veiculo v) async {
+    final confirmar = await GamaConfirmDialog.show(
+      context,
+      title: 'Excluir veículo',
+      message: 'Deseja excluir ${v.placa ?? '${v.marcaNome} ${v.modeloNome}'}? Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      confirmColor: AppColors.danger,
+    );
+    if (confirmar != true || !mounted) return;
+    try {
+      await ref.read(veiculosRemoteDataSourceProvider).excluir(v.id);
+      if (mounted) {
+        GamaSnackBar.success(context, 'Veículo excluído.');
+        context.canPop() ? context.pop() : context.go(AppRoutes.veiculos);
+      }
+    } catch (e) {
+      if (mounted) GamaSnackBar.error(context, _mensagemErro(e));
+    }
+  }
+
+  String _mensagemErro(Object e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic> && data['error'] is String) {
+        return data['error'] as String;
+      }
+    }
+    return 'Erro ao excluir veículo.';
   }
 
   Future<void> _editar(Veiculo v) async {
