@@ -32,6 +32,7 @@ mixin _$Veiculo {
   int? get ano => throw _privateConstructorUsedError;
   String? get cor => throw _privateConstructorUsedError;
   String? get combustivel => throw _privateConstructorUsedError;
+  double? get cilindrada => throw _privateConstructorUsedError;
   int? get quilometragem => throw _privateConstructorUsedError;
   String? get observacoes => throw _privateConstructorUsedError;
   bool get ativo => throw _privateConstructorUsedError;
@@ -63,6 +64,7 @@ abstract class $VeiculoCopyWith<$Res> {
     int? ano,
     String? cor,
     String? combustivel,
+    double? cilindrada,
     int? quilometragem,
     String? observacoes,
     bool ativo,
@@ -96,6 +98,7 @@ class _$VeiculoCopyWithImpl<$Res, $Val extends Veiculo>
     Object? ano = freezed,
     Object? cor = freezed,
     Object? combustivel = freezed,
+    Object? cilindrada = freezed,
     Object? quilometragem = freezed,
     Object? observacoes = freezed,
     Object? ativo = null,
@@ -147,6 +150,10 @@ class _$VeiculoCopyWithImpl<$Res, $Val extends Veiculo>
                 ? _value.combustivel
                 : combustivel // ignore: cast_nullable_to_non_nullable
                       as String?,
+            cilindrada: freezed == cilindrada
+                ? _value.cilindrada
+                : cilindrada // ignore: cast_nullable_to_non_nullable
+                      as double?,
             quilometragem: freezed == quilometragem
                 ? _value.quilometragem
                 : quilometragem // ignore: cast_nullable_to_non_nullable
@@ -189,6 +196,7 @@ abstract class _$$VeiculoImplCopyWith<$Res> implements $VeiculoCopyWith<$Res> {
     int? ano,
     String? cor,
     String? combustivel,
+    double? cilindrada,
     int? quilometragem,
     String? observacoes,
     bool ativo,
@@ -221,6 +229,7 @@ class __$$VeiculoImplCopyWithImpl<$Res>
     Object? ano = freezed,
     Object? cor = freezed,
     Object? combustivel = freezed,
+    Object? cilindrada = freezed,
     Object? quilometragem = freezed,
     Object? observacoes = freezed,
     Object? ativo = null,
@@ -272,6 +281,10 @@ class __$$VeiculoImplCopyWithImpl<$Res>
             ? _value.combustivel
             : combustivel // ignore: cast_nullable_to_non_nullable
                   as String?,
+        cilindrada: freezed == cilindrada
+            ? _value.cilindrada
+            : cilindrada // ignore: cast_nullable_to_non_nullable
+                  as double?,
         quilometragem: freezed == quilometragem
             ? _value.quilometragem
             : quilometragem // ignore: cast_nullable_to_non_nullable
@@ -308,6 +321,7 @@ class _$VeiculoImpl implements _Veiculo {
     this.ano,
     this.cor,
     this.combustivel,
+    this.cilindrada,
     this.quilometragem,
     this.observacoes,
     required this.ativo,
@@ -340,6 +354,8 @@ class _$VeiculoImpl implements _Veiculo {
   @override
   final String? combustivel;
   @override
+  final double? cilindrada;
+  @override
   final int? quilometragem;
   @override
   final String? observacoes;
@@ -350,7 +366,7 @@ class _$VeiculoImpl implements _Veiculo {
 
   @override
   String toString() {
-    return 'Veiculo(id: $id, clienteId: $clienteId, clienteNome: $clienteNome, modeloId: $modeloId, modeloNome: $modeloNome, marcaId: $marcaId, marcaNome: $marcaNome, placa: $placa, ano: $ano, cor: $cor, combustivel: $combustivel, quilometragem: $quilometragem, observacoes: $observacoes, ativo: $ativo, criadoEm: $criadoEm)';
+    return 'Veiculo(id: $id, clienteId: $clienteId, clienteNome: $clienteNome, modeloId: $modeloId, modeloNome: $modeloNome, marcaId: $marcaId, marcaNome: $marcaNome, placa: $placa, ano: $ano, cor: $cor, combustivel: $combustivel, cilindrada: $cilindrada, quilometragem: $quilometragem, observacoes: $observacoes, ativo: $ativo, criadoEm: $criadoEm)';
   }
 
   @override
@@ -375,6 +391,8 @@ class _$VeiculoImpl implements _Veiculo {
             (identical(other.cor, cor) || other.cor == cor) &&
             (identical(other.combustivel, combustivel) ||
                 other.combustivel == combustivel) &&
+            (identical(other.cilindrada, cilindrada) ||
+                other.cilindrada == cilindrada) &&
             (identical(other.quilometragem, quilometragem) ||
                 other.quilometragem == quilometragem) &&
             (identical(other.observacoes, observacoes) ||
@@ -399,6 +417,7 @@ class _$VeiculoImpl implements _Veiculo {
     ano,
     cor,
     combustivel,
+    cilindrada,
     quilometragem,
     observacoes,
     ativo,
@@ -432,6 +451,7 @@ abstract class _Veiculo implements Veiculo {
     final int? ano,
     final String? cor,
     final String? combustivel,
+    final double? cilindrada,
     final int? quilometragem,
     final String? observacoes,
     required final bool ativo,
@@ -462,6 +482,8 @@ abstract class _Veiculo implements Veiculo {
   String? get cor;
   @override
   String? get combustivel;
+  @override
+  double? get cilindrada;
   @override
   int? get quilometragem;
   @override

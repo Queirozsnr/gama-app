@@ -6,8 +6,10 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_avatar.dart';
+import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../../veiculos/data/veiculos_remote_data_source.dart';
+import '../../veiculos/presentation/veiculos_notifier.dart';
 import '../../veiculos/presentation/widgets/veiculo_form_dialog.dart';
 import '../data/clientes_remote_data_source.dart';
 import '../domain/cliente_detalhe.dart';
@@ -223,6 +225,25 @@ class _ClienteDetalheScreenState extends ConsumerState<ClienteDetalheScreen>
     }
   }
 
+  Future<void> _excluirVeiculo(int veiculoId, String nome) async {
+    final confirmar = await GamaConfirmDialog.show(
+      context,
+      title: 'Excluir veículo',
+      message: 'Deseja excluir $nome? Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+    );
+    if (confirmar != true || !mounted) return;
+    try {
+      await ref.read(veiculosNotifierProvider.notifier).excluir(veiculoId);
+      if (mounted) {
+        ref.invalidate(clienteDetalheProvider(widget.clienteId));
+        GamaSnackBar.success(context, 'Veículo excluído.');
+      }
+    } catch (_) {
+      if (mounted) GamaSnackBar.error(context, 'Erro ao excluir veículo.');
+    }
+  }
+
   Future<void> _editarCliente(ClienteDetalhe d) async {
     final cliente = Cliente(
       id: d.id,
@@ -276,6 +297,7 @@ class _ClienteDetalheScreenState extends ConsumerState<ClienteDetalheScreen>
           detalhe: d,
           onEditarCliente: () => _editarCliente(d),
           onAddVeiculo: _adicionarVeiculo,
+          onExcluirVeiculo: _excluirVeiculo,
           onWhatsApp: () => _abrirWhatsApp(d.telefone),
           onLigar: () => _ligarPara(d.telefone),
           onNovaOs: _novaOs,
@@ -1560,6 +1582,7 @@ class _MobileLayout extends StatefulWidget {
     required this.detalhe,
     required this.onEditarCliente,
     required this.onAddVeiculo,
+    required this.onExcluirVeiculo,
     required this.onWhatsApp,
     required this.onLigar,
     required this.onNovaOs,
@@ -1572,6 +1595,7 @@ class _MobileLayout extends StatefulWidget {
   final ClienteDetalhe detalhe;
   final VoidCallback onEditarCliente;
   final VoidCallback onAddVeiculo;
+  final void Function(int id, String nome) onExcluirVeiculo;
   final VoidCallback onWhatsApp;
   final VoidCallback onLigar;
   final VoidCallback onNovaOs;
@@ -1609,6 +1633,8 @@ class _MobileLayoutState extends State<_MobileLayout> {
             child: switch (_tab) {
               0 => _MobileResumoContent(
                   detalhe: d,
+                  onAddVeiculo: widget.onAddVeiculo,
+                  onExcluirVeiculo: widget.onExcluirVeiculo,
                   onEditarVeiculo: widget.onEditarVeiculo,
                   onVerTodasOs: widget.onVerTodasOs,
                   onAbrirOs: widget.onAbrirOs,
@@ -1617,6 +1643,7 @@ class _MobileLayoutState extends State<_MobileLayout> {
               1 => _MobileVeiculosContent(
                   veiculos: d.veiculos,
                   onEditarVeiculo: widget.onEditarVeiculo,
+                  onExcluirVeiculo: widget.onExcluirVeiculo,
                   onAddVeiculo: widget.onAddVeiculo,
                 ),
               2 => _MobileOsContent(
@@ -1915,6 +1942,8 @@ class _MobileTabBar extends StatelessWidget {
 class _MobileResumoContent extends StatelessWidget {
   const _MobileResumoContent({
     required this.detalhe,
+    required this.onAddVeiculo,
+    required this.onExcluirVeiculo,
     required this.onEditarVeiculo,
     required this.onVerTodasOs,
     required this.onAbrirOs,
@@ -1922,6 +1951,8 @@ class _MobileResumoContent extends StatelessWidget {
   });
 
   final ClienteDetalhe detalhe;
+  final VoidCallback onAddVeiculo;
+  final void Function(int id, String nome) onExcluirVeiculo;
   final ValueChanged<int> onEditarVeiculo;
   final VoidCallback onVerTodasOs;
   final ValueChanged<int> onAbrirOs;
@@ -1938,7 +1969,7 @@ class _MobileResumoContent extends StatelessWidget {
           _MobileSectionHeader(
             label: 'VEÍCULOS · ${detalhe.veiculos.length}',
             action: TextButton.icon(
-              onPressed: () {},
+              onPressed: onAddVeiculo,
               icon: const Icon(Icons.add, size: 14),
               label: const Text('Novo'),
               style: TextButton.styleFrom(
@@ -1958,6 +1989,7 @@ class _MobileResumoContent extends StatelessWidget {
                   child: _MobileVeiculoCard(
                     veiculo: v,
                     onTap: () => onEditarVeiculo(v.id),
+                    onLongPress: () => onExcluirVeiculo(v.id, v.modeloNome),
                   ),
                 )),
           const SizedBox(height: 20),
@@ -2001,11 +2033,13 @@ class _MobileVeiculosContent extends StatelessWidget {
   const _MobileVeiculosContent({
     required this.veiculos,
     required this.onEditarVeiculo,
+    required this.onExcluirVeiculo,
     required this.onAddVeiculo,
   });
 
   final List<VeiculoDetalhe> veiculos;
   final ValueChanged<int> onEditarVeiculo;
+  final void Function(int id, String nome) onExcluirVeiculo;
   final VoidCallback onAddVeiculo;
 
   @override
@@ -2022,6 +2056,7 @@ class _MobileVeiculosContent extends StatelessWidget {
                   child: _MobileVeiculoCard(
                     veiculo: v,
                     onTap: () => onEditarVeiculo(v.id),
+                    onLongPress: () => onExcluirVeiculo(v.id, v.modeloNome),
                   ),
                 )),
           const SizedBox(height: 8),
@@ -2069,14 +2104,16 @@ class _MobileOsContent extends StatelessWidget {
 // ── Mobile cards ───────────────────────────────────────────────────────────────
 
 class _MobileVeiculoCard extends StatelessWidget {
-  const _MobileVeiculoCard({required this.veiculo, this.onTap});
+  const _MobileVeiculoCard({required this.veiculo, this.onTap, this.onLongPress});
   final VeiculoDetalhe veiculo;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(

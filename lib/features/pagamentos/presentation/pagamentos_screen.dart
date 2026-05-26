@@ -103,6 +103,12 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
           ),
         ],
       ),
+      mobileAction: IconButton(
+        onPressed: () => GamaSnackBar.info(context, 'Pagamento em lote será implementado em breve.'),
+        icon: const Icon(Icons.payments_outlined),
+        color: Colors.white,
+        tooltip: 'Pagar todos',
+      ),
     ));
   }
 

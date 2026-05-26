@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../state/top_bar_scope.dart';
 import 'gama_bottom_nav.dart';
@@ -94,23 +95,31 @@ class _GamaScaffoldState extends State<GamaScaffold> {
     final loc = GoRouterState.of(context).matchedLocation;
     _updateHistory(loc);
 
-    return BackButtonListener(
-      onBackButtonPressed: _onBackPressed,
-      child: Scaffold(
-        key: _scaffoldKey,
-        bottomNavigationBar: const GamaBottomNav(),
-        body: TopBarScope(
-          notifier: _topBarNotifier,
-          child: SafeArea(
-            child: Column(
-              children: [
-                GamaTopBar(
-                  isDesktop: false,
-                  pageTitle: widget.pageTitle,
-                  pageSubtitle: widget.pageSubtitle,
-                ),
-                Expanded(child: widget.body),
-              ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final handled = await _onBackPressed();
+        if (!handled) SystemNavigator.pop();
+      },
+      child: BackButtonListener(
+        onBackButtonPressed: _onBackPressed,
+        child: Scaffold(
+          key: _scaffoldKey,
+          bottomNavigationBar: const GamaBottomNav(),
+          body: TopBarScope(
+            notifier: _topBarNotifier,
+            child: SafeArea(
+              child: Column(
+                children: [
+                  GamaTopBar(
+                    isDesktop: false,
+                    pageTitle: widget.pageTitle,
+                    pageSubtitle: widget.pageSubtitle,
+                  ),
+                  Expanded(child: widget.body),
+                ],
+              ),
             ),
           ),
         ),

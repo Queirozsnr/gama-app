@@ -12,6 +12,7 @@ import '../../domain/veiculo.dart';
 import '../veiculos_notifier.dart';
 
 const _combustiveis = ['Gasolina', 'Etanol', 'Flex', 'Diesel', 'Eletrico', 'Hibrido', 'GNV'];
+const _cilindradas = ['1.0', '1.3', '1.4', '1.5', '1.6', '1.8', '2.0', '2.5', '3.0', '3.5', '4.0'];
 const _combustiveisLabels = {
   'Gasolina': 'Gasolina',
   'Etanol': 'Etanol',
@@ -57,6 +58,7 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
   Modelo? _modeloSelecionado;
   String? _corSelecionada;
   String? _combustivel;
+  String? _cilindrada;
   bool _loading = false;
 
   bool get _editando => widget.veiculo != null;
@@ -71,6 +73,7 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
     _km        = TextEditingController(text: v?.quilometragem?.toString() ?? '');
     _obs       = TextEditingController(text: v?.observacoes ?? '');
     _combustivel = v?.combustivel;
+    _cilindrada = v?.cilindrada != null ? v!.cilindrada!.toStringAsFixed(1) : null;
     if (v != null) {
       _corSelecionada = v.cor;
       _marcaSelecionada = Marca(id: v.marcaId, nome: v.marcaNome);
@@ -94,6 +97,9 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
   Future<List<String>> _filtrarCombustivel(String q) async =>
       _combustiveis.where((c) => (_combustiveisLabels[c] ?? c).toLowerCase().contains(q.toLowerCase())).toList();
 
+  Future<List<String>> _filtrarCilindrada(String q) async =>
+      _cilindradas.where((c) => c.contains(q)).toList();
+
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
     if (_modeloSelecionado == null) {
@@ -115,6 +121,7 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
         if (_ano.text.trim().isNotEmpty) 'ano': int.tryParse(_ano.text.trim()),
         'cor': ?cor,
         if (_combustivel != null) 'combustivel': _combustivel,
+        if (_cilindrada != null) 'cilindrada': double.tryParse(_cilindrada!),
         if (_km.text.trim().isNotEmpty) 'quilometragem': int.tryParse(_km.text.trim()),
         if (_obs.text.trim().isNotEmpty) 'observacoes': _obs.text.trim(),
       };
@@ -257,6 +264,15 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
                           optionsBuilder: _filtrarCombustivel,
                           displayString: (c) => _combustiveisLabels[c] ?? c,
                           onChanged: (c) => setState(() => _combustivel = c),
+                        ),
+                        const SizedBox(height: 12),
+                        // Cilindrada
+                        GamaSearchableSelect<String>(
+                          label: 'Cilindrada (L)',
+                          selectedValue: _cilindrada,
+                          optionsBuilder: _filtrarCilindrada,
+                          displayString: (c) => '${c}L',
+                          onChanged: (c) => setState(() => _cilindrada = c),
                         ),
                         const SizedBox(height: 12),
                         _campo(_km, 'Quilometragem', teclado: TextInputType.number),

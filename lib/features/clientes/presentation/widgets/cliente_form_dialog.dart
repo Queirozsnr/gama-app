@@ -84,11 +84,14 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 24, right: 24, top: 24,
+            bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+          ),
           child: Form(
             key: _formKey,
             child: Column(

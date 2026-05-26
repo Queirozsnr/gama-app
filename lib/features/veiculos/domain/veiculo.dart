@@ -18,6 +18,7 @@ class Veiculo with _$Veiculo {
     int? ano,
     String? cor,
     String? combustivel,
+    double? cilindrada,
     int? quilometragem,
     String? observacoes,
     required bool ativo,
