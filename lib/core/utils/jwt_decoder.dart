@@ -37,4 +37,9 @@ abstract final class JwtDecoder {
 
   static bool isAdmin(String token) =>
       _claims(token)['role'] == '0';
+
+  static int? funcionarioId(String token) {
+    final v = _claims(token)['funcionarioId'];
+    return v != null ? int.tryParse(v.toString()) : null;
+  }
 }

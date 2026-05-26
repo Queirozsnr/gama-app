@@ -495,14 +495,19 @@ class _KpiRow extends StatelessWidget {
       ]);
     }
 
-    return Column(
-      children: cards
-          .map((c) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: c,
-              ))
-          .toList(),
-    );
+    return Column(children: [
+      Row(children: [
+        Expanded(child: cards[0]),
+        const SizedBox(width: 12),
+        Expanded(child: cards[1]),
+      ]),
+      const SizedBox(height: 12),
+      Row(children: [
+        Expanded(child: cards[2]),
+        const SizedBox(width: 12),
+        Expanded(child: cards[3]),
+      ]),
+    ]);
   }
 }
 
