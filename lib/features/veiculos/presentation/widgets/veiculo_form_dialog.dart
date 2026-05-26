@@ -4,6 +4,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/gama_button.dart';
 import '../../../../shared/widgets/gama_searchable_select.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
+import '../../../clientes/data/clientes_remote_data_source.dart';
+import '../../../clientes/domain/cliente.dart';
 import '../../data/marcas_remote_data_source.dart';
 import '../../data/modelos_remote_data_source.dart';
 import '../../domain/marca.dart';
@@ -54,6 +56,7 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
   late final TextEditingController _km;
   late final TextEditingController _obs;
 
+  Cliente? _clienteSelecionado;
   Marca? _marcaSelecionada;
   Modelo? _modeloSelecionado;
   String? _corSelecionada;
@@ -88,6 +91,9 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
     super.dispose();
   }
 
+  Future<List<Cliente>> _buscarClientes(String q) =>
+      ref.read(clientesRemoteDataSourceProvider).listar(busca: q.isEmpty ? null : q);
+
   Future<List<Marca>> _buscarMarcas(String q) =>
       ref.read(marcasRemoteDataSourceProvider).listar(busca: q);
 
@@ -113,9 +119,14 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
           ? _corSelecionada
           : (_corCustom.text.trim().isNotEmpty ? _corCustom.text.trim() : null);
 
-      final clienteId = widget.clienteIdFixo ?? widget.veiculo?.clienteId;
+      final clienteId = widget.clienteIdFixo ?? widget.veiculo?.clienteId ?? _clienteSelecionado?.id;
+      if (clienteId == null) {
+        GamaSnackBar.error(context, 'Selecione um cliente.');
+        setState(() => _loading = false);
+        return;
+      }
       final data = {
-        'clienteId': ?clienteId,
+        'clienteId': clienteId,
         'modeloId': _modeloSelecionado!.id,
         if (_placa.text.trim().isNotEmpty) 'placa': _placa.text.trim().toUpperCase(),
         if (_ano.text.trim().isNotEmpty) 'ano': int.tryParse(_ano.text.trim()),
@@ -177,6 +188,18 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Cliente (só quando não vem de um contexto fixo)
+                        if (widget.clienteIdFixo == null && !_editando) ...[
+                          GamaSearchableSelect<Cliente>(
+                            label: 'Cliente *',
+                            selectedValue: _clienteSelecionado,
+                            optionsBuilder: _buscarClientes,
+                            displayString: (c) => c.nome,
+                            isRequired: true,
+                            onChanged: (c) => setState(() => _clienteSelecionado = c),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         // Marca
                         GamaSearchableSelect<Marca>(
                           label: 'Marca *',
