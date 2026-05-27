@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../auth/domain/auth_state.dart';
+import '../../auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_avatar.dart';
 import '../../../shared/widgets/gama_button.dart';
@@ -32,9 +34,16 @@ class _FornecedoresScreenState extends ConsumerState<FornecedoresScreen>
   }
 
   void _syncSlot() {
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    final oficinas = auth?.availableOficinas ?? [];
+    final nome = oficinas
+        .where((o) => o.id == auth?.oficinaId)
+        .map((o) => o.nome)
+        .firstOrNull;
     setTopBarSlot(TopBarSlot(
       pageTitle: 'Fornecedores',
       mobileStyle: MobileTopBarStyle.dark,
+      mobileSubtitle: nome != null ? '• $nome' : null,
       searchController: _searchController,
       searchHint: 'Buscar por nome, e-mail ou telefone…',
       onSearchChanged: (v) =>

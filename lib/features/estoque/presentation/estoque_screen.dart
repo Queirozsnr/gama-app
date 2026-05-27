@@ -53,15 +53,16 @@ class _EstoqueScreenState extends ConsumerState<EstoqueScreen>
   void _syncTopBar([ResumoEstoque? r]) {
     final isMobile = MediaQuery.of(context).size.width < 800;
     final auth = ref.read(authNotifierProvider).valueOrNull;
-    final oficinaNome = auth?.availableOficinas
-        .cast<dynamic>()
-        .firstWhere((o) => o.id == auth.oficinaId, orElse: () => null)
-        ?.nome as String?;
+    final oficinas = auth?.availableOficinas ?? [];
+    final oficinaNome = oficinas
+        .where((o) => o.id == auth?.oficinaId)
+        .map((o) => o.nome)
+        .firstOrNull;
 
     setTopBarSlot(TopBarSlot(
       pageTitle: 'Estoque',
       mobileStyle: MobileTopBarStyle.dark,
-      mobileSubtitle: oficinaNome?.toUpperCase(),
+      mobileSubtitle: oficinaNome != null ? '• $oficinaNome' : null,
       desktopSubtitle: r != null ? '${r.totalSkus} SKUs' : null,
       // Search only in topbar on desktop
       searchController: isMobile ? null : _searchController,

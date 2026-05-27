@@ -1,7 +1,10 @@
 import 'dart:math' as math;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/auth/domain/auth_state.dart';
+import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../domain/receitas_dashboard.dart';
@@ -136,8 +139,33 @@ class _ReceitasScreenState extends ConsumerState<ReceitasScreen>
   }
 
   void _syncSlot() {
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    final oficinas = auth?.availableOficinas ?? [];
+    final nome = oficinas.cast<OficinaItem?>().firstWhere(
+      (o) => o!.id == auth?.oficinaId,
+      orElse: () => null,
+    )?.nome;
     setTopBarSlot(TopBarSlot(
       pageTitle: 'Receitas',
+      mobileStyle: MobileTopBarStyle.dark,
+      mobileSubtitle: nome != null ? '• $nome' : null,
+      mobileAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            onPressed: () => GamaSnackBar.error(context, 'Exportação CSV em breve.'),
+            icon: const Icon(Icons.download_outlined),
+            color: Colors.white,
+            tooltip: 'Exportar CSV',
+          ),
+          IconButton(
+            onPressed: () => GamaSnackBar.error(context, 'Impressão em breve.'),
+            icon: const Icon(Icons.print_outlined),
+            color: Colors.white,
+            tooltip: 'Imprimir',
+          ),
+        ],
+      ),
       action: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -244,54 +272,71 @@ class _PeriodoBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          ..._Periodo.values.map((p) {
-            final active = p == periodo;
-            return Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: GestureDetector(
-                onTap: () => onChanged(p),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: active ? AppColors.ink : Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                        color: active ? AppColors.ink : Colors.transparent),
-                  ),
-                  child: Text(
-                    p.label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: active ? Colors.white : AppColors.ink2,
+          Expanded(
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    ..._Periodo.values.map((p) {
+                      final active = p == periodo;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: GestureDetector(
+                          onTap: () => onChanged(p),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: active ? AppColors.ink : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                  color: active
+                                      ? AppColors.ink
+                                      : Colors.transparent),
+                            ),
+                            child: Text(
+                              p.label,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: active ? Colors.white : AppColors.ink2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.line),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.calendar_today_outlined,
+                              size: 12, color: AppColors.ink3),
+                          const SizedBox(width: 5),
+                          Text(
+                            '${_fmtDate(dataInicio)} – ${_fmtDate(dataFim)}',
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.ink2),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            );
-          }),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.line),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.calendar_today_outlined,
-                    size: 12, color: AppColors.ink3),
-                const SizedBox(width: 5),
-                Text(
-                  '${_fmtDate(dataInicio)} – ${_fmtDate(dataFim)}',
-                  style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.ink2),
-                ),
-              ],
             ),
           ),
         ],
@@ -434,110 +479,122 @@ class _KpiCard extends StatelessWidget {
             .toInt()
         : 0;
 
+    final receitaBlock = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: AppColors.accent,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'RECEITA · $_periodoLabel',
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppColors.accent,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _fmt(dashboard.receitaBruta),
+          style: const TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            letterSpacing: -1.5,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: LinearProgressIndicator(
+            value: (dashboard.receitaBruta / math.max(dashboard.receitaBruta * 2, 1))
+                .clamp(0.0, 1.0),
+            backgroundColor: AppColors.sidebarLine,
+            valueColor:
+                const AlwaysStoppedAnimation<Color>(AppColors.accent),
+            minHeight: 5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '${dashboard.totalOs} OS no período',
+          style: const TextStyle(
+            fontSize: 11,
+            color: AppColors.sidebarText,
+          ),
+        ),
+      ],
+    );
+    final despesasBlock = _KpiBlock(
+      label: 'DESPESAS',
+      value: _fmtK(dashboard.despesas),
+      sub: 'Peças · folha · fixos',
+    );
+    final lucroBlock = _KpiBlock(
+      label: 'LUCRO LÍQUIDO',
+      value: _fmtK(dashboard.lucroLiquido),
+      sub: 'Margem $margem%',
+      valueColor: AppColors.accent,
+    );
+    final ticketBlock = _KpiBlock(
+      label: 'TICKET MÉDIO',
+      value: _fmt(dashboard.ticketMedio),
+      sub: '${dashboard.totalOs} OS pagas',
+    );
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.sidebarBg,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Receita
-          Expanded(
-            flex: 3,
-            child: Column(
+      child: LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth >= 520) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 3, child: receitaBlock),
+              const SizedBox(width: 24),
+              Expanded(flex: 2, child: despesasBlock),
+              const SizedBox(width: 20),
+              Expanded(flex: 2, child: lucroBlock),
+              const SizedBox(width: 20),
+              Expanded(flex: 2, child: ticketBlock),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            receitaBlock,
+            const SizedBox(height: 20),
+            const Divider(color: AppColors.sidebarLine, height: 1),
+            const SizedBox(height: 16),
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: AppColors.accent,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'RECEITA · $_periodoLabel',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.accent,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  _fmt(dashboard.receitaBruta),
-                  style: const TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: -1.5,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: (dashboard.receitaBruta / math.max(dashboard.receitaBruta * 2, 1))
-                        .clamp(0.0, 1.0),
-                    backgroundColor: AppColors.sidebarLine,
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(AppColors.accent),
-                    minHeight: 5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${dashboard.totalOs} OS no período',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.sidebarText,
-                  ),
-                ),
+                Expanded(child: despesasBlock),
+                const SizedBox(width: 16),
+                Expanded(child: lucroBlock),
+                const SizedBox(width: 16),
+                Expanded(child: ticketBlock),
               ],
             ),
-          ),
-          const SizedBox(width: 24),
-          // Despesas
-          Expanded(
-            flex: 2,
-            child: _KpiBlock(
-              label: 'DESPESAS',
-              value: _fmtK(dashboard.despesas),
-              sub: 'Peças · folha · fixos',
-            ),
-          ),
-          const SizedBox(width: 20),
-          // Lucro Líquido
-          Expanded(
-            flex: 2,
-            child: _KpiBlock(
-              label: 'LUCRO LÍQUIDO',
-              value: _fmtK(dashboard.lucroLiquido),
-              sub: 'Margem $margem%',
-              valueColor: AppColors.accent,
-            ),
-          ),
-          const SizedBox(width: 20),
-          // Ticket Médio
-          Expanded(
-            flex: 2,
-            child: _KpiBlock(
-              label: 'TICKET MÉDIO',
-              value: _fmt(dashboard.ticketMedio),
-              sub: '${dashboard.totalOs} OS pagas',
-            ),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 }

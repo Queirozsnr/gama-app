@@ -4,6 +4,9 @@ import '../../../shared/utils/file_picker_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/auth/domain/auth_state.dart';
+import '../../../features/auth/presentation/auth_notifier.dart';
+import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_button.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../domain/oficina_model.dart';
@@ -15,8 +18,20 @@ class ConfiguracoesOficinaScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(oficinasNotifierProvider);
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    final oficinas = auth?.availableOficinas ?? [];
+    final nome = oficinas.cast<OficinaItem?>().firstWhere(
+      (o) => o!.id == auth?.oficinaId,
+      orElse: () => null,
+    )?.nome;
 
-    return state.when(
+    return TopBarSlotProvider(
+      slot: TopBarSlot(
+        pageTitle: 'Configurações da Oficina',
+        mobileStyle: MobileTopBarStyle.dark,
+        mobileSubtitle: nome != null ? '• $nome' : null,
+      ),
+      child: state.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
         child: Column(
@@ -43,6 +58,7 @@ class ConfiguracoesOficinaScreen extends ConsumerWidget {
         }
         return _ConfigScreen(oficinas: oficinas);
       },
+    ),
     );
   }
 }

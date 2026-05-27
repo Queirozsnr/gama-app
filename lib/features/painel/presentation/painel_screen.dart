@@ -7,6 +7,7 @@ import '../../../core/utils/jwt_decoder.dart';
 import '../../../features/auth/domain/auth_state.dart';
 import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
+import '../../../shared/widgets/notification_bell.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../../shared/widgets/gama_avatar.dart';
 import '../domain/painel_operacional.dart';
@@ -197,7 +198,22 @@ class _PainelScreenState extends ConsumerState<PainelScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    setTopBarSlot(const TopBarSlot(pageTitle: 'Painel'));
+    _syncSlot();
+  }
+
+  void _syncSlot() {
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    final oficinas = auth?.availableOficinas ?? [];
+    final nome = oficinas.cast<OficinaItem?>().firstWhere(
+      (o) => o!.id == auth?.oficinaId,
+      orElse: () => null,
+    )?.nome;
+    setTopBarSlot(TopBarSlot(
+      pageTitle: 'Painel',
+      mobileStyle: MobileTopBarStyle.dark,
+      mobileSubtitle: nome != null ? '• $nome' : null,
+      mobileAction: const NotificationBell(),
+    ));
   }
 
   @override

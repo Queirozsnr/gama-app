@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/auth/domain/auth_state.dart';
+import '../../../features/auth/presentation/auth_notifier.dart';
+import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../data/admin_remote_data_source.dart';
@@ -14,35 +17,48 @@ class AdminScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = MediaQuery.of(context).size.width >= 800;
     final gruposAsync = ref.watch(gruposAdminProvider);
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    final oficinas = auth?.availableOficinas ?? [];
+    final nome = oficinas.cast<OficinaItem?>().firstWhere(
+      (o) => o!.id == auth?.oficinaId,
+      orElse: () => null,
+    )?.nome;
 
-    if (isDesktop) {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _GruposSection(gruposAsync: gruposAsync),
+    final content = isDesktop
+        ? SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _GruposSection(gruposAsync: gruposAsync),
+                ),
+                const SizedBox(width: 20),
+                SizedBox(
+                  width: 340,
+                  child: _RegisterForm(onSuccess: () => ref.invalidate(gruposAdminProvider)),
+                ),
+              ],
             ),
-            const SizedBox(width: 20),
-            SizedBox(
-              width: 340,
-              child: _RegisterForm(onSuccess: () => ref.invalidate(gruposAdminProvider)),
+          )
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _RegisterForm(onSuccess: () => ref.invalidate(gruposAdminProvider)),
+                const SizedBox(height: 20),
+                _GruposSection(gruposAsync: gruposAsync),
+              ],
             ),
-          ],
-        ),
-      );
-    }
+          );
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _RegisterForm(onSuccess: () => ref.invalidate(gruposAdminProvider)),
-          const SizedBox(height: 20),
-          _GruposSection(gruposAsync: gruposAsync),
-        ],
+    return TopBarSlotProvider(
+      slot: TopBarSlot(
+        pageTitle: 'Admin',
+        mobileStyle: MobileTopBarStyle.dark,
+        mobileSubtitle: nome != null ? '• $nome' : null,
       ),
+      child: content,
     );
   }
 }

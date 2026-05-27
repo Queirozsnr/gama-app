@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/auth/domain/auth_state.dart';
+import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/chips/payment_badge.dart';
 import '../../../shared/widgets/gama_avatar.dart';
@@ -28,8 +30,20 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
 
   @override
   void didChangeDependencies() {
-    super.didChangeDependencies(); // sets _topBarNotifier via mixin
+    super.didChangeDependencies();
+    _syncSlot();
+  }
+
+  void _syncSlot() {
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    final oficinas = auth?.availableOficinas ?? [];
+    final nome = oficinas.cast<OficinaItem?>().firstWhere(
+      (o) => o!.id == auth?.oficinaId,
+      orElse: () => null,
+    )?.nome;
     setTopBarSlot(TopBarSlot(
+      mobileStyle: MobileTopBarStyle.dark,
+      mobileSubtitle: nome != null ? '• $nome' : null,
       searchController: _searchController,
       searchHint: 'Buscar por nome ou e-mail…',
       onSearchChanged: (v) =>

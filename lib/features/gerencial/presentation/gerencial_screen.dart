@@ -8,6 +8,7 @@ import '../../../features/auth/domain/auth_state.dart';
 import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_avatar.dart';
+import '../../../shared/widgets/notification_bell.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../domain/gerencial_dashboard.dart';
 import 'gerencial_notifier.dart';
@@ -109,7 +110,18 @@ class _GerencialScreenState extends ConsumerState<GerencialScreen>
   }
 
   void _syncSlot() {
-    setTopBarSlot(const TopBarSlot(pageTitle: 'Painel'));
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    final oficinas = auth?.availableOficinas ?? [];
+    final nome = oficinas.cast<OficinaItem?>().firstWhere(
+      (o) => o!.id == auth?.oficinaId,
+      orElse: () => null,
+    )?.nome;
+    setTopBarSlot(TopBarSlot(
+      pageTitle: 'Painel',
+      mobileStyle: MobileTopBarStyle.dark,
+      mobileSubtitle: nome != null ? '• $nome' : null,
+      mobileAction: const NotificationBell(),
+    ));
   }
 
   @override
