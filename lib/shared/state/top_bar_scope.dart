@@ -47,19 +47,33 @@ class TopBarSlot {
       pageTitle != null || leading != null || action != null || hasSearch;
 }
 
+/// Stack-based notifier: each screen pushes its slot on mount and pops on
+/// dispose. The topbar always reflects the top of the stack — no animation
+/// listeners, no restore timing, no race conditions.
 class TopBarNotifier extends ChangeNotifier {
-  TopBarSlot? _slot;
-  TopBarSlot? get slot => _slot;
+  final _stack = <TopBarSlot>[];
 
-  void set(TopBarSlot slot) {
-    _slot = slot;
+  TopBarSlot? get slot => _stack.isEmpty ? null : _stack.last;
+
+  void push(TopBarSlot slot) {
+    _stack.add(slot);
     _notify();
   }
 
-  void clear() {
-    if (_slot == null) return;
-    _slot = null;
+  /// Replaces [old] in the stack with [next] (matched by identity).
+  /// Falls back to push if [old] is not found (e.g. notifier was reassigned).
+  void replace(TopBarSlot old, TopBarSlot next) {
+    final idx = _stack.lastIndexOf(old);
+    if (idx >= 0) {
+      _stack[idx] = next;
+    } else {
+      _stack.add(next);
+    }
     _notify();
+  }
+
+  void pop(TopBarSlot slot) {
+    if (_stack.remove(slot)) _notify();
   }
 
   // Defers notifyListeners when called during the build phase to avoid
@@ -126,9 +140,34 @@ class _TopBarSlotProviderState extends State<TopBarSlotProvider>
   Widget build(BuildContext context) => widget.child;
 }
 
+/// Provides one [TopBarNotifier] per shell branch so screens in inactive
+/// branches don't pollute the active branch's topbar slot.
+class BranchTopBarScope extends InheritedWidget {
+  const BranchTopBarScope({
+    super.key,
+    required this.notifiers,
+    required super.child,
+  });
+
+  final List<TopBarNotifier> notifiers;
+
+  // Use get (not dependOn) — the list is stable and we don't need rebuilds.
+  static List<TopBarNotifier> of(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<BranchTopBarScope>()!.notifiers;
+
+  @override
+  bool updateShouldNotify(BranchTopBarScope old) => notifiers != old.notifiers;
+}
+
 /// Mixin for ConsumerStatefulWidget states to easily manage topbar slot.
+///
+/// Call [setTopBarSlot] whenever the slot content changes. The mixin pushes
+/// the slot onto [TopBarNotifier]'s stack on first call and replaces it on
+/// subsequent calls. On dispose the slot is popped — no animation listeners
+/// or manual restore logic needed.
 mixin TopBarSlotMixin<T extends StatefulWidget> on State<T> {
   TopBarNotifier? _topBarNotifier;
+  TopBarSlot? _activeSlot;
 
   @override
   void didChangeDependencies() {
@@ -137,12 +176,17 @@ mixin TopBarSlotMixin<T extends StatefulWidget> on State<T> {
   }
 
   void setTopBarSlot(TopBarSlot slot) {
-    _topBarNotifier?.set(slot);
+    if (_activeSlot == null) {
+      _topBarNotifier?.push(slot);
+    } else {
+      _topBarNotifier?.replace(_activeSlot!, slot);
+    }
+    _activeSlot = slot;
   }
 
   @override
   void dispose() {
-    _topBarNotifier?.clear();
+    if (_activeSlot != null) _topBarNotifier?.pop(_activeSlot!);
     super.dispose();
   }
 }

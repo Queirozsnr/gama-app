@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/router/app_router.dart';
 import '../state/top_bar_scope.dart';
 import 'gama_bottom_nav.dart';
 import 'gama_sidebar.dart';
 import 'gama_top_bar.dart';
 
+// Number of shell branches — must match the StatefulShellRoute in app_router.
+const _kBranchCount = 5;
+
 class GamaScaffold extends StatefulWidget {
   const GamaScaffold({
     super.key,
-    required this.body,
+    required this.navigationShell,
     this.pageTitle,
     this.pageSubtitle,
   });
 
-  final Widget body;
+  final StatefulNavigationShell navigationShell;
   final String? pageTitle;
   final String? pageSubtitle;
 
@@ -25,11 +26,47 @@ class GamaScaffold extends StatefulWidget {
 
 class _GamaScaffoldState extends State<GamaScaffold> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final _topBarNotifier = TopBarNotifier();
+
+  // One notifier per branch — screens in inactive branches push to their own
+  // notifier and don't bleed into the active branch's topbar.
+  final _branchNotifiers = List.generate(_kBranchCount, (_) => TopBarNotifier());
+
+  // Tracks the history of tab switches so back can restore the previous tab.
+  final _branchHistory = <int>[];
+  // Prevents didUpdateWidget from re-recording a history entry when we're
+  // already navigating back through history.
+  bool _poppingBranch = false;
+
+  TopBarNotifier get _activeNotifier =>
+      _branchNotifiers[widget.navigationShell.currentIndex];
+
+  @override
+  void didUpdateWidget(GamaScaffold old) {
+    super.didUpdateWidget(old);
+    final newIdx = widget.navigationShell.currentIndex;
+    final oldIdx = old.navigationShell.currentIndex;
+    if (newIdx != oldIdx) {
+      if (_poppingBranch) {
+        _poppingBranch = false;
+      } else {
+        _branchHistory.add(oldIdx);
+      }
+    }
+  }
+
+  void _handleBranchBack() {
+    if (_branchHistory.isEmpty) return;
+    _poppingBranch = true;
+    final prev = _branchHistory.removeLast();
+    setState(() {});
+    widget.navigationShell.goBranch(prev);
+  }
 
   @override
   void dispose() {
-    _topBarNotifier.dispose();
+    for (final n in _branchNotifiers) {
+      n.dispose();
+    }
     super.dispose();
   }
 
@@ -37,64 +74,75 @@ class _GamaScaffoldState extends State<GamaScaffold> {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width >= 800;
 
+    // BranchTopBarScope lets the router's navigatorContainerBuilder read the
+    // per-branch notifiers and wrap each branch navigator in its own TopBarScope.
+    // The outer TopBarScope (used by GamaTopBar) always points to the active branch.
     if (isDesktop) {
-      return Scaffold(
-        key: _scaffoldKey,
-        body: TopBarScope(
-          notifier: _topBarNotifier,
-          child: Row(
-            children: [
-              const SizedBox(width: 260, child: GamaSidebar()),
-              Expanded(
-                child: Column(
-                  children: [
-                    GamaTopBar(
-                      isDesktop: true,
-                      pageTitle: widget.pageTitle,
-                      pageSubtitle: widget.pageSubtitle,
-                    ),
-                    Expanded(child: widget.body),
-                  ],
+      return BranchTopBarScope(
+        notifiers: _branchNotifiers,
+        child: Scaffold(
+          key: _scaffoldKey,
+          body: TopBarScope(
+            notifier: _activeNotifier,
+            child: Row(
+              children: [
+                const SizedBox(width: 260, child: GamaSidebar()),
+                Expanded(
+                  child: Column(
+                    children: [
+                      GamaTopBar(
+                        isDesktop: true,
+                        pageTitle: widget.pageTitle,
+                        pageSubtitle: widget.pageSubtitle,
+                      ),
+                      Expanded(child: widget.navigationShell),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
     }
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        final router = GoRouter.of(context);
-        if (router.canPop()) {
-          router.pop();
-          return;
-        }
-        final loc = GoRouterState.of(context).matchedLocation;
-        final pai = parentRouteOf(loc);
-        if (pai != null) {
-          context.go(pai);
-        } else {
-          SystemNavigator.pop();
-        }
-      },
-      child: Scaffold(
-        key: _scaffoldKey,
-        bottomNavigationBar: const GamaBottomNav(),
-        body: TopBarScope(
-          notifier: _topBarNotifier,
-          child: SafeArea(
-            child: Column(
-              children: [
-                GamaTopBar(
-                  isDesktop: false,
-                  pageTitle: widget.pageTitle,
-                  pageSubtitle: widget.pageSubtitle,
+    // Mobile: intercept back to restore previous tab when branch is at root.
+    // Branch navigators (StatefulShellRoute) register ChildBackButtonDispatcher
+    // deeper in the tree → higher LIFO priority. So BackButtonListener here is
+    // only reached when the branch navigator has nothing to pop (branch at root).
+    return BranchTopBarScope(
+      notifiers: _branchNotifiers,
+      child: BackButtonListener(
+        onBackButtonPressed: () async {
+          if (_branchHistory.isNotEmpty) {
+            _handleBranchBack();
+            return true;
+          }
+          return false; // nothing in history → let system close the app
+        },
+        child: PopScope(
+          canPop: _branchHistory.isEmpty,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            _handleBranchBack();
+          },
+          child: Scaffold(
+            key: _scaffoldKey,
+            bottomNavigationBar: GamaBottomNav(navigationShell: widget.navigationShell),
+            body: TopBarScope(
+              notifier: _activeNotifier,
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    GamaTopBar(
+                      isDesktop: false,
+                      pageTitle: widget.pageTitle,
+                      pageSubtitle: widget.pageSubtitle,
+                    ),
+                    Expanded(child: widget.navigationShell),
+                  ],
                 ),
-                Expanded(child: widget.body),
-              ],
+              ),
             ),
           ),
         ),

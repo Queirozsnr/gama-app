@@ -28,6 +28,7 @@ import '../../features/oficinas/presentation/configuracoes_oficina_screen.dart';
 import '../../features/auth/presentation/trocar_senha_screen.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../shared/layout/gama_scaffold.dart';
+import '../../shared/state/top_bar_scope.dart';
 
 abstract final class AppRoutes {
   static const splash         = '/';
@@ -55,40 +56,6 @@ abstract final class AppRoutes {
   static const estoqueProdutoNovo    = '/estoque/produto/novo';
   static const estoqueProdutoDetalhe = '/estoque/produto/:id';
   static const estoqueProdutoEditar  = '/estoque/produto/:id/editar';
-}
-
-// Mapa de paternidade: padrão de rota → rota pai.
-// Adicione aqui ao criar sub-rotas novas — GamaScaffold usa isso automaticamente.
-const _rotaPai = <String, String>{
-  AppRoutes.ordensServicoNova:    AppRoutes.ordensServico,
-  AppRoutes.ordensServicoDetalhe: AppRoutes.ordensServico,
-  AppRoutes.clientesDetalhe:      AppRoutes.clientes,
-  AppRoutes.veiculosDetalhe:      AppRoutes.veiculos,
-  AppRoutes.funcionariosDetalhe:  AppRoutes.funcionarios,
-  AppRoutes.estoqueProdutoNovo:    AppRoutes.estoque,
-  AppRoutes.estoqueProdutoDetalhe: AppRoutes.estoque,
-  AppRoutes.estoqueProdutoEditar:  AppRoutes.estoque,
-  AppRoutes.fornecedores:          AppRoutes.estoque,
-};
-
-/// Retorna a rota pai de [location] (URL real, com IDs substituídos),
-/// ou null se for uma rota raiz (back fecha o app).
-String? parentRouteOf(String location) {
-  for (final entry in _rotaPai.entries) {
-    if (_matchRoute(entry.key, location)) return entry.value;
-  }
-  return null;
-}
-
-bool _matchRoute(String pattern, String location) {
-  final p = pattern.split('/');
-  final l = location.split('/');
-  if (p.length != l.length) return false;
-  for (var i = 0; i < p.length; i++) {
-    if (p[i].startsWith(':')) continue; // segmento dinâmico
-    if (p[i] != l[i]) return false;
-  }
-  return true;
 }
 
 const _pageTitles = <String, String>{
@@ -141,7 +108,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAuthenticated = auth?.isAuthenticated ?? false;
       final isPendingGroup = auth?.pendingGroupSelection ?? false;
       final isPendingOficina = auth?.pendingOficinaSelection ?? false;
-
       final isPendingPassword = auth?.pendingPasswordChange ?? false;
 
       if (isPendingGroup && loc != AppRoutes.selectGroup) return AppRoutes.selectGroup;
@@ -161,37 +127,118 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.selectGroup,   pageBuilder: _fade((ctx, st) => const SelectGroupScreen())),
       GoRoute(path: AppRoutes.selectOficina, pageBuilder: _fade((ctx, st) => const SelectOficinaScreen())),
       GoRoute(path: AppRoutes.trocarSenha,   pageBuilder: _fade((ctx, st) => const TrocarSenhaScreen())),
-      ShellRoute(
-        builder: (context, state, child) => GamaScaffold(
+      StatefulShellRoute(
+        navigatorContainerBuilder: (context, shell, children) {
+          final notifiers = BranchTopBarScope.of(context);
+          return IndexedStack(
+            index: shell.currentIndex,
+            children: [
+              for (var i = 0; i < children.length; i++)
+                TopBarScope(notifier: notifiers[i], child: children[i]),
+            ],
+          );
+        },
+        builder: (context, state, navigationShell) => GamaScaffold(
+          navigationShell: navigationShell,
           pageTitle: _pageTitles[GoRouterState.of(context).matchedLocation],
-          body: child,
         ),
-        routes: [
-          GoRoute(path: AppRoutes.home,              pageBuilder: _fade((ctx, st) => const HomeScreen())),
-          GoRoute(path: AppRoutes.ordensServico,     pageBuilder: _fade((ctx, st) => const OrdensServicoScreen())),
-          GoRoute(path: AppRoutes.ordensServicoNova, pageBuilder: _fade((ctx, st) =>
-              OsNovaScreen(clienteIdInicial: st.extra as int?))),
-          GoRoute(path: AppRoutes.ordensServicoDetalhe, pageBuilder: _fade((ctx, st) =>
-              OsDetalheScreen(osId: int.parse(st.pathParameters['id']!)))),
-          GoRoute(path: AppRoutes.clientes,          pageBuilder: _fade((ctx, st) => const ClientesScreen())),
-          GoRoute(path: AppRoutes.clientesDetalhe,   pageBuilder: _fade((ctx, st) =>
-              ClienteDetalheScreen(clienteId: int.parse(st.pathParameters['id']!)))),
-          GoRoute(path: AppRoutes.veiculos,          pageBuilder: _fade((ctx, st) => const VeiculosScreen())),
-          GoRoute(path: AppRoutes.veiculosDetalhe,   pageBuilder: _fade((ctx, st) =>
-              VeiculoDetalheScreen(veiculoId: int.parse(st.pathParameters['id']!)))),
-          GoRoute(path: AppRoutes.estoque,               pageBuilder: _fade((ctx, st) => const EstoqueScreen())),
-          GoRoute(path: AppRoutes.estoqueProdutoNovo,    pageBuilder: _fade((ctx, st) => const NovoProdutoScreen())),
-          GoRoute(path: AppRoutes.estoqueProdutoEditar,  pageBuilder: _fade((ctx, st) => NovoProdutoScreen(produto: st.extra! as ProdutoListagem))),
-          GoRoute(path: AppRoutes.estoqueProdutoDetalhe, pageBuilder: _fade((ctx, st) => ProdutoDetalheScreen(produto: st.extra! as ProdutoListagem))),
-          GoRoute(path: AppRoutes.fornecedores,          pageBuilder: _fade((ctx, st) => const FornecedoresScreen())),
-          GoRoute(path: AppRoutes.funcionarios,        pageBuilder: _fade((ctx, st) => const FuncionariosScreen())),
-          GoRoute(path: AppRoutes.funcionariosDetalhe, pageBuilder: _fade((ctx, st) =>
-              FuncionarioDetalheScreen(funcionarioId: int.parse(st.pathParameters['id']!)))),
-          GoRoute(path: AppRoutes.pagamentos,        pageBuilder: _fade((ctx, st) => const PagamentosScreen())),
-          GoRoute(path: AppRoutes.receitas,          pageBuilder: _fade((ctx, st) => const ReceitasScreen())),
-          GoRoute(path: AppRoutes.gerenciarOficinas,    pageBuilder: _fade((ctx, st) => const GerenciarOficinasScreen())),
-          GoRoute(path: AppRoutes.configuracoesOficina, pageBuilder: _fade((ctx, st) => const ConfiguracoesOficinaScreen())),
-          GoRoute(path: AppRoutes.admin,                pageBuilder: _fade((ctx, st) => const AdminScreen())),
+        branches: [
+          // Branch 0 — Painel
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: AppRoutes.home,
+              pageBuilder: _fade((ctx, st) => const HomeScreen()),
+            ),
+          ]),
+
+          // Branch 1 — Ordens de Serviço
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: AppRoutes.ordensServico,
+              pageBuilder: _fade((ctx, st) => const OrdensServicoScreen()),
+              routes: [
+                GoRoute(
+                  path: 'nova',
+                  pageBuilder: _fade((ctx, st) => OsNovaScreen(clienteIdInicial: st.extra as int?)),
+                ),
+                GoRoute(
+                  path: ':id',
+                  pageBuilder: _fade((ctx, st) => OsDetalheScreen(osId: int.parse(st.pathParameters['id']!))),
+                ),
+              ],
+            ),
+          ]),
+
+          // Branch 2 — Clientes
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: AppRoutes.clientes,
+              pageBuilder: _fade((ctx, st) => const ClientesScreen()),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  pageBuilder: _fade((ctx, st) => ClienteDetalheScreen(clienteId: int.parse(st.pathParameters['id']!))),
+                ),
+              ],
+            ),
+          ]),
+
+          // Branch 3 — Estoque
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: AppRoutes.estoque,
+              pageBuilder: _fade((ctx, st) => const EstoqueScreen()),
+              routes: [
+                GoRoute(
+                  path: 'produto/novo',
+                  pageBuilder: _fade((ctx, st) => const NovoProdutoScreen()),
+                ),
+                GoRoute(
+                  path: 'produto/:id',
+                  pageBuilder: _fade((ctx, st) => ProdutoDetalheScreen(produto: st.extra! as ProdutoListagem)),
+                  routes: [
+                    GoRoute(
+                      path: 'editar',
+                      pageBuilder: _fade((ctx, st) => NovoProdutoScreen(produto: st.extra! as ProdutoListagem)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            GoRoute(
+              path: AppRoutes.fornecedores,
+              pageBuilder: _fade((ctx, st) => const FornecedoresScreen()),
+            ),
+          ]),
+
+          // Branch 4 — Mais (Veículos, Funcionários, Pagamentos, etc.)
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: AppRoutes.veiculos,
+              pageBuilder: _fade((ctx, st) => const VeiculosScreen()),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  pageBuilder: _fade((ctx, st) => VeiculoDetalheScreen(veiculoId: int.parse(st.pathParameters['id']!))),
+                ),
+              ],
+            ),
+            GoRoute(
+              path: AppRoutes.funcionarios,
+              pageBuilder: _fade((ctx, st) => const FuncionariosScreen()),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  pageBuilder: _fade((ctx, st) => FuncionarioDetalheScreen(funcionarioId: int.parse(st.pathParameters['id']!))),
+                ),
+              ],
+            ),
+            GoRoute(path: AppRoutes.pagamentos,        pageBuilder: _fade((ctx, st) => const PagamentosScreen())),
+            GoRoute(path: AppRoutes.receitas,          pageBuilder: _fade((ctx, st) => const ReceitasScreen())),
+            GoRoute(path: AppRoutes.gerenciarOficinas,    pageBuilder: _fade((ctx, st) => const GerenciarOficinasScreen())),
+            GoRoute(path: AppRoutes.configuracoesOficina, pageBuilder: _fade((ctx, st) => const ConfiguracoesOficinaScreen())),
+            GoRoute(path: AppRoutes.admin,                pageBuilder: _fade((ctx, st) => const AdminScreen())),
+          ]),
         ],
       ),
     ],
