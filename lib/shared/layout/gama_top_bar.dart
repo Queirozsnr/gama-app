@@ -9,13 +9,11 @@ class GamaTopBar extends StatelessWidget {
     required this.isDesktop,
     this.pageTitle,
     this.pageSubtitle,
-    this.hasNotification = true,
   });
 
   final bool isDesktop;
   final String? pageTitle;
   final String? pageSubtitle;
-  final bool hasNotification;
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +24,10 @@ class GamaTopBar extends StatelessWidget {
             pageTitle: pageTitle,
             pageSubtitle: pageSubtitle,
             slot: slot,
-            hasNotification: hasNotification,
           )
         : _MobileTopBar(
             pageTitle: pageTitle,
             slot: slot,
-            hasNotification: hasNotification,
           );
   }
 }
@@ -42,13 +38,11 @@ class _DesktopTopBar extends StatelessWidget {
     this.pageTitle,
     this.pageSubtitle,
     this.slot,
-    required this.hasNotification,
   });
 
   final String? pageTitle;
   final String? pageSubtitle;
   final TopBarSlot? slot;
-  final bool hasNotification;
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +99,7 @@ class _DesktopTopBar extends StatelessWidget {
             ),
             const SizedBox(width: 16),
           ],
-          NotificationBell(hasNotification: hasNotification),
+          const NotificationBell(),
           if (slot?.action != null) ...[
             const SizedBox(width: 12),
             slot!.action!,
@@ -121,12 +115,10 @@ class _MobileTopBar extends StatelessWidget {
   const _MobileTopBar({
     this.pageTitle,
     this.slot,
-    required this.hasNotification,
   });
 
   final String? pageTitle;
   final TopBarSlot? slot;
-  final bool hasNotification;
 
   @override
   Widget build(BuildContext context) {
@@ -138,11 +130,7 @@ class _MobileTopBar extends StatelessWidget {
     final isDark = slot?.mobileStyle == MobileTopBarStyle.dark;
     return isDark
         ? _DarkMobileHeader(slot: slot, title: effectiveTitle)
-        : _LightMobileHeader(
-            slot: slot,
-            title: effectiveTitle,
-            hasNotification: hasNotification,
-          );
+        : _LightMobileHeader(slot: slot, title: effectiveTitle);
   }
 }
 
@@ -223,11 +211,9 @@ class _LightMobileHeader extends StatelessWidget {
   const _LightMobileHeader({
     this.slot,
     this.title,
-    required this.hasNotification,
   });
   final TopBarSlot? slot;
   final String? title;
-  final bool hasNotification;
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +275,7 @@ class _LightMobileHeader extends StatelessWidget {
                       ],
                     ),
                   ),
-                  NotificationBell(hasNotification: hasNotification),
+                  const NotificationBell(),
                   if (mobileAction != null) ...[
                     const SizedBox(width: 8),
                     mobileAction,
