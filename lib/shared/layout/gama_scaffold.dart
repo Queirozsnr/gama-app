@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/router/app_router.dart';
 import '../state/top_bar_scope.dart';
 import 'gama_bottom_nav.dart';
 import 'gama_sidebar.dart';
@@ -25,36 +26,6 @@ class GamaScaffold extends StatefulWidget {
 class _GamaScaffoldState extends State<GamaScaffold> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _topBarNotifier = TopBarNotifier();
-  final List<String> _history = [];
-
-  void _updateHistory(String loc) {
-    if (_history.isEmpty) {
-      _history.add(loc);
-      return;
-    }
-    if (_history.last == loc) return;
-    final existingIdx = _history.lastIndexOf(loc);
-    if (existingIdx >= 0) {
-      // voltando para rota já visitada — trunca o histórico
-      _history.removeRange(existingIdx + 1, _history.length);
-    } else {
-      _history.add(loc);
-    }
-  }
-
-  Future<bool> _onBackPressed() async {
-    final router = GoRouter.of(context);
-    if (router.canPop()) {
-      router.pop();
-      return true;
-    }
-    if (_history.length > 1) {
-      _history.removeLast();
-      context.go(_history.last);
-      return true;
-    }
-    return false; // no primeiro item do histórico: deixa o sistema fechar
-  }
 
   @override
   void dispose() {
@@ -92,34 +63,38 @@ class _GamaScaffoldState extends State<GamaScaffold> {
       );
     }
 
-    final loc = GoRouterState.of(context).matchedLocation;
-    _updateHistory(loc);
-
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
+      onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        final handled = await _onBackPressed();
-        if (!handled) SystemNavigator.pop();
+        final router = GoRouter.of(context);
+        if (router.canPop()) {
+          router.pop();
+          return;
+        }
+        final loc = GoRouterState.of(context).matchedLocation;
+        final pai = parentRouteOf(loc);
+        if (pai != null) {
+          context.go(pai);
+        } else {
+          SystemNavigator.pop();
+        }
       },
-      child: BackButtonListener(
-        onBackButtonPressed: _onBackPressed,
-        child: Scaffold(
-          key: _scaffoldKey,
-          bottomNavigationBar: const GamaBottomNav(),
-          body: TopBarScope(
-            notifier: _topBarNotifier,
-            child: SafeArea(
-              child: Column(
-                children: [
-                  GamaTopBar(
-                    isDesktop: false,
-                    pageTitle: widget.pageTitle,
-                    pageSubtitle: widget.pageSubtitle,
-                  ),
-                  Expanded(child: widget.body),
-                ],
-              ),
+      child: Scaffold(
+        key: _scaffoldKey,
+        bottomNavigationBar: const GamaBottomNav(),
+        body: TopBarScope(
+          notifier: _topBarNotifier,
+          child: SafeArea(
+            child: Column(
+              children: [
+                GamaTopBar(
+                  isDesktop: false,
+                  pageTitle: widget.pageTitle,
+                  pageSubtitle: widget.pageSubtitle,
+                ),
+                Expanded(child: widget.body),
+              ],
             ),
           ),
         ),

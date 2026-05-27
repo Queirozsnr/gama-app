@@ -32,17 +32,18 @@ class NotificacoesNotifier extends AsyncNotifier<List<Notificacao>> {
       ref.read(notificacoesDataSourceProvider).listar();
 
   Future<void> _conectarSignalR() async {
-    final token = await ref.read(tokenStorageProvider).read();
-    if (token == null) return;
+    // Verifica se há sessão antes de abrir o socket
+    final tokenInicial = await ref.read(tokenStorageProvider).read();
+    if (tokenInicial == null) return;
 
-    final hubUrl = '$kBaseUrl/hubs/notificacoes';
+    final storage = ref.read(tokenStorageProvider);
 
     _hub = HubConnectionBuilder()
         .withUrl(
-          hubUrl,
+          '$kBaseUrl/hubs/notificacoes',
           options: HttpConnectionOptions(
-            accessTokenFactory: () async => token,
-            skipNegotiation: false,
+            // Lê o token atual a cada (re)conexão — cobre renovação e reconexão pós-background
+            accessTokenFactory: () async => await storage.read() ?? '',
           ),
         )
         .withAutomaticReconnect()

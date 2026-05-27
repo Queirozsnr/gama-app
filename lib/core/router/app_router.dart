@@ -57,6 +57,40 @@ abstract final class AppRoutes {
   static const estoqueProdutoEditar  = '/estoque/produto/:id/editar';
 }
 
+// Mapa de paternidade: padrão de rota → rota pai.
+// Adicione aqui ao criar sub-rotas novas — GamaScaffold usa isso automaticamente.
+const _rotaPai = <String, String>{
+  AppRoutes.ordensServicoNova:    AppRoutes.ordensServico,
+  AppRoutes.ordensServicoDetalhe: AppRoutes.ordensServico,
+  AppRoutes.clientesDetalhe:      AppRoutes.clientes,
+  AppRoutes.veiculosDetalhe:      AppRoutes.veiculos,
+  AppRoutes.funcionariosDetalhe:  AppRoutes.funcionarios,
+  AppRoutes.estoqueProdutoNovo:    AppRoutes.estoque,
+  AppRoutes.estoqueProdutoDetalhe: AppRoutes.estoque,
+  AppRoutes.estoqueProdutoEditar:  AppRoutes.estoque,
+  AppRoutes.fornecedores:          AppRoutes.estoque,
+};
+
+/// Retorna a rota pai de [location] (URL real, com IDs substituídos),
+/// ou null se for uma rota raiz (back fecha o app).
+String? parentRouteOf(String location) {
+  for (final entry in _rotaPai.entries) {
+    if (_matchRoute(entry.key, location)) return entry.value;
+  }
+  return null;
+}
+
+bool _matchRoute(String pattern, String location) {
+  final p = pattern.split('/');
+  final l = location.split('/');
+  if (p.length != l.length) return false;
+  for (var i = 0; i < p.length; i++) {
+    if (p[i].startsWith(':')) continue; // segmento dinâmico
+    if (p[i] != l[i]) return false;
+  }
+  return true;
+}
+
 const _pageTitles = <String, String>{
   AppRoutes.home:          'Painel',
   AppRoutes.ordensServico: 'Ordens de Serviço',
