@@ -1615,10 +1615,32 @@ class _MobileLayout extends StatefulWidget {
 
 class _MobileLayoutState extends State<_MobileLayout> {
   int _tab = 0;
+  late final PageController _pageCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageCtrl = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
+  void _goToTab(int i) {
+    _pageCtrl.animateToPage(
+      i,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeInOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final d = widget.detalhe;
+    final bottomPad = MediaQuery.of(context).padding.bottom + 24;
     return Column(
       children: [
         _MobileHeader(
@@ -1629,14 +1651,15 @@ class _MobileLayoutState extends State<_MobileLayout> {
           onLigar: widget.onLigar,
         ),
         _MobileKpiStrip(detalhe: d),
-        _MobileTabBar(tab: _tab, onChanged: (t) => setState(() => _tab = t)),
+        _MobileTabBar(tab: _tab, onChanged: _goToTab),
         Expanded(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).padding.bottom + 24,
-            ),
-            child: switch (_tab) {
-              0 => _MobileResumoContent(
+          child: PageView(
+            controller: _pageCtrl,
+            onPageChanged: (i) => setState(() => _tab = i),
+            children: [
+              SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: bottomPad),
+                child: _MobileResumoContent(
                   detalhe: d,
                   onAddVeiculo: widget.onAddVeiculo,
                   onExcluirVeiculo: widget.onExcluirVeiculo,
@@ -1645,18 +1668,24 @@ class _MobileLayoutState extends State<_MobileLayout> {
                   onAbrirOs: widget.onAbrirOs,
                   onEditarNotas: widget.onEditarNotas,
                 ),
-              1 => _MobileVeiculosContent(
+              ),
+              SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: bottomPad),
+                child: _MobileVeiculosContent(
                   veiculos: d.veiculos,
                   onEditarVeiculo: widget.onEditarVeiculo,
                   onExcluirVeiculo: widget.onExcluirVeiculo,
                   onAddVeiculo: widget.onAddVeiculo,
                 ),
-              2 => _MobileOsContent(
+              ),
+              SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: bottomPad),
+                child: _MobileOsContent(
                   ultimasOs: d.ultimasOs,
                   onAbrirOs: widget.onAbrirOs,
                 ),
-              _ => const SizedBox(),
-            },
+              ),
+            ],
           ),
         ),
       ],

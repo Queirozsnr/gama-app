@@ -163,6 +163,8 @@ class _GerencialScreenState extends ConsumerState<GerencialScreen>
             data: (d) => _Body(
               dashboard: d,
               periodo: _periodo,
+              onRefresh: () async => ref.invalidate(
+                  gerencialDashboardProvider((_dataInicio, _dataFim))),
             ),
           ),
         ),
@@ -405,16 +407,17 @@ class _OficinaBarState extends ConsumerState<_OficinaBar> {
 // ── body ──────────────────────────────────────────────────────────────────────
 
 class _Body extends StatelessWidget {
-  const _Body({required this.dashboard, required this.periodo});
+  const _Body({required this.dashboard, required this.periodo, required this.onRefresh});
 
   final GerencialDashboard dashboard;
   final _Periodo periodo;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       final w = constraints.maxWidth;
-      return SingleChildScrollView(
+      final scrollView = SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -432,6 +435,8 @@ class _Body extends StatelessWidget {
           ],
         ),
       );
+      if (w >= 800) return scrollView;
+      return RefreshIndicator(onRefresh: onRefresh, child: scrollView);
     });
   }
 }

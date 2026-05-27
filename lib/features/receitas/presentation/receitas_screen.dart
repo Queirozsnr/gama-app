@@ -228,6 +228,8 @@ class _ReceitasScreenState extends ConsumerState<ReceitasScreen>
               periodo: _periodo,
               dataInicio: _dataInicio,
               dataFim: _dataFim,
+              onRefresh: () async => ref.invalidate(
+                  receitasDashboardProvider((_dataInicio, _dataFim))),
             ),
           ),
         ),
@@ -353,16 +355,19 @@ class _Body extends StatelessWidget {
     required this.periodo,
     required this.dataInicio,
     required this.dataFim,
+    required this.onRefresh,
   });
 
   final ReceitasDashboard dashboard;
   final _Periodo periodo;
   final DateTime dataInicio;
   final DateTime dataFim;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
+    final list = ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       children: [
         _KpiCard(dashboard: dashboard, periodo: periodo, dataInicio: dataInicio, dataFim: dataFim),
@@ -444,6 +449,8 @@ class _Body extends StatelessWidget {
         ),
       ],
     );
+    if (isDesktop) return list;
+    return RefreshIndicator(onRefresh: onRefresh, child: list);
   }
 }
 

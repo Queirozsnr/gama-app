@@ -251,7 +251,12 @@ class _PainelScreenState extends ConsumerState<PainelScreen>
                 ],
               ),
             ),
-            data: (d) => _Body(painel: d, periodo: _periodo),
+            data: (d) => _Body(
+              painel: d,
+              periodo: _periodo,
+              onRefresh: () async => ref.invalidate(
+                  painelOperacionalProvider((_dataInicio, _dataFim))),
+            ),
           ),
         ),
       ],
@@ -262,9 +267,10 @@ class _PainelScreenState extends ConsumerState<PainelScreen>
 // ── body ──────────────────────────────────────────────────────────────────────
 
 class _Body extends ConsumerWidget {
-  const _Body({required this.painel, required this.periodo});
+  const _Body({required this.painel, required this.periodo, required this.onRefresh});
   final PainelOperacional painel;
   final _Periodo periodo;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -275,7 +281,7 @@ class _Body extends ConsumerWidget {
 
     return LayoutBuilder(builder: (context, constraints) {
       final wide = constraints.maxWidth >= 800;
-      return SingleChildScrollView(
+      final scrollView = SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -297,6 +303,8 @@ class _Body extends ConsumerWidget {
           ],
         ),
       );
+      if (wide) return scrollView;
+      return RefreshIndicator(onRefresh: onRefresh, child: scrollView);
     });
   }
 }
@@ -792,146 +800,209 @@ class _OsRow extends StatelessWidget {
   const _OsRow({required this.os});
   final OsResumo os;
 
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => context.go('/ordens-servico/${os.id}?from=/home'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.line)),
+  Widget _statusBadge() => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: _statusBg(os.status),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // número OS
-            SizedBox(
-              width: 52,
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: _statusColor(os.status),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              os.status,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: _statusColor(os.status),
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _clientePlacaRow() => Row(
+        children: [
+          Text(os.clienteNome,
+              style: const TextStyle(fontSize: 12, color: AppColors.ink2)),
+          if (os.placa != null) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: AppColors.sidebarBg,
+                borderRadius: BorderRadius.circular(4),
+              ),
               child: Text(
-                '#${os.id}',
+                os.placa!,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.ink3,
+                  color: Colors.white,
                   fontFamily: 'JetBrains Mono',
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
-            // serviço + cliente + placa
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(os.servico,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.ink,
-                      ),
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Text(os.clienteNome,
-                          style: const TextStyle(
-                              fontSize: 12, color: AppColors.ink2)),
-                      if (os.placa != null) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: AppColors.sidebarBg,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            os.placa!,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              fontFamily: 'JetBrains Mono',
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        if (os.veiculoDescricao != null) ...[
-                          const SizedBox(width: 4),
-                          Text(os.veiculoDescricao!,
-                              style: const TextStyle(
-                                  fontSize: 11, color: AppColors.ink3)),
-                        ],
-                      ],
-                    ],
-                  ),
-                ],
-              ),
+          ],
+        ],
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final compact = constraints.maxWidth < 520;
+      return InkWell(
+        onTap: () => context.go('/ordens-servico/${os.id}?from=/home'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.line)),
+          ),
+          child: compact ? _buildCompact() : _buildFull(),
+        ),
+      );
+    });
+  }
+
+  // Mobile: número | serviço+cliente | status+valor empilhados à direita
+  Widget _buildCompact() => Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            '#${os.id}',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.ink3,
+              fontFamily: 'JetBrains Mono',
             ),
-            const SizedBox(width: 12),
-            // status
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: _statusBg(os.status),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: _statusColor(os.status),
-                      shape: BoxShape.circle,
-                    ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  os.servico,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
                   ),
-                  const SizedBox(width: 5),
-                  Text(os.status,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: _statusColor(os.status),
-                        letterSpacing: 0.3,
-                      )),
-                ],
-              ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                _clientePlacaRow(),
+              ],
             ),
-            const SizedBox(width: 12),
-            // valor
-            SizedBox(
-              width: 80,
-              child: Text(
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _statusBadge(),
+              const SizedBox(height: 4),
+              Text(
                 _fmt(os.valor),
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.ink,
                 ),
-                textAlign: TextAlign.right,
+              ),
+            ],
+          ),
+        ],
+      );
+
+  // Desktop: layout completo com prazo
+  Widget _buildFull() => Row(
+        children: [
+          SizedBox(
+            width: 52,
+            child: Text(
+              '#${os.id}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink3,
+                fontFamily: 'JetBrains Mono',
               ),
             ),
-            const SizedBox(width: 12),
-            // previsão
-            SizedBox(
-              width: 52,
-              child: Text(
-                _fmtPrevisao(os.previsaoEntrega),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: os.previsaoEntrega != null &&
-                          os.previsaoEntrega!.isBefore(DateTime.now())
-                      ? AppColors.danger
-                      : AppColors.ink2,
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  os.servico,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.right,
-              ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    _clientePlacaRow(),
+                    if (os.veiculoDescricao != null) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        os.veiculoDescricao!,
+                        style: const TextStyle(fontSize: 11, color: AppColors.ink3),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
+          ),
+          const SizedBox(width: 12),
+          _statusBadge(),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 80,
+            child: Text(
+              _fmt(os.valor),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 52,
+            child: Text(
+              _fmtPrevisao(os.previsaoEntrega),
+              style: TextStyle(
+                fontSize: 12,
+                color: os.previsaoEntrega != null &&
+                        os.previsaoEntrega!.isBefore(DateTime.now())
+                    ? AppColors.danger
+                    : AppColors.ink2,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      );
 }
 
 // ── equipe do dia ─────────────────────────────────────────────────────────────

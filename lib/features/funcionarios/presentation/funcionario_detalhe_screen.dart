@@ -726,26 +726,55 @@ class _MobileLayout extends StatefulWidget {
 
 class _MobileLayoutState extends State<_MobileLayout> {
   int _tab = 0;
+  late final PageController _pageCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageCtrl = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
+  void _goToTab(int i) {
+    _pageCtrl.animateToPage(
+      i,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeInOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final f = widget.funcionario;
+    final bottomPad = MediaQuery.of(context).padding.bottom + 24;
     return Column(
       children: [
         _MobileSubHeader(funcionario: f),
         _MobileKpiStrip(funcionario: f),
-        _MobileTabBar(tab: _tab, onChanged: (t) => setState(() => _tab = t)),
+        _MobileTabBar(tab: _tab, onChanged: _goToTab),
         Expanded(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).padding.bottom + 24,
-            ),
-            child: switch (_tab) {
-              0 => _MobilePerfilContent(funcionario: f, onEditar: widget.onEditar),
-              1 => _MobilePagamentoContent(funcionario: f),
-              2 => _MobileOficinasContent(oficinas: f.oficinas),
-              _ => const SizedBox(),
-            },
+          child: PageView(
+            controller: _pageCtrl,
+            onPageChanged: (i) => setState(() => _tab = i),
+            children: [
+              SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: bottomPad),
+                child: _MobilePerfilContent(funcionario: f, onEditar: widget.onEditar),
+              ),
+              SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: bottomPad),
+                child: _MobilePagamentoContent(funcionario: f),
+              ),
+              SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: bottomPad),
+                child: _MobileOficinasContent(oficinas: f.oficinas),
+              ),
+            ],
           ),
         ),
       ],
