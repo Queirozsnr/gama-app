@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
@@ -87,6 +88,21 @@ class OrdensServicoRemoteDataSource {
 
   Future<void> removerDesconto(int osId, int descontoId) async {
     await _dio.delete('/ordens-servico/$osId/descontos/$descontoId');
+  }
+
+  Future<int> adicionarMidia(int osId, Uint8List bytes, String filename) async {
+    final formData = FormData.fromMap({
+      'arquivo': MultipartFile.fromBytes(bytes, filename: filename),
+    });
+    final resp = await _dio.post(
+      '/ordens-servico/$osId/midias',
+      data: formData,
+    );
+    return (resp.data as Map<String, dynamic>)['id'] as int;
+  }
+
+  Future<void> removerMidia(int osId, int midiaId) async {
+    await _dio.delete('/ordens-servico/$osId/midias/$midiaId');
   }
 }
 

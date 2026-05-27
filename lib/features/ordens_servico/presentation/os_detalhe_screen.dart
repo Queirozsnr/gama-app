@@ -1,9 +1,12 @@
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/network/api_constants.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/state/top_bar_scope.dart';
+import '../../../../shared/utils/file_picker_helper.dart';
 import '../../../../shared/widgets/chips/status_chip.dart';
 import '../../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
@@ -15,6 +18,7 @@ import '../domain/desconto_os.dart';
 import '../domain/item_os.dart';
 import '../domain/ordem_servico_detalhe.dart';
 import '../domain/os_mecanico.dart';
+import '../domain/os_midia.dart';
 import 'ordens_servico_notifier.dart';
 import 'os_orcamento_pdf.dart';
 import '../../auth/presentation/auth_notifier.dart';
@@ -396,6 +400,41 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
     }
   }
 
+  Future<void> _adicionarMidia(int osId, Uint8List bytes, String filename) async {
+    setState(() => _actionLoading = true);
+    try {
+      await ref.read(ordensServicoRemoteDataSourceProvider).adicionarMidia(osId, bytes, filename);
+      ref.invalidate(osDetalheProvider(widget.osId));
+      if (mounted) GamaSnackBar.success(context, 'Mídia adicionada.');
+    } catch (e) {
+      if (mounted) GamaSnackBar.error(context, _dioError(e, 'Erro ao adicionar mídia.'));
+    } finally {
+      if (mounted) setState(() => _actionLoading = false);
+    }
+  }
+
+  Future<void> _removerMidia(int osId, OsMidia midia) async {
+    final ok = await GamaConfirmDialog.show(
+      context,
+      title: 'Remover mídia',
+      message: 'Remover esta ${midia.isVideo ? 'vídeo' : 'foto'}?',
+      confirmLabel: 'Remover',
+      confirmColor: AppColors.danger,
+    );
+    if (!ok || !mounted) return;
+
+    setState(() => _actionLoading = true);
+    try {
+      await ref.read(ordensServicoRemoteDataSourceProvider).removerMidia(osId, midia.id);
+      ref.invalidate(osDetalheProvider(widget.osId));
+      if (mounted) GamaSnackBar.success(context, 'Mídia removida.');
+    } catch (e) {
+      if (mounted) GamaSnackBar.error(context, _dioError(e, 'Erro ao remover mídia.'));
+    } finally {
+      if (mounted) setState(() => _actionLoading = false);
+    }
+  }
+
   Future<void> _excluir(OrdemServicoDetalhe os) async {
     final ok = await GamaConfirmDialog.show(
       context,
@@ -506,6 +545,8 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
         onRemoverDesconto: (d) => _removerDesconto(os.id, d),
         onEditarConclusao: () => _editarConclusao(os),
         onExcluir: () => _excluir(os),
+        onAdicionarMidia: (bytes, name) => _adicionarMidia(os.id, bytes, name),
+        onRemoverMidia: (m) => _removerMidia(os.id, m),
       ),
     );
   }
@@ -529,6 +570,8 @@ class _Body extends StatelessWidget {
     required this.onRemoverDesconto,
     required this.onEditarConclusao,
     required this.onExcluir,
+    required this.onAdicionarMidia,
+    required this.onRemoverMidia,
   });
 
   final OrdemServicoDetalhe os;
@@ -545,6 +588,8 @@ class _Body extends StatelessWidget {
   final void Function(DescontoOs) onRemoverDesconto;
   final VoidCallback onEditarConclusao;
   final VoidCallback onExcluir;
+  final Future<void> Function(Uint8List bytes, String filename) onAdicionarMidia;
+  final Future<void> Function(OsMidia) onRemoverMidia;
 
   @override
   Widget build(BuildContext context) {
@@ -650,6 +695,16 @@ class _Body extends StatelessWidget {
                       ],
                     ],
                   ),
+                ),
+                const SizedBox(height: 12),
+
+                // Fotos e vídeos
+                _FotosVideosCard(
+                  midias: os.midias,
+                  podeEditar: podeEditar,
+                  isDesktop: true,
+                  onAdd: onAdicionarMidia,
+                  onRemover: onRemoverMidia,
                 ),
                 const SizedBox(height: 12),
 
@@ -810,6 +865,8 @@ class _Body extends StatelessWidget {
                   onRemoverMecanico: onRemoverMecanico,
                   onAdicionarServico: onAdicionarServico,
                   onRemoverItem: onRemoverItem,
+                  onAdicionarMidia: onAdicionarMidia,
+                  onRemoverMidia: onRemoverMidia,
                 ),
                 // Peças
                 _PecasTab(
@@ -893,6 +950,8 @@ class _ResumoTab extends StatelessWidget {
     required this.onRemoverMecanico,
     required this.onAdicionarServico,
     required this.onRemoverItem,
+    required this.onAdicionarMidia,
+    required this.onRemoverMidia,
   });
 
   final OrdemServicoDetalhe os;
@@ -904,6 +963,8 @@ class _ResumoTab extends StatelessWidget {
   final void Function(OsMecanico) onRemoverMecanico;
   final VoidCallback onAdicionarServico;
   final void Function(ItemOs) onRemoverItem;
+  final Future<void> Function(Uint8List bytes, String filename) onAdicionarMidia;
+  final Future<void> Function(OsMidia) onRemoverMidia;
 
   @override
   Widget build(BuildContext context) {
@@ -970,6 +1031,15 @@ class _ResumoTab extends StatelessWidget {
           ),
 
         const SizedBox(height: 14),
+        _FotosVideosCard(
+          midias: os.midias,
+          podeEditar: podeEditar,
+          isDesktop: false,
+          onAdd: onAdicionarMidia,
+          onRemover: onRemoverMidia,
+        ),
+
+        const SizedBox(height: 14),
         _Section(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -979,7 +1049,7 @@ class _ResumoTab extends StatelessWidget {
                   const Icon(Icons.notes_outlined, size: 15, color: AppColors.ink2),
                   const SizedBox(width: 6),
                   Text('Observação',
-                      style: TextStyle(fontFamily: 'Inter', 
+                      style: TextStyle(fontFamily: 'Inter',
                           fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
                 ],
               ),
@@ -2399,6 +2469,251 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
       ),
     );
   }
+}
+
+// ── Fotos e vídeos card ───────────────────────────────────────────────────────
+
+class _FotosVideosCard extends StatefulWidget {
+  const _FotosVideosCard({
+    required this.midias,
+    required this.podeEditar,
+    required this.isDesktop,
+    required this.onAdd,
+    required this.onRemover,
+  });
+
+  final List<OsMidia> midias;
+  final bool podeEditar;
+  final bool isDesktop;
+  final Future<void> Function(Uint8List bytes, String filename) onAdd;
+  final Future<void> Function(OsMidia) onRemover;
+
+  @override
+  State<_FotosVideosCard> createState() => _FotosVideosCardState();
+}
+
+class _FotosVideosCardState extends State<_FotosVideosCard> {
+  bool _picking = false;
+
+  Future<void> _pick(Future<({Uint8List bytes, String name})?> Function() picker) async {
+    if (_picking) return;
+    setState(() => _picking = true);
+    try {
+      final result = await picker();
+      if (result == null || !mounted) return;
+      await widget.onAdd(result.bytes, result.name);
+    } finally {
+      if (mounted) setState(() => _picking = false);
+    }
+  }
+
+  Widget _thumb(OsMidia m) {
+    final thumbSize = widget.isDesktop ? 90.0 : 80.0;
+    return SizedBox(
+      width: thumbSize,
+      height: thumbSize,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: m.isVideo
+                ? Container(
+                    width: thumbSize,
+                    height: thumbSize,
+                    color: AppColors.surface2,
+                    child: const Center(
+                      child: Icon(Icons.videocam, size: 28, color: AppColors.ink2),
+                    ),
+                  )
+                : Image.network(
+                    '$kBaseUrl${m.url}',
+                    width: thumbSize,
+                    height: thumbSize,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Container(
+                      width: thumbSize,
+                      height: thumbSize,
+                      color: AppColors.surface2,
+                      child: const Icon(Icons.broken_image, color: AppColors.ink3),
+                    ),
+                  ),
+          ),
+          if (m.isVideo)
+            Positioned(
+              bottom: 4,
+              left: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xAA000000),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: const Text('VÍD',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'JetBrains Mono',
+                    )),
+              ),
+            ),
+          if (widget.podeEditar)
+            Positioned(
+              top: -5,
+              right: -5,
+              child: GestureDetector(
+                onTap: () => widget.onRemover(m),
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: const BoxDecoration(
+                    color: AppColors.danger,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 11, color: Colors.white),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _Section(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.photo_library_outlined, size: 15, color: AppColors.ink2),
+              const SizedBox(width: 6),
+              Text('Fotos e vídeos',
+                  style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink)),
+              if (widget.midias.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface2,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text('${widget.midias.length}',
+                      style: TextStyle(
+                          fontFamily: 'Inter', fontSize: 11, color: AppColors.ink2)),
+                ),
+              ],
+              const Spacer(),
+              if (widget.podeEditar && widget.isDesktop) ...[
+                _HeaderBtn(Icons.photo_library_outlined, 'Galeria foto',
+                    _picking ? () {} : () => _pick(pickImageBytes)),
+                _HeaderBtn(Icons.videocam_outlined, 'Vídeo',
+                    _picking ? () {} : () => _pick(pickVideoBytes)),
+              ],
+            ],
+          ),
+
+          // Mobile action buttons
+          if (widget.podeEditar && !widget.isDesktop) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _MidiaActionBtn(
+                    icon: Icons.camera_alt_outlined,
+                    label: 'Tirar foto',
+                    onTap: _picking ? null : () => _pick(capturePhotoBytes),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _MidiaActionBtn(
+                    icon: Icons.videocam_outlined,
+                    label: 'Gravar vídeo',
+                    onTap: _picking ? null : () => _pick(captureVideoBytes),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            _MidiaActionBtn(
+              icon: Icons.photo_library_outlined,
+              label: 'Galeria',
+              onTap: _picking ? null : () => _pick(pickImageBytes),
+            ),
+          ],
+
+          if (_picking) ...[
+            const SizedBox(height: 8),
+            const LinearProgressIndicator(
+              minHeight: 2,
+              color: AppColors.accent,
+              backgroundColor: AppColors.surface2,
+            ),
+          ],
+
+          if (widget.midias.isEmpty) ...[
+            const SizedBox(height: 10),
+            Text('Nenhuma foto ou vídeo registrado.',
+                style: TextStyle(
+                    fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3)),
+          ] else ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: widget.midias.map(_thumb).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MidiaActionBtn extends StatelessWidget {
+  const _MidiaActionBtn({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.line),
+            borderRadius: BorderRadius.circular(8),
+            color: AppColors.surface2,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: onTap != null ? AppColors.accent : AppColors.ink3),
+              const SizedBox(width: 6),
+              Text(label,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: onTap != null ? AppColors.accent : AppColors.ink3,
+                  )),
+            ],
+          ),
+        ),
+      );
 }
 
 // ── Item form dialog ──────────────────────────────────────────────────────────

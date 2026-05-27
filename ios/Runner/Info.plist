@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Necessário para tirar fotos e gravar vídeos dos veículos na ordem de serviço.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Necessário para selecionar fotos e vídeos da galeria.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Necessário para gravar vídeos com áudio.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

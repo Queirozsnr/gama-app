@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:html' as html;
 import 'dart:typed_data';
 
+bool get isMobile => false;
+
 Future<({Uint8List bytes, String name})?> pickImageBytes() async {
   final completer = Completer<({Uint8List bytes, String name})?>();
 
@@ -25,3 +27,9 @@ Future<({Uint8List bytes, String name})?> pickImageBytes() async {
 
   return completer.future;
 }
+
+Future<({Uint8List bytes, String name})?> pickVideoBytes() async => null;
+
+Future<({Uint8List bytes, String name})?> capturePhotoBytes() async => null;
+
+Future<({Uint8List bytes, String name})?> captureVideoBytes() async => null;

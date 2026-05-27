@@ -1,6 +1,7 @@
 import 'desconto_os.dart';
 import 'item_os.dart';
 import 'os_mecanico.dart';
+import 'os_midia.dart';
 
 class OrdemServicoDetalhe {
   const OrdemServicoDetalhe({
@@ -22,6 +23,7 @@ class OrdemServicoDetalhe {
     required this.mecanicos,
     required this.itens,
     required this.descontos,
+    required this.midias,
     required this.totalServicos,
     required this.totalPecas,
     required this.totalDescontos,
@@ -46,6 +48,7 @@ class OrdemServicoDetalhe {
   final List<OsMecanico> mecanicos;
   final List<ItemOs> itens;
   final List<DescontoOs> descontos;
+  final List<OsMidia> midias;
   final double totalServicos;
   final double totalPecas;
   final double totalDescontos;
@@ -80,6 +83,9 @@ class OrdemServicoDetalhe {
             .toList(),
         descontos: (json['descontos'] as List)
             .map((e) => DescontoOs.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        midias: (json['midias'] as List? ?? [])
+            .map((e) => OsMidia.fromJson(e as Map<String, dynamic>))
             .toList(),
         totalServicos: (json['totalServicos'] as num).toDouble(),
         totalPecas: (json['totalPecas'] as num).toDouble(),
