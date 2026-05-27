@@ -23,14 +23,18 @@ const _periodos = <_PeriodoOpt>[
   (label: 'Tudo',        value: OsPeriodo.tudo),
 ];
 
+// Sentinel: busca tudo no backend mas oculta 'Entregue' no cliente
+const _kSemEntregue = '__sem_entregue__';
+
 typedef _StatusOpt = ({String label, String? value});
 const _statusOpts = <_StatusOpt>[
-  (label: 'Todas',        value: null),
-  (label: 'ABERTA',       value: 'Aberta'),
-  (label: 'EM ANDAMENTO', value: 'EmAndamento'),
-  (label: 'AGUARDA PEÇA', value: 'AguardandoPecas'),
-  (label: 'PRONTO',       value: 'Concluida'),
-  (label: 'ENTREGUE',     value: 'Entregue'),
+  (label: 'Ativos',  value: _kSemEntregue),
+  (label: 'Todas',         value: null),
+  (label: 'Aberta',        value: 'Aberta'),
+  (label: 'Em Andamento',  value: 'EmAndamento'),
+  (label: 'Aguarda Peça',  value: 'AguardandoPecas'),
+  (label: 'Pronto',        value: 'Concluida'),
+  (label: 'Entregue',      value: 'Entregue'),
 ];
 
 class OrdensServicoScreen extends ConsumerStatefulWidget {
@@ -42,8 +46,8 @@ class OrdensServicoScreen extends ConsumerStatefulWidget {
 
 class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
     with TopBarSlotMixin<OrdensServicoScreen> {
-  OsPeriodo _periodo = OsPeriodo.semana;
-  String? _filtroStatus;
+  OsPeriodo _periodo = OsPeriodo.tudo;
+  String? _filtroStatus = _kSemEntregue;
   String? _filtroMecanico;
   String? _filtroCliente;
   String _ordenarCampo = 'prazo';
@@ -109,7 +113,10 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
 
   void _setStatus(String? v) {
     setState(() => _filtroStatus = v);
-    ref.read(ordensServicoNotifierProvider.notifier).filtrar(v);
+    // Sentinel busca tudo; 'Entregue' é excluído no cliente em _aplicarFiltros
+    ref.read(ordensServicoNotifierProvider.notifier).filtrar(
+      v == _kSemEntregue ? null : v,
+    );
   }
 
   void _setMecanico(String? v) => setState(() => _filtroMecanico = v);
@@ -123,6 +130,9 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
 
   List<OrdemServico> _aplicarFiltros(List<OrdemServico> lista) {
     var r = lista;
+    if (_filtroStatus == _kSemEntregue) {
+      r = r.where((os) => os.status != 'Entregue').toList();
+    }
     if (_busca.isNotEmpty) {
       r = r.where((os) =>
         os.clienteNome.toLowerCase().contains(_busca) ||
