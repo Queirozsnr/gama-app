@@ -106,19 +106,16 @@ class _GamaScaffoldState extends State<GamaScaffold> {
       );
     }
 
-    // Mobile: intercept back to restore previous tab when branch is at root.
-    // Branch navigators (StatefulShellRoute) register ChildBackButtonDispatcher
-    // deeper in the tree → higher LIFO priority. So BackButtonListener here is
-    // only reached when the branch navigator has nothing to pop (branch at root).
+  
     return BranchTopBarScope(
       notifiers: _branchNotifiers,
       child: BackButtonListener(
         onBackButtonPressed: () async {
-          if (_branchHistory.isNotEmpty) {
+          if (_branchHistory.isNotEmpty && !GoRouter.of(context).canPop()) {
             _handleBranchBack();
             return true;
           }
-          return false; // nothing in history → let system close the app
+          return false;
         },
         child: PopScope(
           canPop: _branchHistory.isEmpty,

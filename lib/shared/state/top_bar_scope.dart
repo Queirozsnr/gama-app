@@ -99,9 +99,20 @@ class TopBarScope extends InheritedNotifier<TopBarNotifier> {
     required super.child,
   });
 
+  /// Subscribes the caller to rebuild when the notifier changes.
+  /// Use this in widgets that display topbar content (e.g. GamaTopBar).
   static TopBarNotifier? maybeOf(BuildContext context) {
     return context
         .dependOnInheritedWidgetOfExactType<TopBarScope>()
+        ?.notifier;
+  }
+
+  /// Reads the notifier WITHOUT subscribing. Use in [TopBarSlotMixin] to
+  /// avoid a circular rebuild loop (slot change → didChangeDependencies →
+  /// setTopBarSlot → slot change → …).
+  static TopBarNotifier? readOf(BuildContext context) {
+    return context
+        .getInheritedWidgetOfExactType<TopBarScope>()
         ?.notifier;
   }
 }
@@ -172,7 +183,9 @@ mixin TopBarSlotMixin<T extends StatefulWidget> on State<T> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _topBarNotifier = TopBarScope.maybeOf(context);
+    // Use readOf (no subscription) to avoid a circular rebuild loop where
+    // slot changes trigger didChangeDependencies which re-pushes the slot.
+    _topBarNotifier = TopBarScope.readOf(context);
   }
 
   void setTopBarSlot(TopBarSlot slot) {
