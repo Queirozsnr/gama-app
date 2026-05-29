@@ -13,14 +13,17 @@ import '../../domain/remuneracao.dart';
 import '../funcionarios_notifier.dart';
 
 const _cargos = [
+  'Lider',
   'Mecanico', 'Auxiliar', 'Atendente',
   'Lavador', 'Funileiro', 'Eletricista', 'Pintor', 'TecnicoArCondicionado',
 ];
 
 const _tiposRemuneracao = ['Fixo', 'Porcentagem'];
+const _tiposRemuneracaoLider = ['Fixo', 'NaoRemunerado'];
 const _tipoRemuneracaoLabels = {
-  'Fixo': 'Salário fixo',
-  'Porcentagem': 'Porcentagem da OS',
+  'Fixo':          'Salário fixo',
+  'Porcentagem':   'Porcentagem da OS',
+  'NaoRemunerado': 'Não remunerado',
 };
 
 class FuncionarioFormDialog extends ConsumerStatefulWidget {
@@ -80,8 +83,11 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
   Future<List<String>> _filtrarCargos(String q) async =>
       _cargos.where((c) => cargoLabel(c).toLowerCase().contains(q.toLowerCase())).toList();
 
+  List<String> get _tiposParaCargo =>
+      _cargo == 'Lider' ? _tiposRemuneracaoLider : _tiposRemuneracao;
+
   Future<List<String>> _filtrarTipos(String q) async =>
-      _tiposRemuneracao.where((t) => (_tipoRemuneracaoLabels[t] ?? t).toLowerCase().contains(q.toLowerCase())).toList();
+      _tiposParaCargo.where((t) => (_tipoRemuneracaoLabels[t] ?? t).toLowerCase().contains(q.toLowerCase())).toList();
 
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
@@ -179,7 +185,7 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                           isRequired: true,
                           onChanged: (v) => setState(() {
                             _cargo = v;
-                            if (v == 'Gerente') {
+                            if (v == 'Gerente' || v == 'Lider') {
                               _tipoRemuneracao = null;
                               _valor.clear();
                             }
@@ -198,12 +204,14 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                               _valor.clear();
                             }),
                           ),
-                          const SizedBox(height: 12),
-                          _campo(
-                            _valor,
-                            _tipoRemuneracao == 'Porcentagem' ? 'Porcentagem (%)' : 'Salário (R\$)',
-                            teclado: const TextInputType.numberWithOptions(decimal: true),
-                          ),
+                          if (_tipoRemuneracao != null && _tipoRemuneracao != 'NaoRemunerado') ...[
+                            const SizedBox(height: 12),
+                            _campo(
+                              _valor,
+                              _tipoRemuneracao == 'Porcentagem' ? 'Porcentagem (%)' : 'Salário (R\$)',
+                              teclado: const TextInputType.numberWithOptions(decimal: true),
+                            ),
+                          ],
                         ],
                         const SizedBox(height: 16),
                         const Text('Oficinas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
