@@ -2502,6 +2502,14 @@ class _FotosVideosCardState extends State<_FotosVideosCard> {
       final result = await picker();
       if (result == null || !mounted) return;
       await widget.onAdd(result.bytes, result.name);
+    } catch (e) {
+      if (mounted) {
+        final msg = e.toString().contains('photo_access_denied') ||
+                e.toString().contains('camera_access_denied')
+            ? 'Permissão de câmera negada. Verifique as configurações do app.'
+            : 'Erro ao capturar mídia. Tente novamente.';
+        GamaSnackBar.error(context, msg);
+      }
     } finally {
       if (mounted) setState(() => _picking = false);
     }
