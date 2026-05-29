@@ -42,6 +42,7 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
       orElse: () => null,
     )?.nome;
     setTopBarSlot(TopBarSlot(
+      pageTitle: 'Funcionários',
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
       searchController: _searchController,

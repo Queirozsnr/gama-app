@@ -1206,6 +1206,9 @@ class _VehicleCard extends StatelessWidget {
   const _VehicleCard({required this.os});
   final OrdemServicoDetalhe os;
 
+  String _fmtDate(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(14),
@@ -1214,49 +1217,65 @@ class _VehicleCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.line),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.surface2,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.directions_car_outlined, size: 22, color: AppColors.ink2),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(os.veiculoDescricao,
-                      style: TextStyle(fontFamily: 'Inter', 
-                          fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
-                  if (os.veiculoCor != null)
-                    Text(os.veiculoCor!,
-                        style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2)),
-                ],
-              ),
-            ),
-            if (os.veiculoPlaca != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.sidebarBg,
-                  borderRadius: BorderRadius.circular(6),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface2,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.directions_car_outlined, size: 22, color: AppColors.ink2),
                 ),
-                child: Text(
-                  os.veiculoPlaca!,
-                  style: const TextStyle(
-                    fontFamily: 'JetBrains Mono',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    letterSpacing: 1.5,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(os.veiculoDescricao,
+                          style: const TextStyle(fontFamily: 'Inter',
+                              fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                      if (os.veiculoCor != null)
+                        Text(os.veiculoCor!,
+                            style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2)),
+                    ],
                   ),
                 ),
-              ),
+                if (os.veiculoPlaca != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.sidebarBg,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      os.veiculoPlaca!,
+                      style: const TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today_outlined, size: 12, color: AppColors.ink3),
+                const SizedBox(width: 5),
+                Text(
+                  'Entrada: ${_fmtDate(os.dataEntrada)}',
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2),
+                ),
+              ],
+            ),
           ],
         ),
       );
@@ -1507,11 +1526,16 @@ class _DesktopVeiculoCard extends StatelessWidget {
                   const SizedBox(width: 24),
                   _MetaCell('PLACA', os.veiculoPlaca!, mono: true),
                 ],
+                const SizedBox(width: 24),
+                _MetaCell('ENTRADA', _fmtDateShort(os.dataEntrada)),
               ],
             ),
           ],
         ),
       );
+
+  static String _fmtDateShort(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 }
 
 class _MetaCell extends StatelessWidget {

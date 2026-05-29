@@ -54,6 +54,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen>
         .firstOrNull
         ?.nome;
     setTopBarSlot(TopBarSlot(
+      pageTitle: 'Clientes',
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
       searchController: _searchController,

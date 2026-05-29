@@ -20,6 +20,6 @@ class OsMidia {
         url: json['url'] as String,
         tipo: json['tipo'] as String,
         criadoPorNome: json['criadoPorNome'] as String,
-        criadoEm: DateTime.parse(json['criadoEm'] as String),
+        criadoEm: DateTime.parse(json['criadoEm'] as String).toLocal(),
       );
 }

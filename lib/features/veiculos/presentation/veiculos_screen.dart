@@ -38,6 +38,7 @@ class _VeiculosScreenState extends ConsumerState<VeiculosScreen>
       orElse: () => null,
     )?.nome;
     setTopBarSlot(TopBarSlot(
+      pageTitle: 'Veículos',
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
       searchController: _searchController,

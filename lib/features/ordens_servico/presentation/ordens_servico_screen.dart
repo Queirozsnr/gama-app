@@ -71,6 +71,7 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
         .firstOrNull
         ?.nome;
     setTopBarSlot(TopBarSlot(
+      pageTitle: 'Ordens de Serviço',
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
       mobileAction: IconButton(
@@ -112,11 +113,13 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
   }
 
   void _setStatus(String? v) {
+    final prevBackend = _filtroStatus == _kSemEntregue ? null : _filtroStatus;
+    final newBackend  = v            == _kSemEntregue ? null : v;
     setState(() => _filtroStatus = v);
-    // Sentinel busca tudo; 'Entregue' é excluído no cliente em _aplicarFiltros
-    ref.read(ordensServicoNotifierProvider.notifier).filtrar(
-      v == _kSemEntregue ? null : v,
-    );
+    // Só re-busca se o parâmetro enviado ao backend realmente mudou
+    if (prevBackend != newBackend) {
+      ref.read(ordensServicoNotifierProvider.notifier).filtrar(newBackend);
+    }
   }
 
   void _setMecanico(String? v) => setState(() => _filtroMecanico = v);
@@ -596,16 +599,20 @@ class _FiltrosBar extends StatelessWidget {
                                     : AppColors.ink)),
                       ))
                   .toList(),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('ORDENAR: ',
-                    style: TextStyle(fontFamily: 'Inter', 
-                        fontSize: 10, fontWeight: FontWeight.w700,
-                        color: AppColors.ink3, letterSpacing: 0.8)),
-                Text(_ordenarLabel,
-                    style: TextStyle(fontFamily: 'Inter', 
-                        fontSize: 11, fontWeight: FontWeight.w700,
-                        color: AppColors.ink2)),
-              ]),
+              child: Builder(builder: (ctx) {
+                final isDesktop = MediaQuery.of(ctx).size.width >= 800;
+                return Row(mainAxisSize: MainAxisSize.min, children: [
+                  if (isDesktop)
+                    Text('ORDENAR: ',
+                        style: TextStyle(fontFamily: 'Inter',
+                            fontSize: 10, fontWeight: FontWeight.w700,
+                            color: AppColors.ink3, letterSpacing: 0.8)),
+                  Text(_ordenarLabel,
+                      style: TextStyle(fontFamily: 'Inter',
+                          fontSize: 11, fontWeight: FontWeight.w700,
+                          color: AppColors.ink2)),
+                ]);
+              }),
             ),
           ),
         ],

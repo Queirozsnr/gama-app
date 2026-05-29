@@ -67,7 +67,7 @@ class OrdemServicoDetalhe {
         status: json['status'] as String,
         formaPagamento: json['formaPagamento'] as String?,
         observacoes: json['observacoes'] as String?,
-        dataEntrada: DateTime.parse(json['dataEntrada'] as String),
+        dataEntrada: DateTime.parse(json['dataEntrada'] as String).toLocal(),
         previsaoEntrega: json['previsaoEntrega'] != null
             ? DateTime.parse(json['previsaoEntrega'] as String)
             : null,

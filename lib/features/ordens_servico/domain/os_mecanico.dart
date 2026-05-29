@@ -15,6 +15,6 @@ class OsMecanico {
         funcionarioId: json['funcionarioId'] as int,
         nome: json['nome'] as String,
         cargo: json['cargo'] as String,
-        ingressouEm: DateTime.parse(json['ingressouEm'] as String),
+        ingressouEm: DateTime.parse(json['ingressouEm'] as String).toLocal(),
       );
 }
