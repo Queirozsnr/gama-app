@@ -20,6 +20,7 @@ import '../domain/ordem_servico_detalhe.dart';
 import '../domain/os_mecanico.dart';
 import '../domain/os_midia.dart';
 import 'ordens_servico_notifier.dart';
+import 'os_midia_viewer.dart';
 import 'os_orcamento_pdf.dart';
 import '../../auth/presentation/auth_notifier.dart';
 import '../../estoque/data/estoque_remote_data_source.dart';
@@ -435,6 +436,18 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
     }
   }
 
+  Future<bool> _removerMidiaQuiet(int osId, OsMidia midia) async {
+    try {
+      await ref.read(ordensServicoRemoteDataSourceProvider).removerMidia(osId, midia.id);
+      ref.invalidate(osDetalheProvider(widget.osId));
+      ref.invalidate(ordensServicoNotifierProvider);
+      return true;
+    } catch (e) {
+      if (mounted) GamaSnackBar.error(context, _dioError(e, 'Erro ao remover mídia.'));
+      return false;
+    }
+  }
+
   Future<void> _excluir(OrdemServicoDetalhe os) async {
     final ok = await GamaConfirmDialog.show(
       context,
@@ -547,6 +560,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
         onExcluir: () => _excluir(os),
         onAdicionarMidia: (bytes, name) => _adicionarMidia(os.id, bytes, name),
         onRemoverMidia: (m) => _removerMidia(os.id, m),
+        onRemoverMidiaQuiet: (m) => _removerMidiaQuiet(os.id, m),
       ),
     );
   }
@@ -572,6 +586,7 @@ class _Body extends StatelessWidget {
     required this.onExcluir,
     required this.onAdicionarMidia,
     required this.onRemoverMidia,
+    required this.onRemoverMidiaQuiet,
   });
 
   final OrdemServicoDetalhe os;
@@ -590,6 +605,7 @@ class _Body extends StatelessWidget {
   final VoidCallback onExcluir;
   final Future<void> Function(Uint8List bytes, String filename) onAdicionarMidia;
   final Future<void> Function(OsMidia) onRemoverMidia;
+  final Future<bool> Function(OsMidia) onRemoverMidiaQuiet;
 
   @override
   Widget build(BuildContext context) {
@@ -705,6 +721,7 @@ class _Body extends StatelessWidget {
                   isDesktop: true,
                   onAdd: onAdicionarMidia,
                   onRemover: onRemoverMidia,
+                  onRemoverQuiet: onRemoverMidiaQuiet,
                 ),
                 const SizedBox(height: 12),
 
@@ -867,6 +884,7 @@ class _Body extends StatelessWidget {
                   onRemoverItem: onRemoverItem,
                   onAdicionarMidia: onAdicionarMidia,
                   onRemoverMidia: onRemoverMidia,
+                  onRemoverMidiaQuiet: onRemoverMidiaQuiet,
                 ),
                 // Peças
                 _PecasTab(
@@ -952,6 +970,7 @@ class _ResumoTab extends StatelessWidget {
     required this.onRemoverItem,
     required this.onAdicionarMidia,
     required this.onRemoverMidia,
+    required this.onRemoverMidiaQuiet,
   });
 
   final OrdemServicoDetalhe os;
@@ -965,6 +984,7 @@ class _ResumoTab extends StatelessWidget {
   final void Function(ItemOs) onRemoverItem;
   final Future<void> Function(Uint8List bytes, String filename) onAdicionarMidia;
   final Future<void> Function(OsMidia) onRemoverMidia;
+  final Future<bool> Function(OsMidia) onRemoverMidiaQuiet;
 
   @override
   Widget build(BuildContext context) {
@@ -1037,6 +1057,7 @@ class _ResumoTab extends StatelessWidget {
           isDesktop: false,
           onAdd: onAdicionarMidia,
           onRemover: onRemoverMidia,
+          onRemoverQuiet: onRemoverMidiaQuiet,
         ),
 
         const SizedBox(height: 14),
@@ -2480,6 +2501,7 @@ class _FotosVideosCard extends StatefulWidget {
     required this.isDesktop,
     required this.onAdd,
     required this.onRemover,
+    required this.onRemoverQuiet,
   });
 
   final List<OsMidia> midias;
@@ -2487,6 +2509,7 @@ class _FotosVideosCard extends StatefulWidget {
   final bool isDesktop;
   final Future<void> Function(Uint8List bytes, String filename) onAdd;
   final Future<void> Function(OsMidia) onRemover;
+  final Future<bool> Function(OsMidia) onRemoverQuiet;
 
   @override
   State<_FotosVideosCard> createState() => _FotosVideosCardState();
@@ -2494,96 +2517,222 @@ class _FotosVideosCard extends StatefulWidget {
 
 class _FotosVideosCardState extends State<_FotosVideosCard> {
   bool _picking = false;
+  final Set<int> _selected = {};
+
+  bool get _selectMode => _selected.isNotEmpty;
+
+  static const _kMaxMidias = 10;
+
+  bool get _atLimit => widget.midias.length >= _kMaxMidias;
+  int get _slotsLeft => _kMaxMidias - widget.midias.length;
 
   Future<void> _pick(Future<({Uint8List bytes, String name})?> Function() picker) async {
     if (_picking) return;
+    if (_atLimit) {
+      GamaSnackBar.error(context, 'Limite de $_kMaxMidias mídias por OS atingido.');
+      return;
+    }
     setState(() => _picking = true);
     try {
       final result = await picker();
       if (result == null || !mounted) return;
+      if (result.bytes.length > kMaxMediaBytes) {
+        GamaSnackBar.error(context, 'Arquivo muito grande. Máximo permitido: 50 MB.');
+        return;
+      }
       await widget.onAdd(result.bytes, result.name);
     } catch (e) {
-      if (mounted) {
-        final msg = e.toString().contains('photo_access_denied') ||
-                e.toString().contains('camera_access_denied')
-            ? 'Permissão de câmera negada. Verifique as configurações do app.'
-            : 'Erro ao capturar mídia. Tente novamente.';
-        GamaSnackBar.error(context, msg);
+      if (!mounted) return;
+      if (e is FileTooLargeException) {
+        GamaSnackBar.error(context, '${e.name} ultrapassa 50 MB. Escolha um arquivo menor.');
+      } else if (e.toString().contains('photo_access_denied') ||
+          e.toString().contains('camera_access_denied')) {
+        GamaSnackBar.error(context, 'Permissão de câmera negada. Verifique as configurações do app.');
+      } else {
+        GamaSnackBar.error(context, 'Erro ao capturar mídia. Tente novamente.');
       }
     } finally {
       if (mounted) setState(() => _picking = false);
     }
   }
 
-  Widget _thumb(OsMidia m) {
+  Future<void> _pickMultiple() async {
+    if (_picking) return;
+    if (_atLimit) {
+      GamaSnackBar.error(context, 'Limite de $_kMaxMidias mídias por OS atingido.');
+      return;
+    }
+    setState(() => _picking = true);
+    try {
+      final files = await pickMultipleImageBytes();
+      if (!mounted) return;
+      final slots = _slotsLeft;
+      var added = 0;
+      var ignoredSize = 0;
+      for (final f in files) {
+        if (added >= slots) break;
+        if (f.bytes.length > kMaxMediaBytes) {
+          ignoredSize++;
+          continue;
+        }
+        await widget.onAdd(f.bytes, f.name);
+        added++;
+        if (!mounted) return;
+      }
+      if (ignoredSize > 0 && mounted) {
+        GamaSnackBar.error(context,
+            '$ignoredSize arquivo${ignoredSize > 1 ? 's ultrapassam' : ' ultrapassa'} 50 MB e ${ignoredSize > 1 ? 'foram ignorados' : 'foi ignorado'}.');
+      }
+      if (files.length > slots && mounted) {
+        GamaSnackBar.error(context,
+            'Apenas $slots arquivo${slots > 1 ? 's foram adicionados' : ' foi adicionado'} para não exceder o limite de $_kMaxMidias.');
+      }
+    } catch (e) {
+      if (mounted) GamaSnackBar.error(context, 'Erro ao selecionar imagens. Tente novamente.');
+    } finally {
+      if (mounted) setState(() => _picking = false);
+    }
+  }
+
+  Future<void> _deleteSelected() async {
+    final ids = Set<int>.from(_selected);
+    final count = ids.length;
+    final ok = await GamaConfirmDialog.show(
+      context,
+      title: 'Remover mídias',
+      message: 'Remover $count ${count == 1 ? 'item selecionado' : 'itens selecionados'}?',
+      confirmLabel: 'Remover',
+      confirmColor: AppColors.danger,
+    );
+    if (!ok || !mounted) return;
+    setState(() => _selected.clear());
+    for (final idx in ids) {
+      final midia = widget.midias[idx];
+      await widget.onRemoverQuiet(midia);
+      if (!mounted) return;
+    }
+    if (mounted) GamaSnackBar.success(context, '$count ${count == 1 ? 'mídia removida' : 'mídias removidas'}.');
+  }
+
+  Widget _thumb(OsMidia m, int index) {
     final thumbSize = widget.isDesktop ? 90.0 : 80.0;
-    return SizedBox(
-      width: thumbSize,
-      height: thumbSize,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: m.isVideo
-                ? Container(
-                    width: thumbSize,
-                    height: thumbSize,
-                    color: AppColors.surface2,
-                    child: const Center(
-                      child: Icon(Icons.videocam, size: 28, color: AppColors.ink2),
-                    ),
-                  )
-                : Image.network(
-                    '$kBaseUrl${m.url}',
-                    width: thumbSize,
-                    height: thumbSize,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
+    final isSelected = _selected.contains(index);
+
+    return GestureDetector(
+      onTap: () {
+        if (_selectMode) {
+          setState(() {
+            if (isSelected) {
+              _selected.remove(index);
+            } else {
+              _selected.add(index);
+            }
+          });
+        } else {
+          showMidiaViewer(
+            context,
+            widget.midias,
+            index,
+            kBaseUrl,
+            onDelete: widget.podeEditar ? widget.onRemoverQuiet : null,
+          );
+        }
+      },
+      onLongPress: widget.podeEditar
+          ? () => setState(() => _selected.add(index))
+          : null,
+      child: SizedBox(
+        width: thumbSize,
+        height: thumbSize,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Imagem ou placeholder de vídeo
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: m.isVideo
+                  ? Container(
                       width: thumbSize,
                       height: thumbSize,
                       color: AppColors.surface2,
-                      child: const Icon(Icons.broken_image, color: AppColors.ink3),
+                      child: const Center(
+                        child: Icon(Icons.videocam, size: 28, color: AppColors.ink2),
+                      ),
+                    )
+                  : Image.network(
+                      '$kBaseUrl${m.url}',
+                      width: thumbSize,
+                      height: thumbSize,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, e, st) => Container(
+                        width: thumbSize,
+                        height: thumbSize,
+                        color: AppColors.surface2,
+                        child: const Icon(Icons.broken_image, color: AppColors.ink3),
+                      ),
                     ),
-                  ),
-          ),
-          if (m.isVideo)
-            Positioned(
-              bottom: 4,
-              left: 4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xAA000000),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: const Text('VÍD',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'JetBrains Mono',
-                    )),
-              ),
             ),
-          if (widget.podeEditar)
-            Positioned(
-              top: -5,
-              right: -5,
-              child: GestureDetector(
-                onTap: () => widget.onRemover(m),
+
+            // Badge VÍD
+            if (m.isVideo)
+              Positioned(
+                bottom: 4,
+                left: 4,
                 child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: AppColors.danger,
-                    shape: BoxShape.circle,
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xAA000000),
+                    borderRadius: BorderRadius.circular(3),
                   ),
-                  child: const Icon(Icons.close, size: 11, color: Colors.white),
+                  child: const Text('VÍD',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'JetBrains Mono',
+                      )),
                 ),
               ),
-            ),
-        ],
+
+            // Overlay de seleção
+            if (_selectMode)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: ColoredBox(
+                    color: isSelected
+                        ? AppColors.accent.withValues(alpha: 0.35)
+                        : Colors.black26,
+                    child: isSelected
+                        ? const Center(
+                            child: Icon(Icons.check_circle,
+                                color: AppColors.accent, size: 28),
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+
+            // Botão X individual (só quando fora do modo seleção)
+            if (widget.podeEditar && !_selectMode && widget.isDesktop)
+              Positioned(
+                top: -5,
+                right: -5,
+                child: GestureDetector(
+                  onTap: () => widget.onRemover(m),
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    decoration: const BoxDecoration(
+                      color: AppColors.danger,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close, size: 11, color: Colors.white),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -2594,41 +2743,86 @@ class _FotosVideosCardState extends State<_FotosVideosCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.photo_library_outlined, size: 15, color: AppColors.ink2),
-              const SizedBox(width: 6),
-              Text('Fotos e vídeos',
-                  style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink)),
-              if (widget.midias.isNotEmpty) ...[
+          // Header — normal ou modo seleção
+          if (_selectMode)
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18, color: AppColors.ink2),
+                  onPressed: () => setState(() => _selected.clear()),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
                 const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface2,
-                    borderRadius: BorderRadius.circular(10),
+                Text('${_selected.length} selecionado${_selected.length > 1 ? 's' : ''}',
+                    style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink)),
+                const Spacer(),
+                GestureDetector(
+                  onTap: _deleteSelected,
+                  child: const Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 16, color: AppColors.danger),
+                      SizedBox(width: 4),
+                      Text('Excluir',
+                          style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.danger)),
+                    ],
                   ),
-                  child: Text('${widget.midias.length}',
-                      style: TextStyle(
-                          fontFamily: 'Inter', fontSize: 11, color: AppColors.ink2)),
                 ),
               ],
-              const Spacer(),
-              if (widget.podeEditar && widget.isDesktop) ...[
-                _HeaderBtn(Icons.photo_library_outlined, 'Galeria foto',
-                    _picking ? () {} : () => _pick(pickImageBytes)),
-                _HeaderBtn(Icons.videocam_outlined, 'Vídeo',
-                    _picking ? () {} : () => _pick(pickVideoBytes)),
+            )
+          else
+            Row(
+              children: [
+                const Icon(Icons.photo_library_outlined, size: 15, color: AppColors.ink2),
+                const SizedBox(width: 6),
+                Text('Fotos e vídeos',
+                    style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink)),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _atLimit
+                        ? AppColors.danger.withValues(alpha: 0.12)
+                        : widget.midias.length >= 8
+                            ? AppColors.accent.withValues(alpha: 0.12)
+                            : AppColors.surface2,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${widget.midias.length} / $_kMaxMidias',
+                    style: TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _atLimit
+                          ? AppColors.danger
+                          : widget.midias.length >= 8
+                              ? AppColors.accent
+                              : AppColors.ink2,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                if (widget.podeEditar && widget.isDesktop)
+                  _HeaderBtn(Icons.photo_library_outlined, 'Galeria foto',
+                      (_picking || _atLimit) ? () {} : _pickMultiple),
               ],
-            ],
-          ),
+            ),
 
-          // Mobile action buttons
-          if (widget.podeEditar && !widget.isDesktop) ...[
+          // Botões de ação mobile (escondidos no modo seleção)
+          if (widget.podeEditar && !widget.isDesktop && !_selectMode) ...[
             const SizedBox(height: 10),
             Row(
               children: [
@@ -2636,7 +2830,7 @@ class _FotosVideosCardState extends State<_FotosVideosCard> {
                   child: _MidiaActionBtn(
                     icon: Icons.camera_alt_outlined,
                     label: 'Tirar foto',
-                    onTap: _picking ? null : () => _pick(capturePhotoBytes),
+                    onTap: (_picking || _atLimit) ? null : () => _pick(capturePhotoBytes),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -2653,7 +2847,7 @@ class _FotosVideosCardState extends State<_FotosVideosCard> {
             _MidiaActionBtn(
               icon: Icons.photo_library_outlined,
               label: 'Galeria',
-              onTap: _picking ? null : () => _pick(pickImageBytes),
+              onTap: (_picking || _atLimit) ? null : _pickMultiple,
             ),
           ],
 
@@ -2669,14 +2863,16 @@ class _FotosVideosCardState extends State<_FotosVideosCard> {
           if (widget.midias.isEmpty) ...[
             const SizedBox(height: 10),
             Text('Nenhuma foto ou vídeo registrado.',
-                style: TextStyle(
+                style: const TextStyle(
                     fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3)),
           ] else ...[
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: widget.midias.map(_thumb).toList(),
+              children: widget.midias.asMap().entries
+                  .map((e) => _thumb(e.value, e.key))
+                  .toList(),
             ),
           ],
         ],

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:html' as html;
 import 'dart:typed_data';
+import 'file_picker_helper_exceptions.dart';
 
 bool get isMobile => false;
 
@@ -23,6 +24,43 @@ Future<({Uint8List bytes, String name})?> pickImageBytes() async {
       completer.complete((bytes: bytes, name: file.name));
     });
     reader.onError.listen((_) => completer.complete(null));
+  });
+
+  return completer.future;
+}
+
+Future<List<({Uint8List bytes, String name})>> pickMultipleImageBytes() async {
+  final completer = Completer<List<({Uint8List bytes, String name})>>();
+
+  final input = html.FileUploadInputElement()
+    ..accept = 'image/*'
+    ..multiple = true;
+  input.click();
+
+  input.onChange.listen((event) async {
+    final fileList = input.files;
+    if (fileList == null || fileList.isEmpty) {
+      completer.complete([]);
+      return;
+    }
+    final results = <({Uint8List bytes, String name})>[];
+    var pending = fileList.length;
+    for (final file in fileList) {
+      final reader = html.FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onLoad.listen((_) {
+        results.add((
+          bytes: Uint8List.fromList(reader.result as List<int>),
+          name: file.name,
+        ));
+        pending--;
+        if (pending == 0) completer.complete(results);
+      });
+      reader.onError.listen((_) {
+        pending--;
+        if (pending == 0) completer.complete(results);
+      });
+    }
   });
 
   return completer.future;
