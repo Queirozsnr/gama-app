@@ -439,7 +439,6 @@ class _WelcomeBanner extends ConsumerWidget {
         onSelect: (id) async {
           await ref.read(authNotifierProvider.notifier).selectOficina(id);
           invalidateAllData(ref);
-          if (context.mounted) context.go('/home');
         },
       ),
     );

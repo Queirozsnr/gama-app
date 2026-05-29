@@ -45,7 +45,7 @@ class OrdensServicoScreen extends ConsumerStatefulWidget {
 }
 
 class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
-    with TopBarSlotMixin<OrdensServicoScreen> {
+    with TopBarSlotMixin<OrdensServicoScreen>, WidgetsBindingObserver {
   OsPeriodo _periodo = OsPeriodo.tudo;
   String? _filtroStatus = _kSemEntregue;
   String? _filtroMecanico;
@@ -55,6 +55,19 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
   final _buscaCtrl = TextEditingController();
   String _busca = '';
   bool _searchOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(ordensServicoNotifierProvider.notifier).recarregar();
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -103,8 +116,9 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
 
   @override
   void dispose() {
-    super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _buscaCtrl.dispose());
+    super.dispose();
   }
 
   void _setPeriodo(OsPeriodo p) {

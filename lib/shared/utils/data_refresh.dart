@@ -3,6 +3,7 @@ import '../../features/clientes/presentation/clientes_notifier.dart';
 import '../../features/estoque/presentation/estoque_notifier.dart';
 import '../../features/estoque/presentation/fornecedores_notifier.dart';
 import '../../features/funcionarios/presentation/funcionarios_notifier.dart';
+import '../../features/gerencial/presentation/gerencial_notifier.dart';
 import '../../features/ordens_servico/presentation/ordens_servico_notifier.dart';
 import '../../features/pagamentos/presentation/pagamentos_notifier.dart';
 import '../../features/painel/presentation/painel_notifier.dart';
@@ -22,4 +23,5 @@ void invalidateAllData(WidgetRef ref) {
   ref.invalidate(pagamentosNotifierProvider);
   ref.invalidate(painelOperacionalProvider);
   ref.invalidate(receitasDashboardProvider);
+  ref.invalidate(gerencialDashboardProvider);
 }

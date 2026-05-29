@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../features/auth/domain/auth_state.dart';
 import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
+import '../../../shared/utils/data_refresh.dart';
 import '../../../shared/widgets/gama_avatar.dart';
 import '../../../shared/widgets/notification_bell.dart';
 import '../../../shared/widgets/section_card.dart';
@@ -136,7 +137,7 @@ class _GerencialScreenState extends ConsumerState<GerencialScreen>
           periodo: _periodo,
           onChanged: (p) => setState(() => _applyPeriodo(p)),
         ),
-        _OficinaBar(onSwitch: () => ref.invalidate(gerencialDashboardProvider)),
+        const _OficinaBar(),
         Expanded(
           child: asyncData.when(
             loading: () =>
@@ -249,8 +250,7 @@ class _PeriodoBar extends StatelessWidget {
 // ── oficina bar ───────────────────────────────────────────────────────────────
 
 class _OficinaBar extends ConsumerStatefulWidget {
-  const _OficinaBar({required this.onSwitch});
-  final VoidCallback onSwitch;
+  const _OficinaBar();
 
   @override
   ConsumerState<_OficinaBar> createState() => _OficinaBarState();
@@ -313,8 +313,11 @@ class _OficinaBarState extends ConsumerState<_OficinaBar> {
                             await ref
                                 .read(authNotifierProvider.notifier)
                                 .selectOficina(o.id);
-                            widget.onSwitch();
-                            if (ctx.mounted) Navigator.pop(ctx);
+                            invalidateAllData(ref);
+                            if (ctx.mounted) {
+                              Navigator.pop(ctx);
+                              ctx.go('/home');
+                            }
                           } finally {
                             if (mounted) setState(() => _loadingId = null);
                           }
