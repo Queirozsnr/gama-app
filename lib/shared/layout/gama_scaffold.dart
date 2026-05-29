@@ -128,17 +128,15 @@ class _GamaScaffoldState extends State<GamaScaffold> {
             bottomNavigationBar: GamaBottomNav(navigationShell: widget.navigationShell),
             body: TopBarScope(
               notifier: _activeNotifier,
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    GamaTopBar(
-                      isDesktop: false,
-                      pageTitle: widget.pageTitle,
-                      pageSubtitle: widget.pageSubtitle,
-                    ),
-                    Expanded(child: widget.navigationShell),
-                  ],
-                ),
+              child: Column(
+                children: [
+                  GamaTopBar(
+                    isDesktop: false,
+                    pageTitle: widget.pageTitle,
+                    pageSubtitle: widget.pageSubtitle,
+                  ),
+                  Expanded(child: widget.navigationShell),
+                ],
               ),
             ),
           ),

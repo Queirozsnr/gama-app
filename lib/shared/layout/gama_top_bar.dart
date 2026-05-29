@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
 import '../state/top_bar_scope.dart';
 import '../widgets/notification_bell.dart';
@@ -124,10 +125,11 @@ class _MobileTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveTitle = slot?.pageTitle ?? pageTitle;
     if (effectiveTitle == null && (slot == null || !slot!.hasContent)) {
-      return const SizedBox.shrink();
+      return SizedBox(height: MediaQuery.of(context).padding.top);
     }
 
     final isDark = slot?.mobileStyle == MobileTopBarStyle.dark;
+
     return isDark
         ? _DarkMobileHeader(slot: slot, title: effectiveTitle)
         : _LightMobileHeader(slot: slot, title: effectiveTitle);
@@ -146,76 +148,79 @@ class _DarkMobileHeader extends StatelessWidget {
     final hasSubtitle = slot?.mobileSubtitle != null;
     final hasSearch = slot?.hasSearch == true;
 
-    return Container(
-      decoration: const BoxDecoration(color: AppColors.sidebarBg),
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              height: hasSubtitle ? 68 : 56,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 12, 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (slot?.leading != null)
-                      IconTheme(
-                        data: const IconThemeData(color: Colors.white),
-                        child: slot!.leading!,
-                      )
-                    else
-                      const SizedBox(width: 16),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (hasSubtitle)
-                            Text(
-                              slot!.mobileSubtitle!,
-                              style: const TextStyle(fontFamily: 'Inter',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.accent,
-                                letterSpacing: 0.2,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+      child: Container(
+        decoration: const BoxDecoration(color: AppColors.sidebarBg),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: hasSubtitle ? 68 : 56,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 0, 12, 0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (slot?.leading != null)
+                        IconTheme(
+                          data: const IconThemeData(color: Colors.white),
+                          child: slot!.leading!,
+                        )
+                      else
+                        const SizedBox(width: 16),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (hasSubtitle)
+                              Text(
+                                slot!.mobileSubtitle!,
+                                style: const TextStyle(fontFamily: 'Inter',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.accent,
+                                  letterSpacing: 0.2,
+                                ),
                               ),
-                            ),
-                          if (title != null)
-                            Text(
-                              title!,
-                              style: const TextStyle(fontFamily: 'Inter',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: -0.3,
-                                height: 1.15,
+                            if (title != null)
+                              Text(
+                                title!,
+                                style: const TextStyle(fontFamily: 'Inter',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: -0.3,
+                                  height: 1.15,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    ?mobileAction,
-                  ],
+                      ?mobileAction,
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (hasSearch)
-              Container(
-                height: 48,
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                child: _SearchBar(
-                  controller: slot!.searchController,
-                  hint: slot!.searchHint ?? 'Buscar…',
-                  onChanged: slot!.onSearchChanged,
-                  dark: true,
+              if (hasSearch)
+                Container(
+                  height: 48,
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                  child: _SearchBar(
+                    controller: slot!.searchController,
+                    hint: slot!.searchHint ?? 'Buscar…',
+                    onChanged: slot!.onSearchChanged,
+                    dark: true,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -237,15 +242,14 @@ class _LightMobileHeader extends StatelessWidget {
     final mobileAction = slot?.mobileAction ?? slot?.action;
     final hasSubtitle = slot?.mobileSubtitle != null;
 
-    return Column(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.transparent),
+      child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: AppColors.surface,
-            border: hasSearch
-                ? null
-                : const Border(bottom: BorderSide(color: AppColors.line)),
           ),
           padding: const EdgeInsets.fromLTRB(4, 0, 12, 0),
           child: SafeArea(
@@ -314,6 +318,7 @@ class _LightMobileHeader extends StatelessWidget {
             ),
           ),
       ],
+      ),
     );
   }
 }
