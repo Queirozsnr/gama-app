@@ -18,9 +18,10 @@ class VeiculosNotifier extends AutoDisposeAsyncNotifier<List<Veiculo>> {
     state = await AsyncValue.guard(() => _carregar(busca: _ultimaBusca));
   }
 
-  Future<void> criar(Map<String, dynamic> data) async {
-    await ref.read(veiculosRemoteDataSourceProvider).criar(data);
+  Future<int> criar(Map<String, dynamic> data) async {
+    final id = await ref.read(veiculosRemoteDataSourceProvider).criar(data);
     state = await AsyncValue.guard(() => _carregar(busca: _ultimaBusca));
+    return id;
   }
 
   Future<void> atualizar(int id, Map<String, dynamic> data) async {

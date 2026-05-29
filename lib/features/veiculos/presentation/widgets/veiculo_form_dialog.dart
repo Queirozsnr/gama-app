@@ -8,6 +8,7 @@ import '../../../clientes/data/clientes_remote_data_source.dart';
 import '../../../clientes/domain/cliente.dart';
 import '../../data/marcas_remote_data_source.dart';
 import '../../data/modelos_remote_data_source.dart';
+import '../../data/veiculos_remote_data_source.dart';
 import '../../domain/marca.dart';
 import '../../domain/modelo.dart';
 import '../../domain/veiculo.dart';
@@ -39,10 +40,11 @@ const _coresPredefinidas = [
 ];
 
 class VeiculoFormDialog extends ConsumerStatefulWidget {
-  const VeiculoFormDialog({super.key, this.veiculo, this.clienteIdFixo});
+  const VeiculoFormDialog({super.key, this.veiculo, this.clienteIdFixo, this.onCriado});
 
   final Veiculo? veiculo;
   final int? clienteIdFixo;
+  final void Function(Veiculo)? onCriado;
 
   @override
   ConsumerState<VeiculoFormDialog> createState() => _VeiculoFormDialogState();
@@ -140,10 +142,18 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
       final notifier = ref.read(veiculosNotifierProvider.notifier);
       if (_editando) {
         await notifier.atualizar(widget.veiculo!.id, data);
+        if (mounted) Navigator.pop(context, true);
       } else {
-        await notifier.criar(data);
+        final id = await notifier.criar(data);
+        if (mounted) {
+          final nav = Navigator.of(context);
+          if (widget.onCriado != null) {
+            final veiculo = await ref.read(veiculosRemoteDataSourceProvider).obter(id);
+            if (mounted) widget.onCriado!(veiculo);
+          }
+          nav.pop(true);
+        }
       }
-      if (mounted) Navigator.pop(context, true);
     } catch (_) {
       if (mounted) GamaSnackBar.error(context, 'Erro ao salvar veículo.');
     } finally {

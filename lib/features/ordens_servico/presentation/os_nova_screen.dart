@@ -8,8 +8,10 @@ import '../../../../shared/widgets/gama_searchable_select.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
 import '../../clientes/data/clientes_remote_data_source.dart';
 import '../../clientes/domain/cliente.dart';
+import '../../clientes/presentation/widgets/cliente_form_dialog.dart';
 import '../../veiculos/data/veiculos_remote_data_source.dart';
 import '../../veiculos/domain/veiculo.dart';
+import '../../veiculos/presentation/widgets/veiculo_form_dialog.dart';
 import '../data/ordens_servico_remote_data_source.dart';
 import 'ordens_servico_notifier.dart';
 import '../../estoque/data/estoque_remote_data_source.dart';
@@ -352,30 +354,75 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
     ]);
   }
 
+  Future<void> _abrirNovoCliente() async {
+    await showDialog<bool>(
+      context: context,
+      builder: (_) => ClienteFormDialog(
+        onCriado: (c) {
+          if (mounted) setState(() { _cliente = c; _veiculo = null; });
+        },
+      ),
+    );
+  }
+
+  Future<void> _abrirNovoVeiculo() async {
+    if (_cliente == null) return;
+    await showDialog<bool>(
+      context: context,
+      builder: (_) => VeiculoFormDialog(
+        clienteIdFixo: _cliente!.id,
+        onCriado: (v) {
+          if (mounted) setState(() => _veiculo = v);
+        },
+      ),
+    );
+  }
+
   Widget _step0Fields() {
     return Column(children: [
-      GamaSearchableSelect<Cliente>(
-        label: 'Cliente *',
-        selectedValue: _cliente,
-        optionsBuilder: (q) =>
-            ref.read(clientesRemoteDataSourceProvider).listar(busca: q.isEmpty ? null : q),
-        displayString: (c) => c.nome,
-        isRequired: true,
-        onChanged: (c) => setState(() { _cliente = c; _veiculo = null; }),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: GamaSearchableSelect<Cliente>(
+              label: 'Cliente *',
+              selectedValue: _cliente,
+              optionsBuilder: (q) =>
+                  ref.read(clientesRemoteDataSourceProvider).listar(busca: q.isEmpty ? null : q),
+              displayString: (c) => c.nome,
+              isRequired: true,
+              onChanged: (c) => setState(() { _cliente = c; _veiculo = null; }),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _AddShortcutButton(tooltip: 'Novo cliente', onTap: _abrirNovoCliente),
+        ],
       ),
       const SizedBox(height: 12),
-      GamaSearchableSelect<Veiculo>(
-        key: ValueKey(_cliente?.id),
-        label: 'Veículo *',
-        selectedValue: _veiculo,
-        enabled: _cliente != null,
-        hint: _cliente == null ? 'Selecione um cliente primeiro' : null,
-        optionsBuilder: (q) => ref
-            .read(veiculosRemoteDataSourceProvider)
-            .listar(clienteId: _cliente?.id, busca: q.isEmpty ? null : q),
-        displayString: (v) => v.placa != null ? '${v.modeloNome} · ${v.placa}' : v.modeloNome,
-        isRequired: true,
-        onChanged: (v) => setState(() => _veiculo = v),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: GamaSearchableSelect<Veiculo>(
+              key: ValueKey(_cliente?.id),
+              label: 'Veículo *',
+              selectedValue: _veiculo,
+              enabled: _cliente != null,
+              hint: _cliente == null ? 'Selecione um cliente primeiro' : null,
+              optionsBuilder: (q) => ref
+                  .read(veiculosRemoteDataSourceProvider)
+                  .listar(clienteId: _cliente?.id, busca: q.isEmpty ? null : q),
+              displayString: (v) => v.placa != null ? '${v.modeloNome} · ${v.placa}' : v.modeloNome,
+              isRequired: true,
+              onChanged: (v) => setState(() => _veiculo = v),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _AddShortcutButton(
+            tooltip: 'Novo veículo',
+            onTap: _cliente != null ? _abrirNovoVeiculo : null,
+          ),
+        ],
       ),
     ]);
   }
@@ -965,6 +1012,36 @@ class _AddItemButton extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(label,
             style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.accent)),
+      ),
+    );
+  }
+}
+
+// ── Add shortcut button (+ novo cliente / veículo) ────────────────────────────
+class _AddShortcutButton extends StatelessWidget {
+  const _AddShortcutButton({required this.tooltip, this.onTap});
+  final String tooltip;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 44,
+          height: 44,
+          margin: const EdgeInsets.only(top: 2),
+          decoration: BoxDecoration(
+            color: enabled ? AppColors.accentSoft : AppColors.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: enabled ? AppColors.accent : AppColors.line),
+          ),
+          alignment: Alignment.center,
+          child: Icon(Icons.add, size: 20, color: enabled ? AppColors.accent : AppColors.ink3),
+        ),
       ),
     );
   }

@@ -15,14 +15,14 @@ class ClientesNotifier extends AutoDisposeAsyncNotifier<List<Cliente>> {
     state = await AsyncValue.guard(() => _fetch(busca: termo?.isEmpty == true ? null : termo));
   }
 
-  Future<void> criar({
+  Future<int> criar({
     required String nome,
     String? email,
     String? telefone,
     String? cpf,
     String? cidade,
   }) async {
-    await ref.read(clientesRemoteDataSourceProvider).criar({
+    final id = await ref.read(clientesRemoteDataSourceProvider).criar({
       'nome': nome,
       if (email != null && email.isNotEmpty) 'email': email,
       if (telefone != null && telefone.isNotEmpty) 'telefone': telefone,
@@ -30,6 +30,7 @@ class ClientesNotifier extends AutoDisposeAsyncNotifier<List<Cliente>> {
       if (cidade != null && cidade.isNotEmpty) 'cidade': cidade,
     });
     ref.invalidateSelf();
+    return id;
   }
 
   Future<void> atualizar({

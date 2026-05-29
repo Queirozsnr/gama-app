@@ -3,13 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/gama_button.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
+import '../../data/clientes_remote_data_source.dart';
 import '../../domain/cliente.dart';
 import '../clientes_notifier.dart';
 
 class ClienteFormDialog extends ConsumerStatefulWidget {
-  const ClienteFormDialog({super.key, this.cliente});
+  const ClienteFormDialog({super.key, this.cliente, this.onCriado});
 
   final Cliente? cliente;
+  final void Function(Cliente)? onCriado;
 
   @override
   ConsumerState<ClienteFormDialog> createState() => _ClienteFormDialogState();
@@ -61,16 +63,24 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
           cpf: _cpf.text.trim(),
           cidade: _cidade.text.trim(),
         );
+        if (mounted) Navigator.pop(context, true);
       } else {
-        await notifier.criar(
+        final id = await notifier.criar(
           nome: _nome.text.trim(),
           email: _email.text.trim(),
           telefone: _telefone.text.trim(),
           cpf: _cpf.text.trim(),
           cidade: _cidade.text.trim(),
         );
+        if (mounted) {
+          final nav = Navigator.of(context);
+          if (widget.onCriado != null) {
+            final cliente = await ref.read(clientesRemoteDataSourceProvider).obter(id);
+            if (mounted) widget.onCriado!(cliente);
+          }
+          nav.pop(true);
+        }
       }
-      if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) GamaSnackBar.error(context, 'Erro ao salvar cliente.');
     } finally {
