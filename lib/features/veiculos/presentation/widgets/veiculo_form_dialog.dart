@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/utils/formatters.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/gama_button.dart';
 import '../../../../shared/widgets/gama_searchable_select.dart';
@@ -72,7 +74,7 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
   void initState() {
     super.initState();
     final v = widget.veiculo;
-    _placa     = TextEditingController(text: v?.placa ?? '');
+    _placa     = TextEditingController(text: formatPlaca(v?.placa));
     _ano       = TextEditingController(text: v?.ano?.toString() ?? '');
     _corCustom = TextEditingController();
     _km        = TextEditingController(text: v?.quilometragem?.toString() ?? '');
@@ -130,7 +132,7 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
       final data = {
         'clienteId': clienteId,
         'modeloId': _modeloSelecionado!.id,
-        if (_placa.text.trim().isNotEmpty) 'placa': _placa.text.trim().toUpperCase(),
+        if (_placa.text.trim().isNotEmpty) 'placa': stripPlaca(_placa.text),
         if (_ano.text.trim().isNotEmpty) 'ano': int.tryParse(_ano.text.trim()),
         'cor': ?cor,
         if (_combustivel != null) 'combustivel': _combustivel,
@@ -238,9 +240,14 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Expanded(child: _campo(_placa, 'Placa')),
+                            Expanded(child: _campo(_placa, 'Placa',
+                              formatters: [PlacaInputFormatter()],
+                            )),
                             const SizedBox(width: 12),
-                            Expanded(child: _campo(_ano, 'Ano', teclado: TextInputType.number)),
+                            Expanded(child: _campo(_ano, 'Ano',
+                              teclado: TextInputType.number,
+                              formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
+                            )),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -287,7 +294,9 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
                         ),
                         if (_corSelecionada == null) ...[
                           const SizedBox(height: 8),
-                          _campo(_corCustom, 'Ou digite a cor (ex: Vinho, Bege...)'),
+                          _campo(_corCustom, 'Ou digite a cor (ex: Vinho, Bege...)',
+                            maxLength: 30,
+                          ),
                         ],
                         const SizedBox(height: 12),
                         // Combustível — select com busca
@@ -308,9 +317,12 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
                           onChanged: (c) => setState(() => _cilindrada = c),
                         ),
                         const SizedBox(height: 12),
-                        _campo(_km, 'Quilometragem', teclado: TextInputType.number),
+                        _campo(_km, 'Quilometragem',
+                          teclado: TextInputType.number,
+                          formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(7)],
+                        ),
                         const SizedBox(height: 12),
-                        _campo(_obs, 'Observações', maxLines: 2),
+                        _campo(_obs, 'Observações', maxLines: 2, maxLength: 300),
                       ],
                     ),
                   ),
@@ -332,11 +344,15 @@ class _VeiculoFormDialogState extends ConsumerState<VeiculoFormDialog> {
   Widget _campo(TextEditingController ctrl, String label, {
     TextInputType teclado = TextInputType.text,
     int maxLines = 1,
+    int? maxLength,
+    List<TextInputFormatter>? formatters,
   }) {
     return TextFormField(
       controller: ctrl,
       keyboardType: teclado,
       maxLines: maxLines,
+      maxLength: maxLength,
+      inputFormatters: formatters,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),

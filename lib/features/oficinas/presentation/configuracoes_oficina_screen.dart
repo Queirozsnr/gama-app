@@ -1,6 +1,7 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../shared/utils/file_picker_helper.dart';
+import '../../../shared/utils/formatters.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_constants.dart';
 import '../../../core/theme/app_theme.dart';
@@ -464,9 +465,9 @@ class _Fields extends StatelessWidget {
         _Field(label: 'Endereço', controller: enderecoCtrl, hint: 'Rua, número, bairro, cidade'),
         const SizedBox(height: 12),
         Row(children: [
-          Expanded(child: _Field(label: 'Telefone principal', controller: telefoneCtrl, hint: '(92) 99999-9999', keyboardType: TextInputType.phone)),
+          Expanded(child: _Field(label: 'Telefone principal', controller: telefoneCtrl, hint: '(92) 99999-9999', keyboardType: TextInputType.phone, inputFormatters: [PhoneInputFormatter()])),
           const SizedBox(width: 12),
-          Expanded(child: _Field(label: 'Telefone 2', controller: telefone2Ctrl, hint: '(92) 99999-9999', keyboardType: TextInputType.phone)),
+          Expanded(child: _Field(label: 'Telefone 2', controller: telefone2Ctrl, hint: '(92) 99999-9999', keyboardType: TextInputType.phone, inputFormatters: [PhoneInputFormatter()])),
         ]),
 
         const SizedBox(height: 24),
@@ -475,7 +476,7 @@ class _Fields extends StatelessWidget {
         _Field(label: 'E-mail', controller: emailCtrl, hint: 'contato@oficina.com', keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 12),
         Row(children: [
-          Expanded(child: _Field(label: 'WhatsApp', controller: whatsappCtrl, hint: '(92) 99999-9999', keyboardType: TextInputType.phone)),
+          Expanded(child: _Field(label: 'WhatsApp', controller: whatsappCtrl, hint: '(92) 99999-9999', keyboardType: TextInputType.phone, inputFormatters: [PhoneInputFormatter()])),
           const SizedBox(width: 12),
           Expanded(child: _Field(label: 'Instagram', controller: instagramCtrl, hint: '@minha_oficina', prefix: '@')),
         ]),
@@ -483,7 +484,7 @@ class _Fields extends StatelessWidget {
         const SizedBox(height: 24),
         _SectionHeader(icon: Icons.receipt_long_outlined, label: 'Dados fiscais'),
         const SizedBox(height: 14),
-        _Field(label: 'CNPJ', controller: cnpjCtrl, hint: '00.000.000/0001-00', keyboardType: TextInputType.number),
+        _Field(label: 'CNPJ', controller: cnpjCtrl, hint: '00.000.000/0001-00', keyboardType: TextInputType.number, inputFormatters: [CnpjInputFormatter()]),
 
         const SizedBox(height: 24),
         _SectionHeader(icon: Icons.palette_outlined, label: 'Personalização'),
@@ -534,6 +535,7 @@ class _Field extends StatelessWidget {
     this.validator,
     this.keyboardType,
     this.prefix,
+    this.inputFormatters,
   });
 
   final String label;
@@ -542,6 +544,7 @@ class _Field extends StatelessWidget {
   final FormFieldValidator<String>? validator;
   final TextInputType? keyboardType;
   final String? prefix;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -555,6 +558,7 @@ class _Field extends StatelessWidget {
           controller: controller,
           validator: validator,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
@@ -609,41 +613,39 @@ class _ColorPicker extends StatelessWidget {
         const Text('Cor padrão (usada em orçamentos e documentos)',
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
         const SizedBox(height: 10),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
             ..._kPresetColors.map((hex) {
               final color = _parse(hex)!;
               final selected = controller.text.toUpperCase() == hex.toUpperCase();
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () {
-                    controller.text = hex;
-                    onChanged(hex);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 120),
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: selected ? AppColors.textPrimary : Colors.transparent,
-                        width: 2.5,
-                      ),
-                      boxShadow: selected
-                          ? [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2))]
-                          : null,
+              return GestureDetector(
+                onTap: () {
+                  controller.text = hex;
+                  onChanged(hex);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected ? AppColors.textPrimary : Colors.transparent,
+                      width: 2.5,
                     ),
-                    child: selected
-                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                    boxShadow: selected
+                        ? [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2))]
                         : null,
                   ),
+                  child: selected
+                      ? const Icon(Icons.check, size: 16, color: Colors.white)
+                      : null,
                 ),
               );
             }),
-            const SizedBox(width: 8),
             SizedBox(
               width: 130,
               child: TextFormField(

@@ -15,10 +15,12 @@ import '../../funcionarios/data/funcionarios_remote_data_source.dart';
 import '../../funcionarios/domain/funcionario.dart';
 import '../data/ordens_servico_remote_data_source.dart';
 import '../domain/desconto_os.dart';
+import '../domain/ordem_servico.dart';
 import '../domain/item_os.dart';
 import '../domain/ordem_servico_detalhe.dart';
 import '../domain/os_mecanico.dart';
 import '../domain/os_midia.dart';
+import '../../../../core/router/app_router.dart';
 import 'ordens_servico_notifier.dart';
 import 'os_midia_viewer.dart';
 import 'os_orcamento_pdf.dart';
@@ -26,6 +28,12 @@ import '../../auth/presentation/auth_notifier.dart';
 import '../../estoque/data/estoque_remote_data_source.dart';
 import '../../estoque/domain/estoque.dart';
 import '../../oficinas/presentation/oficinas_notifier.dart';
+
+final _osDoVeiculoProvider =
+    FutureProvider.autoDispose.family<List<OrdemServico>, int>(
+  (ref, veiculoId) =>
+      ref.read(ordensServicoRemoteDataSourceProvider).listar(veiculoId: veiculoId),
+);
 
 const _statusTransicoes = {
   'Aberta':           ['EmAndamento'],
@@ -568,7 +576,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
 
 // ── Body ──────────────────────────────────────────────────────────────────────
 
-class _Body extends StatelessWidget {
+class _Body extends ConsumerWidget {
   const _Body({
     required this.os,
     required this.actionLoading,
@@ -608,14 +616,18 @@ class _Body extends StatelessWidget {
   final Future<bool> Function(OsMidia) onRemoverMidiaQuiet;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = MediaQuery.of(context).size.width >= 800;
-    return isDesktop ? _buildDesktop(context) : _buildMobile(context);
+    final outrasOs = ref
+        .watch(_osDoVeiculoProvider(os.veiculoId))
+        .whenData((list) => list.where((o) => o.id != os.id).toList())
+        .valueOrNull ?? [];
+    return isDesktop ? _buildDesktop(context, outrasOs) : _buildMobile(context, outrasOs);
   }
 
   // ── Desktop layout (two-column) ──────────────────────────────────────────
 
-  Widget _buildDesktop(BuildContext context) {
+  Widget _buildDesktop(BuildContext context, List<OrdemServico> outrasOs) {
     final servicos = os.itens.where((i) => !i.isPeca).toList();
     final pecas    = os.itens.where((i) =>  i.isPeca).toList();
     final podeExcluir = os.status == 'Aberta';
@@ -786,8 +798,8 @@ class _Body extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // Histórico (placeholder)
-                _HistoricoCard(),
+                // Histórico do veículo
+                _HistoricoCard(outrasOs: outrasOs),
                 const SizedBox(height: 12),
 
                 // Responsável (mecânicos)
@@ -813,7 +825,7 @@ class _Body extends StatelessWidget {
 
   // ── Mobile layout (tabbed) ────────────────────────────────────────────────
 
-  Widget _buildMobile(BuildContext context) {
+  Widget _buildMobile(BuildContext context, List<OrdemServico> outrasOs) {
     final status = OsStatus.fromString(os.status);
     final proximos = _statusTransicoes[os.status] ?? [];
     final servicos = os.itens.where((i) => !i.isPeca).toList();
@@ -897,7 +909,7 @@ class _Body extends StatelessWidget {
                   onRemoverDesconto: onRemoverDesconto,
                 ),
                 // Histórico
-                const _HistoricoTab(),
+                _HistoricoTab(outrasOs: outrasOs),
               ],
             ),
           ),
@@ -1184,20 +1196,34 @@ class _PecasTab extends StatelessWidget {
 // ── Mobile tab: Histórico ─────────────────────────────────────────────────────
 
 class _HistoricoTab extends StatelessWidget {
-  const _HistoricoTab();
+  const _HistoricoTab({required this.outrasOs});
+  final List<OrdemServico> outrasOs;
 
   @override
-  Widget build(BuildContext context) => Center(
+  Widget build(BuildContext context) {
+    if (outrasOs.isEmpty) {
+      return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.history, size: 40, color: AppColors.ink3),
-            const SizedBox(height: 10),
-            Text('Histórico em breve',
+            Icon(Icons.history, size: 40, color: AppColors.ink3),
+            SizedBox(height: 10),
+            Text('Nenhuma outra OS para este veículo',
                 style: TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.ink2)),
           ],
         ),
       );
+    }
+    final sorted = [...outrasOs]..sort((a, b) => b.dataEntrada.compareTo(a.dataEntrada));
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      itemCount: sorted.length,
+      itemBuilder: (_, i) => _HistoricoOsMobileCard(
+        os: sorted[i],
+        onTap: () => context.go('${AppRoutes.ordensServico}/${sorted[i].id}'),
+      ),
+    );
+  }
 }
 
 // ── Vehicle card (mobile) ─────────────────────────────────────────────────────
@@ -1502,9 +1528,8 @@ class _DesktopVeiculoCard extends StatelessWidget {
                 Text('Veículo',
                     style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2)),
                 const Spacer(),
-                // placeholder Histórico do veículo
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => context.go('${AppRoutes.veiculos}/${os.veiculoId}'),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.accent,
                     textStyle: TextStyle(fontFamily: 'Inter', fontSize: 12),
@@ -1715,36 +1740,199 @@ class _ResumoFinanceiroCard extends StatelessWidget {
 // ── Sidebar: Histórico ────────────────────────────────────────────────────────
 
 class _HistoricoCard extends StatelessWidget {
-  const _HistoricoCard();
+  const _HistoricoCard({required this.outrasOs});
+  final List<OrdemServico> outrasOs;
 
   @override
-  Widget build(BuildContext context) => _Section(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final sorted = [...outrasOs]..sort((a, b) => b.dataEntrada.compareTo(a.dataEntrada));
+    return _Section(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.timeline_outlined, size: 15, color: AppColors.ink2),
+              const SizedBox(width: 6),
+              Text('Histórico · ${sorted.length}',
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+              const Spacer(),
+              if (sorted.isNotEmpty)
+                TextButton(
+                  onPressed: () => context.go(AppRoutes.ordensServico),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.accent,
+                    textStyle: const TextStyle(fontFamily: 'Inter', fontSize: 11),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Ver todas'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (sorted.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text('Nenhuma outra OS para este veículo.',
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink3)),
+            )
+          else
+            for (final o in sorted) ...[
+              const Divider(height: 1),
+              _HistoricoOsRow(os: o,
+                  onTap: () => context.go('${AppRoutes.ordensServico}/${o.id}')),
+            ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── Histórico: widgets de linha ────────────────────────────────────────────────
+
+class _HistoricoOsRow extends StatelessWidget {
+  const _HistoricoOsRow({required this.os, required this.onTap});
+  final OrdemServico os;
+  final VoidCallback onTap;
+
+  static String _fmtVal(double v) {
+    final parts = v.toStringAsFixed(2).split('.');
+    final intPart = parts[0].replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    return 'R\$ $intPart,${parts[1]}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final d = os.dataEntrada;
+    final date = '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    final (bg, fg) = switch (os.status) {
+      'Entregue'    => (AppColors.okSoft, AppColors.ok),
+      'Cancelada'   => (AppColors.dangerSoft, AppColors.danger),
+      'EmAndamento' => (AppColors.infoSoft, AppColors.info),
+      'Aguardando'  => (AppColors.warnSoft, AppColors.warn),
+      _             => (AppColors.surface2, AppColors.ink2),
+    };
+    return InkWell(
+      onTap: onTap,
+      hoverColor: AppColors.surface2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+        child: Row(
           children: [
-            Row(
+            Text('#${os.id}',
+                style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink)),
+            const SizedBox(width: 8),
+            Text(date, style: const TextStyle(fontSize: 11, color: AppColors.ink2)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(os.primeiroServico ?? os.veiculoDescricao,
+                  style: const TextStyle(fontSize: 12, color: AppColors.ink),
+                  overflow: TextOverflow.ellipsis),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
+              child: Text(_statusLabels[os.status] ?? os.status,
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: fg)),
+            ),
+            const SizedBox(width: 8),
+            Text(_fmtVal(os.total),
+                style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.ink)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoricoOsMobileCard extends StatelessWidget {
+  const _HistoricoOsMobileCard({required this.os, required this.onTap});
+  final OrdemServico os;
+  final VoidCallback onTap;
+
+  static String _fmtVal(double v) {
+    final parts = v.toStringAsFixed(2).split('.');
+    final intPart = parts[0].replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    return 'R\$ $intPart,${parts[1]}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final d = os.dataEntrada;
+    final date = '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    final (dotColor, label) = switch (os.status) {
+      'Entregue'    => (AppColors.ok,     'PRONTO'),
+      'Cancelada'   => (AppColors.danger, 'CANCELADA'),
+      'EmAndamento' => (AppColors.info,   'EM ANDAMENTO'),
+      'Aguardando'  => (AppColors.warn,   'AGUARDANDO'),
+      _             => (AppColors.ink2,   os.status.toUpperCase()),
+    };
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
               children: [
-                const Icon(Icons.timeline_outlined, size: 15, color: AppColors.ink2),
-                const SizedBox(width: 6),
-                Text('Histórico',
-                    style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text('Status da OS no tempo',
-                      style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink3),
-                      overflow: TextOverflow.ellipsis),
+                Container(
+                  width: 4, height: 40,
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text('#${os.id}',
+                              style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                          const SizedBox(width: 8),
+                          Text(label,
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: dotColor, letterSpacing: 0.3)),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(os.primeiroServico ?? os.veiculoDescricao,
+                          style: const TextStyle(fontSize: 13, color: AppColors.ink),
+                          overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(_fmtVal(os.total),
+                        style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                    const SizedBox(height: 2),
+                    Text(date, style: const TextStyle(fontSize: 11, color: AppColors.ink2)),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Center(
-              child: Text('Em breve',
-                  style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3)),
-            ),
-            const SizedBox(height: 4),
-          ],
+          ),
         ),
-      );
+      ),
+    );
+  }
 }
 
 // ── Sidebar: Responsável ──────────────────────────────────────────────────────

@@ -37,8 +37,8 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen>
   final _qtdMinima = TextEditingController();
   final _precoCusto = TextEditingController();
   final _precoVenda = TextEditingController();
-  String _categoria = 'Freios';
-  String _unidade = 'Unidade';
+  String? _categoria;
+  String? _unidade;
   FornecedorEstoque? _fornecedor;
   bool _salvando = false;
 
@@ -71,6 +71,18 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen>
 
   Future<void> _salvar() async {
     if (!_form.currentState!.validate()) return;
+    if (_categoria == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecione uma categoria'), backgroundColor: AppColors.error),
+      );
+      return;
+    }
+    if (_unidade == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecione uma unidade de medida'), backgroundColor: AppColors.error),
+      );
+      return;
+    }
     setState(() => _salvando = true);
     try {
       final ds = ref.read(estoqueDataSourceProvider);
@@ -79,8 +91,8 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen>
           id: widget.produto!.id,
           nome: _nome.text.trim(),
           codigo: _codigo.text.trim(),
-          categoria: _categoria,
-          unidade: _unidade,
+          categoria: _categoria!,
+          unidade: _unidade!,
           quantidadeMinima: _parse(_qtdMinima.text),
           precoCusto: _tryParse(_precoCusto.text) ?? 0,
           precoVenda: _parse(_precoVenda.text),
@@ -89,8 +101,8 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen>
         await ds.criarProduto(
           nome: _nome.text.trim(),
           codigo: _codigo.text.trim(),
-          categoria: _categoria,
-          unidade: _unidade,
+          categoria: _categoria!,
+          unidade: _unidade!,
           quantidadeInicial: _tryParse(_qtdInicial.text) ?? 0,
           quantidadeMinima: _parse(_qtdMinima.text),
           precoCusto: _tryParse(_precoCusto.text) ?? 0,
@@ -147,7 +159,7 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen>
           const SizedBox(height: 20),
           _Section('Classificação'),
           GamaSearchableSelect<(String, String)>(
-            label: 'Categoria',
+            label: 'Categoria *',
             isRequired: true,
             selectedValue: _categorias.where((c) => c.$1 == _categoria).firstOrNull,
             displayString: (c) => c.$2,
@@ -158,7 +170,7 @@ class _NovoProdutoScreenState extends ConsumerState<NovoProdutoScreen>
           ),
           const SizedBox(height: 12),
           GamaSearchableSelect<(String, String)>(
-            label: 'Unidade de medida',
+            label: 'Unidade de medida *',
             isRequired: true,
             selectedValue: _unidades.where((u) => u.$1 == _unidade).firstOrNull,
             displayString: (u) => u.$2,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/utils/formatters.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/gama_button.dart';
 import '../../../../shared/widgets/gama_snack_bar.dart';
@@ -34,8 +36,8 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
     final c = widget.cliente;
     _nome = TextEditingController(text: c?.nome ?? '');
     _email = TextEditingController(text: c?.email ?? '');
-    _telefone = TextEditingController(text: c?.telefone ?? '');
-    _cpf = TextEditingController(text: c?.cpf ?? '');
+    _telefone = TextEditingController(text: formatPhone(c?.telefone));
+    _cpf = TextEditingController(text: formatCpfCnpj(c?.cpf));
     _cidade = TextEditingController(text: c?.cidade ?? '');
   }
 
@@ -129,11 +131,13 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
                 const SizedBox(height: 20),
                 _campo(_nome, 'Nome *', obrigatorio: true),
                 const SizedBox(height: 12),
-                _campo(_telefone, 'Telefone', teclado: TextInputType.phone),
+                _campo(_telefone, 'Telefone', teclado: TextInputType.phone,
+                    formatters: [PhoneInputFormatter()]),
                 const SizedBox(height: 12),
                 _campo(_email, 'E-mail', teclado: TextInputType.emailAddress),
                 const SizedBox(height: 12),
-                _campo(_cpf, 'CPF / CNPJ'),
+                _campo(_cpf, 'CPF / CNPJ', teclado: TextInputType.number,
+                    formatters: [CpfCnpjInputFormatter()]),
                 const SizedBox(height: 12),
                 _campo(_cidade, 'Cidade'),
                 const SizedBox(height: 24),
@@ -155,10 +159,12 @@ class _ClienteFormDialogState extends ConsumerState<ClienteFormDialog> {
     String label, {
     bool obrigatorio = false,
     TextInputType teclado = TextInputType.text,
+    List<TextInputFormatter>? formatters,
   }) {
     return TextFormField(
       controller: ctrl,
       keyboardType: teclado,
+      inputFormatters: formatters,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),

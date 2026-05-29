@@ -7,6 +7,7 @@ import '../../../core/utils/jwt_decoder.dart';
 import '../../../features/auth/domain/auth_state.dart';
 import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
+import '../../../shared/utils/data_refresh.dart';
 import '../../../shared/widgets/notification_bell.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../../shared/widgets/gama_avatar.dart';
@@ -437,7 +438,8 @@ class _WelcomeBanner extends ConsumerWidget {
         currentId: currentId,
         onSelect: (id) async {
           await ref.read(authNotifierProvider.notifier).selectOficina(id);
-          ref.invalidate(painelOperacionalProvider);
+          invalidateAllData(ref);
+          if (context.mounted) context.go('/home');
         },
       ),
     );

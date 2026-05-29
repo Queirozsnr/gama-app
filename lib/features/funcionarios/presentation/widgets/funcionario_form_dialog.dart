@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/utils/formatters.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../features/oficinas/data/oficinas_remote_data_source.dart';
 import '../../../../features/oficinas/domain/oficina_model.dart';
@@ -11,7 +13,7 @@ import '../../domain/remuneracao.dart';
 import '../funcionarios_notifier.dart';
 
 const _cargos = [
-  'Gerente', 'Mecanico', 'Auxiliar', 'Atendente',
+  'Mecanico', 'Auxiliar', 'Atendente',
   'Lavador', 'Funileiro', 'Eletricista', 'Pintor', 'TecnicoArCondicionado',
 ];
 
@@ -50,9 +52,9 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
     final f = widget.funcionario;
     _nome = TextEditingController(text: f?.nome ?? '');
     _email = TextEditingController(text: f?.email ?? '');
-    _telefone = TextEditingController(text: f?.telefone ?? '');
-    _cargo = f?.cargo ?? _cargos.first;
-    _tipoRemuneracao = (_cargo == 'Gerente') ? null : (f?.tipoRemuneracao ?? 'Fixo');
+    _telefone = TextEditingController(text: formatPhone(f?.telefone));
+    _cargo = f?.cargo;
+    _tipoRemuneracao = f?.tipoRemuneracao;
     _valor = TextEditingController(
       text: f == null ? '' : (_tipoRemuneracao == 'Fixo' ? f.salario?.toString() : f.porcentagem?.toString()) ?? '',
     );
@@ -87,14 +89,13 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
       GamaSnackBar.error(context, 'Selecione um cargo.');
       return;
     }
-    final isGerente = _cargo == 'Gerente';
-    if (!isGerente && _tipoRemuneracao == null) {
+    if (_tipoRemuneracao == null) {
       GamaSnackBar.error(context, 'Selecione o tipo de remuneração.');
       return;
     }
     setState(() => _loading = true);
     try {
-      final tipoFinal = isGerente ? 'Socio' : _tipoRemuneracao!;
+      final tipoFinal = _tipoRemuneracao!;
       final valorNum = double.tryParse(_valor.text.trim().replaceAll(',', '.'));
       final data = {
         'cargo': _cargo,
@@ -159,10 +160,16 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                         if (!_editando) ...[
                           _campo(_nome, 'Nome *', obrigatorio: true),
                           const SizedBox(height: 12),
-                          _campo(_email, 'E-mail *', teclado: TextInputType.emailAddress, obrigatorio: true),
+                          _campo(_email, 'E-mail *', teclado: TextInputType.emailAddress,
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) return 'Campo obrigatório';
+                                final ok = RegExp(r'^[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}$').hasMatch(v.trim());
+                                return ok ? null : 'E-mail inválido';
+                              }),
                           const SizedBox(height: 12),
                         ],
-                        _campo(_telefone, 'Telefone', teclado: TextInputType.phone),
+                        _campo(_telefone, 'Telefone', teclado: TextInputType.phone,
+                            formatters: [PhoneInputFormatter()]),
                         const SizedBox(height: 12),
                         GamaSearchableSelect<String>(
                           label: 'Cargo *',
@@ -178,7 +185,7 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                             }
                           }),
                         ),
-                        if (_cargo != null && _cargo != 'Gerente') ...[
+                        if (_cargo != null) ...[
                           const SizedBox(height: 12),
                           GamaSearchableSelect<String>(
                             label: 'Remuneração *',
@@ -245,10 +252,13 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
   Widget _campo(TextEditingController ctrl, String label, {
     bool obrigatorio = false,
     TextInputType teclado = TextInputType.text,
+    List<TextInputFormatter>? formatters,
+    FormFieldValidator<String>? validator,
   }) {
     return TextFormField(
       controller: ctrl,
       keyboardType: teclado,
+      inputFormatters: formatters,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
@@ -258,7 +268,7 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         filled: true, fillColor: Colors.white,
       ),
-      validator: obrigatorio ? (v) => (v == null || v.trim().isEmpty) ? 'Campo obrigatório' : null : null,
+      validator: validator ?? (obrigatorio ? (v) => (v == null || v.trim().isEmpty) ? 'Campo obrigatório' : null : null),
     );
   }
 }

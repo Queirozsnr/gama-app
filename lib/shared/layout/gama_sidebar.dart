@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/jwt_decoder.dart';
 import '../../features/auth/domain/auth_state.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
+import '../utils/data_refresh.dart';
 import '../widgets/gama_avatar.dart';
 import '../widgets/gama_snack_bar.dart';
 
@@ -140,19 +141,10 @@ class GamaSidebar extends ConsumerWidget {
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 10, vertical: 8),
-            child: Column(
-              children: [
-                _SidebarNavItem(
-                  item: const _NavItem('Ajuda', Icons.help_outline, '/ajuda'),
-                  isActive: false,
-                  collapsed: collapsed,
-                ),
-                _SidebarNavItem(
-                  item: const _NavItem('Configurações', Icons.settings_outlined, '/configuracoes-oficina'),
-                  isActive: currentRoute.startsWith('/configuracoes-oficina'),
-                  collapsed: collapsed,
-                ),
-              ],
+            child: _SidebarNavItem(
+              item: const _NavItem('Configurações', Icons.settings_outlined, '/configuracoes-oficina'),
+              isActive: currentRoute.startsWith('/configuracoes-oficina'),
+              collapsed: collapsed,
             ),
           ),
           Container(height: 1, color: AppColors.sidebarLine),
@@ -337,7 +329,11 @@ class _GroupCardState extends ConsumerState<_GroupCard> {
     _overlay?.markNeedsBuild();
     try {
       await ref.read(authNotifierProvider.notifier).selectOficina(oficinaId);
-      if (mounted) _hide();
+      invalidateAllData(ref);
+      if (mounted) {
+        _hide();
+        context.go('/home');
+      }
     } catch (e) {
       if (mounted) { _hide(); GamaSnackBar.error(context, e.toString()); }
     } finally {
