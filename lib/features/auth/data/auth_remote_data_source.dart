@@ -32,6 +32,14 @@ class AuthRemoteDataSource {
     final response = await _dio.get('/auth/oficinas');
     return (response.data as List).cast<Map<String, dynamic>>();
   }
+
+  Future<LoginResponse> refresh(String refreshToken) async {
+    final response = await _dio.post(
+      '/auth/refresh',
+      data: {'refreshToken': refreshToken},
+    );
+    return LoginResponse.fromJson(response.data as Map<String, dynamic>);
+  }
 }
 
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>(

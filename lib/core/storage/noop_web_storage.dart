@@ -9,4 +9,13 @@ class WebTokenStorage implements TokenStorage {
 
   @override
   Future<void> delete() async {}
+
+  @override
+  Future<String?> readRefreshToken() async => null;
+
+  @override
+  Future<void> writeRefreshToken(String token) async {}
+
+  @override
+  Future<void> deleteRefreshToken() async {}
 }

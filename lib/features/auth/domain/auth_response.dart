@@ -8,6 +8,7 @@ part 'auth_response.g.dart';
 class LoginResponse with _$LoginResponse {
   const factory LoginResponse({
     String? token,
+    String? refreshToken,
     int? userId,
     int? grupoOficinaId,
     int? oficinaId,

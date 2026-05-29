@@ -9,6 +9,7 @@ part of 'auth_response.dart';
 _$LoginResponseImpl _$$LoginResponseImplFromJson(Map<String, dynamic> json) =>
     _$LoginResponseImpl(
       token: json['token'] as String?,
+      refreshToken: json['refreshToken'] as String?,
       userId: (json['userId'] as num?)?.toInt(),
       grupoOficinaId: (json['grupoOficinaId'] as num?)?.toInt(),
       oficinaId: (json['oficinaId'] as num?)?.toInt(),
@@ -24,6 +25,7 @@ _$LoginResponseImpl _$$LoginResponseImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$LoginResponseImplToJson(_$LoginResponseImpl instance) =>
     <String, dynamic>{
       'token': instance.token,
+      'refreshToken': instance.refreshToken,
       'userId': instance.userId,
       'grupoOficinaId': instance.grupoOficinaId,
       'oficinaId': instance.oficinaId,

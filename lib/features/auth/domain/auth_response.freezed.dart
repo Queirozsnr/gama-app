@@ -22,6 +22,7 @@ LoginResponse _$LoginResponseFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$LoginResponse {
   String? get token => throw _privateConstructorUsedError;
+  String? get refreshToken => throw _privateConstructorUsedError;
   int? get userId => throw _privateConstructorUsedError;
   int? get grupoOficinaId => throw _privateConstructorUsedError;
   int? get oficinaId => throw _privateConstructorUsedError;
@@ -48,6 +49,7 @@ abstract class $LoginResponseCopyWith<$Res> {
   @useResult
   $Res call({
     String? token,
+    String? refreshToken,
     int? userId,
     int? grupoOficinaId,
     int? oficinaId,
@@ -73,6 +75,7 @@ class _$LoginResponseCopyWithImpl<$Res, $Val extends LoginResponse>
   @override
   $Res call({
     Object? token = freezed,
+    Object? refreshToken = freezed,
     Object? userId = freezed,
     Object? grupoOficinaId = freezed,
     Object? oficinaId = freezed,
@@ -85,6 +88,10 @@ class _$LoginResponseCopyWithImpl<$Res, $Val extends LoginResponse>
             token: freezed == token
                 ? _value.token
                 : token // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            refreshToken: freezed == refreshToken
+                ? _value.refreshToken
+                : refreshToken // ignore: cast_nullable_to_non_nullable
                       as String?,
             userId: freezed == userId
                 ? _value.userId
@@ -127,6 +134,7 @@ abstract class _$$LoginResponseImplCopyWith<$Res>
   @useResult
   $Res call({
     String? token,
+    String? refreshToken,
     int? userId,
     int? grupoOficinaId,
     int? oficinaId,
@@ -151,6 +159,7 @@ class __$$LoginResponseImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? token = freezed,
+    Object? refreshToken = freezed,
     Object? userId = freezed,
     Object? grupoOficinaId = freezed,
     Object? oficinaId = freezed,
@@ -163,6 +172,10 @@ class __$$LoginResponseImplCopyWithImpl<$Res>
         token: freezed == token
             ? _value.token
             : token // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        refreshToken: freezed == refreshToken
+            ? _value.refreshToken
+            : refreshToken // ignore: cast_nullable_to_non_nullable
                   as String?,
         userId: freezed == userId
             ? _value.userId
@@ -198,6 +211,7 @@ class __$$LoginResponseImplCopyWithImpl<$Res>
 class _$LoginResponseImpl implements _LoginResponse {
   const _$LoginResponseImpl({
     this.token,
+    this.refreshToken,
     this.userId,
     this.grupoOficinaId,
     this.oficinaId,
@@ -212,6 +226,8 @@ class _$LoginResponseImpl implements _LoginResponse {
 
   @override
   final String? token;
+  @override
+  final String? refreshToken;
   @override
   final int? userId;
   @override
@@ -245,7 +261,7 @@ class _$LoginResponseImpl implements _LoginResponse {
 
   @override
   String toString() {
-    return 'LoginResponse(token: $token, userId: $userId, grupoOficinaId: $grupoOficinaId, oficinaId: $oficinaId, selecioneGrupo: $selecioneGrupo, selecioneOficina: $selecioneOficina, precisaTrocarSenha: $precisaTrocarSenha)';
+    return 'LoginResponse(token: $token, refreshToken: $refreshToken, userId: $userId, grupoOficinaId: $grupoOficinaId, oficinaId: $oficinaId, selecioneGrupo: $selecioneGrupo, selecioneOficina: $selecioneOficina, precisaTrocarSenha: $precisaTrocarSenha)';
   }
 
   @override
@@ -254,6 +270,8 @@ class _$LoginResponseImpl implements _LoginResponse {
         (other.runtimeType == runtimeType &&
             other is _$LoginResponseImpl &&
             (identical(other.token, token) || other.token == token) &&
+            (identical(other.refreshToken, refreshToken) ||
+                other.refreshToken == refreshToken) &&
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.grupoOficinaId, grupoOficinaId) ||
                 other.grupoOficinaId == grupoOficinaId) &&
@@ -276,6 +294,7 @@ class _$LoginResponseImpl implements _LoginResponse {
   int get hashCode => Object.hash(
     runtimeType,
     token,
+    refreshToken,
     userId,
     grupoOficinaId,
     oficinaId,
@@ -301,6 +320,7 @@ class _$LoginResponseImpl implements _LoginResponse {
 abstract class _LoginResponse implements LoginResponse {
   const factory _LoginResponse({
     final String? token,
+    final String? refreshToken,
     final int? userId,
     final int? grupoOficinaId,
     final int? oficinaId,
@@ -314,6 +334,8 @@ abstract class _LoginResponse implements LoginResponse {
 
   @override
   String? get token;
+  @override
+  String? get refreshToken;
   @override
   int? get userId;
   @override

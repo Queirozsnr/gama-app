@@ -12,9 +12,7 @@ class AuthRepository {
 
   Future<LoginResponse> login(String email, String senha) async {
     final response = await _dataSource.login(LoginRequest(email: email, senha: senha));
-    if (response.token != null) {
-      await _storage.write(response.token!);
-    }
+    await _saveTokens(response);
     return response;
   }
 
@@ -22,9 +20,7 @@ class AuthRepository {
     final response = await _dataSource.selectGroup(
       SelectGroupRequest(userId: userId, grupoOficinaId: grupoOficinaId),
     );
-    if (response.token != null) {
-      await _storage.write(response.token!);
-    }
+    await _saveTokens(response);
     return response;
   }
 
@@ -32,8 +28,13 @@ class AuthRepository {
     final response = await _dataSource.selecionarOficina(
       SelectOficinaRequest(oficinaId: oficinaId),
     );
-    if (response.token != null) await _storage.write(response.token!);
+    await _saveTokens(response);
     return response;
+  }
+
+  Future<void> _saveTokens(LoginResponse response) async {
+    if (response.token != null) await _storage.write(response.token!);
+    if (response.refreshToken != null) await _storage.writeRefreshToken(response.refreshToken!);
   }
 
   Future<List<GrupoItem>> fetchGroups() async {
@@ -46,9 +47,14 @@ class AuthRepository {
     return raw.map((e) => OficinaItem.fromJson(e)).toList();
   }
 
-  Future<void> logout() async => _storage.delete();
+  Future<void> logout() async {
+    await _storage.delete();
+    await _storage.deleteRefreshToken();
+  }
 
   Future<String?> getStoredToken() async => _storage.read();
+
+  Future<String?> getStoredRefreshToken() async => _storage.readRefreshToken();
 }
 
 final authRepositoryProvider = Provider<AuthRepository>(
