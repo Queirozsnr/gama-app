@@ -563,19 +563,21 @@ class _KpiCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.sidebarText,
-                  letterSpacing: 0.8,
+              Flexible(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.sidebarText,
+                    letterSpacing: 0.8,
+                  ),
                 ),
               ),
-              if (delta != null)
+              if (delta != null) ...[
+                const SizedBox(width: 6),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -594,6 +596,7 @@ class _KpiCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
@@ -701,10 +704,6 @@ class _TableHeader extends StatelessWidget {
               flex: 2,
               child:
                   Text('TICKET', style: style, textAlign: TextAlign.center)),
-          Expanded(
-              flex: 2,
-              child:
-                  Text('STATUS', style: style, textAlign: TextAlign.right)),
         ],
       ),
     );
@@ -720,12 +719,6 @@ class _UnidadeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pct = (oficina.receita / maxReceita).clamp(0.0, 1.0);
-
-    final (statusColor, statusBg, statusText) = switch (oficina.statusLabel) {
-      'NO_PRAZO' => (AppColors.ok, AppColors.okSoft, 'NO PRAZO'),
-      'ATENCAO'  => (AppColors.warn, AppColors.warnSoft, 'ATENÇÃO'),
-      _          => (AppColors.danger, AppColors.dangerSoft, 'ABAIXO'),
-    };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -787,29 +780,6 @@ class _UnidadeRow extends StatelessWidget {
               style:
                   const TextStyle(fontSize: 13, color: AppColors.ink2),
               textAlign: TextAlign.center,
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: statusBg,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: statusColor,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
             ),
           ),
         ],

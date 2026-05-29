@@ -144,62 +144,78 @@ class _DarkMobileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobileAction = slot?.mobileAction ?? slot?.action;
     final hasSubtitle = slot?.mobileSubtitle != null;
+    final hasSearch = slot?.hasSearch == true;
 
     return Container(
       decoration: const BoxDecoration(color: AppColors.sidebarBg),
-      padding: const EdgeInsets.fromLTRB(4, 0, 12, 0),
       child: SafeArea(
         bottom: false,
-        child: SizedBox(
-          height: hasSubtitle ? 68 : 56,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Leading (back button) — recolored white
-              if (slot?.leading != null)
-                IconTheme(
-                  data: const IconThemeData(color: Colors.white),
-                  child: slot!.leading!,
-                )
-              else
-                const SizedBox(width: 16),
-              const SizedBox(width: 4),
-              // Title block
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: hasSubtitle ? 68 : 56,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 0, 12, 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    if (hasSubtitle)
-                      Text(
-                        slot!.mobileSubtitle!,
-                        style: TextStyle(fontFamily: 'Inter', 
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.accent,
-                          letterSpacing: 0.2,
-                        ),
+                    if (slot?.leading != null)
+                      IconTheme(
+                        data: const IconThemeData(color: Colors.white),
+                        child: slot!.leading!,
+                      )
+                    else
+                      const SizedBox(width: 16),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (hasSubtitle)
+                            Text(
+                              slot!.mobileSubtitle!,
+                              style: const TextStyle(fontFamily: 'Inter',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.accent,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          if (title != null)
+                            Text(
+                              title!,
+                              style: const TextStyle(fontFamily: 'Inter',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: -0.3,
+                                height: 1.15,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
                       ),
-                    if (title != null)
-                      Text(
-                        title!,
-                        style: TextStyle(fontFamily: 'Inter', 
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: -0.3,
-                          height: 1.15,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    ),
+                    ?mobileAction,
                   ],
                 ),
               ),
-              // Trailing actions
-              ?mobileAction,
-            ],
-          ),
+            ),
+            if (hasSearch)
+              Container(
+                height: 48,
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                child: _SearchBar(
+                  controller: slot!.searchController,
+                  hint: slot!.searchHint ?? 'Buscar…',
+                  onChanged: slot!.onSearchChanged,
+                  dark: true,
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -227,11 +243,9 @@ class _LightMobileHeader extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
-            border: Border(
-              bottom: BorderSide(
-                color: hasSearch ? AppColors.surface2 : AppColors.line,
-              ),
-            ),
+            border: hasSearch
+                ? null
+                : const Border(bottom: BorderSide(color: AppColors.line)),
           ),
           padding: const EdgeInsets.fromLTRB(4, 0, 12, 0),
           child: SafeArea(
@@ -306,34 +320,41 @@ class _LightMobileHeader extends StatelessWidget {
 
 // ── Shared search bar ─────────────────────────────────────────────
 class _SearchBar extends StatelessWidget {
-  const _SearchBar({this.controller, this.hint, this.onChanged});
+  const _SearchBar({this.controller, this.hint, this.onChanged, this.dark = false});
 
   final TextEditingController? controller;
   final String? hint;
   final ValueChanged<String>? onChanged;
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = dark ? AppColors.sidebarLine : AppColors.surface2;
+    final borderColor = dark ? Colors.transparent : AppColors.line;
+    final textColor = dark ? Colors.white : AppColors.ink;
+    final hintColor = dark ? AppColors.sidebarText : AppColors.ink3;
+    final iconColor = dark ? AppColors.sidebarText : AppColors.ink3;
+
     return Container(
       height: 38,
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: bgColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: borderColor),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          const Icon(Icons.search, size: 17, color: AppColors.ink3),
+          Icon(Icons.search, size: 17, color: iconColor),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink),
+              style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: textColor),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ink3),
+                hintStyle: TextStyle(fontFamily: 'Inter', fontSize: 13, color: hintColor),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,

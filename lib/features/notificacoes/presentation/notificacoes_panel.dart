@@ -44,6 +44,117 @@ class NotificacoesPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(notificacoesNotifierProvider);
     final notifier = ref.read(notificacoesNotifierProvider.notifier);
+    final isMobile = MediaQuery.of(context).size.width < 800;
+
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (isMobile) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.line,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ],
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
+          child: Row(
+            children: [
+              const Text(
+                'Notificações',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                ),
+              ),
+              const Spacer(),
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.accent,
+                  textStyle: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+                onPressed: () => notifier.marcarTodasLidas(),
+                child: const Text('Marcar todas como lidas'),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: AppColors.line),
+        // List
+        Flexible(
+          child: async.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (_, _) => const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: Text('Erro ao carregar notificações.')),
+            ),
+            data: (lista) {
+              if (lista.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(
+                    child: Text(
+                      'Nenhuma notificação',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        color: AppColors.ink3,
+                      ),
+                    ),
+                  ),
+                );
+              }
+              return ListView.separated(
+                shrinkWrap: true,
+                itemCount: lista.length,
+                separatorBuilder: (_, _) =>
+                    const Divider(height: 1, color: AppColors.line),
+                itemBuilder: (ctx, i) => _NotificacaoTile(
+                  item: lista[i],
+                  onTap: () {
+                    notifier.marcarLida(lista[i].id);
+                    final rota = _rotaPara(lista[i]);
+                    onClose?.call();
+                    if (rota != null && ctx.mounted) {
+                      ctx.go(rota);
+                    }
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        if (isMobile)
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+      ],
+    );
+
+    if (isMobile) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
+        child: content,
+      );
+    }
 
     return Container(
       width: 360,
@@ -60,90 +171,7 @@ class NotificacoesPanel extends ConsumerWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
-            child: Row(
-              children: [
-                const Text(
-                  'Notificações',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                  ),
-                ),
-                const Spacer(),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.accent,
-                    textStyle: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  ),
-                  onPressed: () => notifier.marcarTodasLidas(),
-                  child: const Text('Marcar todas como lidas'),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: AppColors.line),
-          // List
-          Flexible(
-            child: async.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (_, __) => const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: Text('Erro ao carregar notificações.')),
-              ),
-              data: (lista) {
-                if (lista.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(
-                      child: Text(
-                        'Nenhuma notificação',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          color: AppColors.ink3,
-                        ),
-                      ),
-                    ),
-                  );
-                }
-                return ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: lista.length,
-                  separatorBuilder: (_, _) =>
-                      const Divider(height: 1, color: AppColors.line),
-                  itemBuilder: (ctx, i) => _NotificacaoTile(
-                    item: lista[i],
-                    onTap: () {
-                      notifier.marcarLida(lista[i].id);
-                      final rota = _rotaPara(lista[i]);
-                      onClose?.call();
-                      if (rota != null && ctx.mounted) {
-                        ctx.go(rota);
-                      }
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+      child: content,
     );
   }
 }

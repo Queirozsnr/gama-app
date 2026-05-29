@@ -9,6 +9,7 @@ import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/chips/payment_badge.dart';
 import '../../../shared/widgets/gama_avatar.dart';
 import '../../../shared/widgets/gama_confirm_dialog.dart';
+import '../../../shared/widgets/gama_fab.dart';
 import '../../../shared/widgets/gama_list_tile.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../domain/funcionario.dart';
@@ -27,6 +28,7 @@ class FuncionariosScreen extends ConsumerStatefulWidget {
 class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
     with TopBarSlotMixin<FuncionariosScreen> {
   final _searchController = TextEditingController();
+  bool _searchOpen = false;
 
   @override
   void didChangeDependencies() {
@@ -35,6 +37,7 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
   }
 
   void _syncSlot() {
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
     final auth = ref.read(authNotifierProvider).valueOrNull;
     final oficinas = auth?.availableOficinas ?? [];
     final nome = oficinas.cast<OficinaItem?>().firstWhere(
@@ -45,24 +48,36 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
       pageTitle: 'Funcionários',
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
-      searchController: _searchController,
-      searchHint: 'Buscar por nome ou e-mail…',
-      onSearchChanged: (v) =>
-          ref.read(funcionariosNotifierProvider.notifier).buscar(v),
+      searchController: isDesktop ? _searchController : null,
+      searchHint: isDesktop ? 'Buscar por nome ou e-mail…' : null,
+      onSearchChanged: isDesktop
+          ? (v) => ref.read(funcionariosNotifierProvider.notifier).buscar(v)
+          : null,
       action: FilledButton.icon(
         onPressed: () => _openForm(),
         icon: const Icon(Icons.person_add_outlined, size: 17),
         label: const Text('Novo funcionário'),
       ),
       mobileAction: IconButton(
-        onPressed: () => _openForm(),
-        icon: const Icon(Icons.person_add_outlined),
-        color: AppColors.accent,
-        tooltip: 'Novo funcionário',
+        onPressed: _toggleSearch,
+        icon: Icon(
+          _searchOpen ? Icons.close : Icons.search,
+          color: _searchOpen ? AppColors.accent : Colors.white,
+          size: 20,
+        ),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),
       ),
     ));
+  }
+
+  void _toggleSearch() {
+    setState(() => _searchOpen = !_searchOpen);
+    if (!_searchOpen) {
+      _searchController.clear();
+      ref.read(funcionariosNotifierProvider.notifier).buscar(null);
+    }
+    _syncSlot();
   }
 
   @override
@@ -266,31 +281,62 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
         }
 
         // Mobile
-        return RefreshIndicator(
-          onRefresh: () => ref.read(funcionariosNotifierProvider.notifier).buscar(
-                _searchController.text.isEmpty ? null : _searchController.text,
-              ),
-          child: GridView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 420,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              mainAxisExtent: 180,
-            ),
-            itemCount: funcionarios.length,
-            itemBuilder: (_, i) {
-              final f = funcionarios[i];
-              return FuncionarioCard(
-                funcionario: f,
-                onTap: () => context.go(
-                  AppRoutes.funcionariosDetalhe.replaceAll(':id', '${f.id}'),
+        return Stack(
+          children: [
+            Column(
+              children: [
+                if (_searchOpen)
+                  _MobileSearchRow(
+                    controller: _searchController,
+                    hint: 'Buscar por nome ou e-mail…',
+                    onChanged: (v) => ref
+                        .read(funcionariosNotifierProvider.notifier)
+                        .buscar(v),
+                  ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () => ref
+                        .read(funcionariosNotifierProvider.notifier)
+                        .buscar(_searchController.text.isEmpty
+                            ? null
+                            : _searchController.text),
+                    child: GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 420,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        mainAxisExtent: 180,
+                      ),
+                      itemCount: funcionarios.length,
+                      itemBuilder: (_, i) {
+                        final f = funcionarios[i];
+                        return FuncionarioCard(
+                          funcionario: f,
+                          onTap: () => context.go(
+                            AppRoutes.funcionariosDetalhe
+                                .replaceAll(':id', '${f.id}'),
+                          ),
+                          onLongPress: () => _excluir(f),
+                          onResetarSenha: () => _resetarSenha(f),
+                        );
+                      },
+                    ),
+                  ),
                 ),
-                onLongPress: () => _excluir(f),
-                onResetarSenha: () => _resetarSenha(f),
-              );
-            },
-          ),
+              ],
+            ),
+            Positioned(
+              right: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+              child: GamaFab(
+                label: 'Novo funcionário',
+                icon: Icons.person_add_outlined,
+                onTap: () => _openForm(),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -311,11 +357,62 @@ class _AtivoChip extends StatelessWidget {
       ),
       child: Text(
         ativo ? 'ATIVO' : 'INATIVO',
-        style: TextStyle(fontFamily: 'Inter', 
+        style: TextStyle(fontFamily: 'Inter',
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: ativo ? AppColors.ok : AppColors.ink3,
           letterSpacing: 0.4,
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileSearchRow extends StatelessWidget {
+  const _MobileSearchRow({
+    required this.controller,
+    required this.hint,
+    required this.onChanged,
+  });
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.sidebarBg,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Container(
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppColors.sidebarLine,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.search, size: 16, color: AppColors.sidebarText),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onChanged: onChanged,
+                autofocus: true,
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.sidebarText),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                  filled: false,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

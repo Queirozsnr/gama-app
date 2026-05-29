@@ -23,6 +23,7 @@ class VeiculosScreen extends ConsumerStatefulWidget {
 class _VeiculosScreenState extends ConsumerState<VeiculosScreen>
     with TopBarSlotMixin<VeiculosScreen> {
   final _searchController = TextEditingController();
+  bool _searchOpen = false;
 
   @override
   void didChangeDependencies() {
@@ -31,6 +32,7 @@ class _VeiculosScreenState extends ConsumerState<VeiculosScreen>
   }
 
   void _syncSlot() {
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
     final auth = ref.read(authNotifierProvider).valueOrNull;
     final oficinas = auth?.availableOficinas ?? [];
     final nome = oficinas.cast<OficinaItem?>().firstWhere(
@@ -41,16 +43,36 @@ class _VeiculosScreenState extends ConsumerState<VeiculosScreen>
       pageTitle: 'Veículos',
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
-      searchController: _searchController,
-      searchHint: 'Buscar por placa, modelo, marca…',
-      onSearchChanged: (v) => ref.read(veiculosNotifierProvider.notifier).buscar(v),
+      searchController: isDesktop ? _searchController : null,
+      searchHint: isDesktop ? 'Buscar por placa, modelo, marca…' : null,
+      onSearchChanged: isDesktop
+          ? (v) => ref.read(veiculosNotifierProvider.notifier).buscar(v)
+          : null,
       action: FilledButton.icon(
         onPressed: () => _openForm(),
         icon: const Icon(Icons.directions_car_outlined, size: 17),
         label: const Text('Novo veículo'),
       ),
-      mobileAction: const SizedBox(),
+      mobileAction: IconButton(
+        onPressed: _toggleSearch,
+        icon: Icon(
+          _searchOpen ? Icons.close : Icons.search,
+          color: _searchOpen ? AppColors.accent : Colors.white,
+          size: 20,
+        ),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+      ),
     ));
+  }
+
+  void _toggleSearch() {
+    setState(() => _searchOpen = !_searchOpen);
+    if (!_searchOpen) {
+      _searchController.clear();
+      ref.read(veiculosNotifierProvider.notifier).buscar(null);
+    }
+    _syncSlot();
   }
 
   @override
@@ -169,7 +191,20 @@ class _VeiculosScreenState extends ConsumerState<VeiculosScreen>
         backgroundColor: AppColors.surface,
         body: Stack(
           children: [
-            Positioned.fill(child: content),
+            Positioned.fill(
+              child: Column(
+                children: [
+                  if (_searchOpen)
+                    _MobileSearchRow(
+                      controller: _searchController,
+                      hint: 'Buscar por placa, modelo, marca…',
+                      onChanged: (v) =>
+                          ref.read(veiculosNotifierProvider.notifier).buscar(v),
+                    ),
+                  Expanded(child: content),
+                ],
+              ),
+            ),
             Positioned(
               right: 16,
               bottom: MediaQuery.of(context).padding.bottom + 16,
@@ -195,6 +230,57 @@ class _VeiculosScreenState extends ConsumerState<VeiculosScreen>
     return km.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]}.',
+    );
+  }
+}
+
+class _MobileSearchRow extends StatelessWidget {
+  const _MobileSearchRow({
+    required this.controller,
+    required this.hint,
+    required this.onChanged,
+  });
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.sidebarBg,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Container(
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppColors.sidebarLine,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.search, size: 16, color: AppColors.sidebarText),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onChanged: onChanged,
+                autofocus: true,
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.sidebarText),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                  filled: false,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -40,10 +40,21 @@ class _BellButtonState extends State<_BellButton> {
   }
 
   void _open() {
+    final isMobile = MediaQuery.of(context).size.width < 800;
+
+    if (isMobile) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => NotificacoesPanel(onClose: () => Navigator.of(context).pop()),
+      );
+      return;
+    }
+
     _overlay = OverlayEntry(
       builder: (_) => Stack(
         children: [
-          // Transparent barrier to close on outside tap
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
@@ -54,7 +65,7 @@ class _BellButtonState extends State<_BellButton> {
             link: _layerLink,
             targetAnchor: Alignment.bottomRight,
             followerAnchor: Alignment.topRight,
-            offset: Offset(-8, 8),
+            offset: const Offset(-8, 8),
             child: Material(
               type: MaterialType.transparency,
               child: NotificacoesPanel(onClose: _close),

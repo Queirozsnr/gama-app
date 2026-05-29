@@ -57,6 +57,7 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
     with TopBarSlotMixin<PagamentosScreen> {
   final _searchController = TextEditingController();
   String _query = '';
+  bool _searchOpen = false;
   int _filtroIdx = 0; // 0=todos 1=comissionados 2=salario 3=gerentes
   String _filtroStatus = 'todos'; // 'todos' | 'a_pagar' | 'pago'
   FuncionarioAcumulado? _selected;
@@ -68,6 +69,7 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
   }
 
   void _syncTopBar() {
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
     final auth = ref.read(authNotifierProvider).valueOrNull;
     final oficinaNome = auth?.availableOficinas
         .cast<dynamic>()
@@ -80,9 +82,9 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: oficinaNome != null ? '• $oficinaNome' : null,
       desktopSubtitle: oficinaNome != null ? '$mes · ${oficinaNome.toUpperCase()}' : mes,
-      searchController: _searchController,
-      searchHint: 'Buscar funcionário…',
-      onSearchChanged: (v) => setState(() => _query = v.toLowerCase()),
+      searchController: isDesktop ? _searchController : null,
+      searchHint: isDesktop ? 'Buscar funcionário…' : null,
+      onSearchChanged: isDesktop ? (v) => setState(() => _query = v.toLowerCase()) : null,
       action: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -104,12 +106,25 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
         ],
       ),
       mobileAction: IconButton(
-        onPressed: () => GamaSnackBar.info(context, 'Pagamento em lote será implementado em breve.'),
-        icon: const Icon(Icons.payments_outlined),
-        color: Colors.white,
-        tooltip: 'Pagar todos',
+        onPressed: _toggleSearch,
+        icon: Icon(
+          _searchOpen ? Icons.close : Icons.search,
+          color: _searchOpen ? AppColors.accent : Colors.white,
+          size: 20,
+        ),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
       ),
     ));
+  }
+
+  void _toggleSearch() {
+    setState(() => _searchOpen = !_searchOpen);
+    if (!_searchOpen) {
+      _searchController.clear();
+      setState(() => _query = '');
+    }
+    _syncTopBar();
   }
 
   @override
@@ -397,9 +412,13 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
           totalComissoes: totalComissoes,
           totalSalarios: totalSalarios,
           gerenteValor: gerente?.valorAcumulado ?? 0,
-          searchController: _searchController,
-          onSearch: (v) => setState(() => _query = v.toLowerCase()),
         ),
+        if (_searchOpen)
+          _MobileSearchRow(
+            controller: _searchController,
+            hint: 'Buscar funcionário…',
+            onChanged: (v) => setState(() => _query = v.toLowerCase()),
+          ),
         _MobileFiltroBar(
           tabLabels: tabLabels,
           selectedIndex: _filtroIdx,
@@ -1148,80 +1167,76 @@ class _PagamentoDarkArea extends StatelessWidget {
     required this.totalComissoes,
     required this.totalSalarios,
     required this.gerenteValor,
-    required this.searchController,
-    required this.onSearch,
   });
 
   final double totalAPagar;
   final double totalComissoes;
   final double totalSalarios;
   final double gerenteValor;
-  final TextEditingController searchController;
-  final ValueChanged<String> onSearch;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.sidebarBg,
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              _MobileStatBox(
-                value: _fmt(totalAPagar),
-                label: 'A PAGAR',
-                accent: true,
-              ),
-              _MobileStatBox(
-                value: _fmt(totalComissoes),
-                label: 'COMISSÕES',
-              ),
-              _MobileStatBox(
-                value: _fmt(totalSalarios),
-                label: 'SALÁRIOS',
-              ),
-              _MobileStatBox(
-                value: _fmt(gerenteValor),
-                label: 'GERENTE',
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.sidebarLine,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                const Icon(Icons.search, size: 17, color: AppColors.sidebarText),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: searchController,
-                    onChanged: onSearch,
-                    style: const TextStyle(fontSize: 13, color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: 'Buscar funcionário…',
-                      hintStyle: TextStyle(
-                          fontSize: 13, color: AppColors.sidebarText),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                      filled: false,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _MobileStatBox(value: _fmt(totalAPagar), label: 'A PAGAR', accent: true),
+          _MobileStatBox(value: _fmt(totalComissoes), label: 'COMISSÕES'),
+          _MobileStatBox(value: _fmt(totalSalarios), label: 'SALÁRIOS'),
+          _MobileStatBox(value: _fmt(gerenteValor), label: 'GERENTE'),
         ],
+      ),
+    );
+  }
+}
+
+class _MobileSearchRow extends StatelessWidget {
+  const _MobileSearchRow({
+    required this.controller,
+    required this.hint,
+    required this.onChanged,
+  });
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.sidebarBg,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Container(
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppColors.sidebarLine,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.search, size: 16, color: AppColors.sidebarText),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onChanged: onChanged,
+                autofocus: true,
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.sidebarText),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                  filled: false,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

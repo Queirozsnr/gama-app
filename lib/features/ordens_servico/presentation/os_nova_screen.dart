@@ -206,7 +206,6 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
         icon: const Icon(Icons.close),
         color: AppColors.ink2,
       ),
-      mobileAction: const _RascunhoChip(),
     ));
 
     final isDesktop = MediaQuery.sizeOf(context).width >= 800;
@@ -967,27 +966,6 @@ class _MobileBottomBar extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ── Rascunho chip ──────────────────────────────────────────────────────────────
-class _RascunhoChip extends StatelessWidget {
-  const _RascunhoChip();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Text('RASCUNHO',
-          style: TextStyle(fontFamily: 'Inter', 
-              fontSize: 10, fontWeight: FontWeight.w700,
-              color: AppColors.ink2, letterSpacing: 0.6)),
     );
   }
 }
@@ -1768,12 +1746,6 @@ class _DeskSidebar extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : Text('Criar OS',
                 style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700)),
-      ),
-      TextButton(
-        onPressed: null,
-        style: TextButton.styleFrom(foregroundColor: AppColors.ink2),
-        child: Text('Salvar como rascunho',
-            style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600)),
       ),
       TextButton(
         onPressed: onCancelar,

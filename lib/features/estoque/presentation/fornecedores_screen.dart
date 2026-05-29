@@ -25,6 +25,7 @@ class FornecedoresScreen extends ConsumerStatefulWidget {
 class _FornecedoresScreenState extends ConsumerState<FornecedoresScreen>
     with TopBarSlotMixin<FornecedoresScreen> {
   final _searchController = TextEditingController();
+  bool _searchOpen = false;
   _Filtro _filtro = _Filtro.todos;
 
   @override
@@ -34,6 +35,7 @@ class _FornecedoresScreenState extends ConsumerState<FornecedoresScreen>
   }
 
   void _syncSlot() {
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
     final auth = ref.read(authNotifierProvider).valueOrNull;
     final oficinas = auth?.availableOficinas ?? [];
     final nome = oficinas
@@ -44,17 +46,36 @@ class _FornecedoresScreenState extends ConsumerState<FornecedoresScreen>
       pageTitle: 'Fornecedores',
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
-      searchController: _searchController,
-      searchHint: 'Buscar por nome, e-mail ou telefone…',
-      onSearchChanged: (v) =>
-          ref.read(fornecedoresNotifierProvider.notifier).buscar(v),
-      mobileAction: const SizedBox(),
+      searchController: isDesktop ? _searchController : null,
+      searchHint: isDesktop ? 'Buscar por nome, e-mail ou telefone…' : null,
+      onSearchChanged: isDesktop
+          ? (v) => ref.read(fornecedoresNotifierProvider.notifier).buscar(v)
+          : null,
+      mobileAction: IconButton(
+        onPressed: _toggleSearch,
+        icon: Icon(
+          _searchOpen ? Icons.close : Icons.search,
+          color: _searchOpen ? AppColors.accent : Colors.white,
+          size: 20,
+        ),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+      ),
       action: FilledButton.icon(
         onPressed: _openForm,
         icon: const Icon(Icons.add, size: 17),
         label: const Text('Novo fornecedor'),
       ),
     ));
+  }
+
+  void _toggleSearch() {
+    setState(() => _searchOpen = !_searchOpen);
+    if (!_searchOpen) {
+      _searchController.clear();
+      ref.read(fornecedoresNotifierProvider.notifier).buscar(null);
+    }
+    _syncSlot();
   }
 
   @override
@@ -188,11 +209,13 @@ class _FornecedoresScreenState extends ConsumerState<FornecedoresScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _FornecedorDarkArea(
-                searchController: _searchController,
-                onSearch: (v) =>
-                    ref.read(fornecedoresNotifierProvider.notifier).buscar(v),
-              ),
+              if (_searchOpen)
+                _MobileSearchRow(
+                  controller: _searchController,
+                  hint: 'Buscar por nome, e-mail ou telefone…',
+                  onChanged: (v) =>
+                      ref.read(fornecedoresNotifierProvider.notifier).buscar(v),
+                ),
               _MobileFiltroTabs(
                 filtro: _filtro,
                 lista: lista,
@@ -459,42 +482,41 @@ class _EmptyView extends StatelessWidget {
 
 // ── mobile dark area ───────────────────────────────────────────────────────────
 
-class _FornecedorDarkArea extends StatelessWidget {
-  const _FornecedorDarkArea({
-    required this.searchController,
-    required this.onSearch,
+class _MobileSearchRow extends StatelessWidget {
+  const _MobileSearchRow({
+    required this.controller,
+    required this.hint,
+    required this.onChanged,
   });
-  final TextEditingController searchController;
-  final ValueChanged<String> onSearch;
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.sidebarBg,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Container(
-        height: 40,
+        height: 38,
         decoration: BoxDecoration(
           color: AppColors.sidebarLine,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           children: [
-            const Icon(Icons.search, size: 17, color: AppColors.sidebarText),
+            const Icon(Icons.search, size: 16, color: AppColors.sidebarText),
             const SizedBox(width: 8),
             Expanded(
               child: TextField(
-                controller: searchController,
-                onChanged: onSearch,
-                style: const TextStyle(
-                    fontFamily: 'Inter', fontSize: 13, color: Colors.white),
-                decoration: const InputDecoration(
-                  hintText: 'Buscar por nome, e-mail ou telefone…',
-                  hintStyle: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      color: AppColors.sidebarText),
+                controller: controller,
+                onChanged: onChanged,
+                autofocus: true,
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.sidebarText),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,

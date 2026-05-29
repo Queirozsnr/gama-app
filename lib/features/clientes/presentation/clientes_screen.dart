@@ -35,6 +35,7 @@ class ClientesScreen extends ConsumerStatefulWidget {
 class _ClientesScreenState extends ConsumerState<ClientesScreen>
     with TopBarSlotMixin<ClientesScreen> {
   final _searchController = TextEditingController();
+  bool _searchOpen = false;
   _Filtro _filtro = _Filtro.todos;
   _FiltroDesktop _filtroDesktop = _FiltroDesktop.todos;
   _Ordem _ordem = _Ordem.recentes;
@@ -46,6 +47,7 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen>
   }
 
   void _syncSlot() {
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
     final authState = ref.read(authNotifierProvider).valueOrNull;
     final oficinas =
         ref.read(oficinasNotifierProvider).valueOrNull ?? <OficinaModel>[];
@@ -57,12 +59,16 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen>
       pageTitle: 'Clientes',
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
-      searchController: _searchController,
-      searchHint: 'Buscar nome, telefone, placa…',
-      onSearchChanged: _onSearch,
+      searchController: isDesktop ? _searchController : null,
+      searchHint: isDesktop ? 'Buscar nome, telefone, placa…' : null,
+      onSearchChanged: isDesktop ? _onSearch : null,
       mobileAction: IconButton(
-        icon: const Icon(Icons.tune_outlined, color: Colors.white, size: 20),
-        onPressed: () {},
+        onPressed: _toggleSearch,
+        icon: Icon(
+          _searchOpen ? Icons.close : Icons.search,
+          color: _searchOpen ? AppColors.accent : Colors.white,
+          size: 20,
+        ),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),
       ),
@@ -72,6 +78,15 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen>
         label: const Text('Novo cliente'),
       ),
     ));
+  }
+
+  void _toggleSearch() {
+    setState(() => _searchOpen = !_searchOpen);
+    if (!_searchOpen) {
+      _searchController.clear();
+      ref.read(clientesNotifierProvider.notifier).buscar(null);
+    }
+    _syncSlot();
   }
 
   @override
@@ -250,11 +265,13 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _ClienteDarkArea(
-                lista: todos,
-                searchController: _searchController,
-                onSearch: _onSearch,
-              ),
+              _ClienteDarkArea(lista: todos),
+              if (_searchOpen)
+                _MobileSearchRow(
+                  controller: _searchController,
+                  hint: 'Buscar nome, telefone, placa…',
+                  onChanged: _onSearch,
+                ),
               _FiltroTabs(
                 filtro: _filtro,
                 lista: todos,
@@ -602,14 +619,8 @@ class _DesktopPlateChip extends StatelessWidget {
 // ── Dark area: stats + search ──────────────────────────────────────────────────
 
 class _ClienteDarkArea extends StatelessWidget {
-  const _ClienteDarkArea({
-    required this.lista,
-    required this.searchController,
-    required this.onSearch,
-  });
+  const _ClienteDarkArea({required this.lista});
   final List<Cliente> lista;
-  final TextEditingController searchController;
-  final ValueChanged<String> onSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -624,53 +635,64 @@ class _ClienteDarkArea extends StatelessWidget {
     return Container(
       color: AppColors.sidebarBg,
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              _StatBox(value: '$ativos', label: 'ATIVOS'),
-              _StatBox(value: '$comVeiculo', label: 'COM VEÍCULO', accent: true),
-              _StatBox(value: '$novos', label: 'NOVOS/MÊS'),
-              const _StatBox(value: '—', label: 'TICKET MÉD'),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.sidebarLine,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                const Icon(Icons.search, size: 17, color: AppColors.sidebarText),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: searchController,
-                    onChanged: onSearch,
-                    style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Buscar nome, telefone, placa…',
-                      hintStyle: TextStyle(fontFamily: 'Inter', 
-                          fontSize: 13, color: AppColors.sidebarText),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                      filled: false,
-                    ),
-                  ),
-                ),
-                const Icon(Icons.mic_none_outlined,
-                    size: 17, color: AppColors.sidebarText),
-              ],
-            ),
-          ),
+          _StatBox(value: '$ativos', label: 'ATIVOS'),
+          _StatBox(value: '$comVeiculo', label: 'COM VEÍCULO', accent: true),
+          _StatBox(value: '$novos', label: 'NOVOS/MÊS'),
+          const _StatBox(value: '—', label: 'TICKET MÉD'),
         ],
+      ),
+    );
+  }
+}
+
+class _MobileSearchRow extends StatelessWidget {
+  const _MobileSearchRow({
+    required this.controller,
+    required this.hint,
+    required this.onChanged,
+  });
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.sidebarBg,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Container(
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppColors.sidebarLine,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.search, size: 16, color: AppColors.sidebarText),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onChanged: onChanged,
+                autofocus: true,
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.sidebarText),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                  filled: false,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

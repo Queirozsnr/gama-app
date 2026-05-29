@@ -45,6 +45,7 @@ class EstoqueScreen extends ConsumerStatefulWidget {
 class _EstoqueScreenState extends ConsumerState<EstoqueScreen>
     with TopBarSlotMixin<EstoqueScreen> {
   final _searchController = TextEditingController();
+  bool _searchOpen = false;
   String? _statusFiltro;
   String? _categoriaFiltro;
   int? _fornecedorFiltro;
@@ -87,21 +88,25 @@ class _EstoqueScreenState extends ConsumerState<EstoqueScreen>
               ],
             ),
       mobileAction: IconButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Leitor de QR Code será implementado em breve.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
-        icon: const Icon(Icons.qr_code_scanner_outlined),
-        color: Colors.white,
+        onPressed: _toggleSearch,
+        icon: Icon(
+          _searchOpen ? Icons.close : Icons.search,
+          color: _searchOpen ? AppColors.accent : Colors.white,
+          size: 20,
+        ),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),
-        tooltip: 'Escanear QR',
       ),
     ));
+  }
+
+  void _toggleSearch() {
+    setState(() => _searchOpen = !_searchOpen);
+    if (!_searchOpen) {
+      _searchController.clear();
+      _aplicarFiltro(busca: '');
+    }
+    _syncTopBar();
   }
 
   @override
@@ -289,15 +294,15 @@ class _EstoqueScreenState extends ConsumerState<EstoqueScreen>
       backgroundColor: AppColors.bg,
       body: Column(
         children: [
-          // Search bar below the dark topbar
-          Container(
-            color: AppColors.surface,
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: _MobileSearchField(
-              controller: _searchController,
-              onChanged: (v) => _aplicarFiltro(busca: v),
+          if (_searchOpen)
+            Container(
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              child: _MobileSearchField(
+                controller: _searchController,
+                onChanged: (v) => _aplicarFiltro(busca: v),
+              ),
             ),
-          ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
