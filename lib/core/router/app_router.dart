@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/utils/jwt_decoder.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/select_group_screen.dart';
@@ -119,6 +120,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         return target;
       }
       if (!isAuthenticated && !isPendingGroup && !isPendingOficina && loc != AppRoutes.login) return AppRoutes.login;
+
+      // Guards por role — bloqueio no router (camada de segurança real)
+      if (isAuthenticated && !isPendingPassword) {
+        final token = auth?.token ?? '';
+        if (token.isNotEmpty && !JwtDecoder.isGestor(token)) {
+          const restricted = [
+            '/funcionarios',
+            '/receitas',
+            '/gerenciar-oficinas',
+            '/configuracoes-oficina',
+          ];
+          if (restricted.any((r) => loc.startsWith(r))) return AppRoutes.home;
+        }
+      }
+
       return null;
     },
     routes: [

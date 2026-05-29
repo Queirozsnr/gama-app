@@ -38,6 +38,13 @@ abstract final class JwtDecoder {
   static bool isAdmin(String token) =>
       _claims(token)['role'] == '0';
 
+  // Admin(0) e Gestor(1) têm acesso gerencial.
+  // Líder(2) e Mecanico(3) têm acesso restrito.
+  static bool isGestor(String token) {
+    final v = int.tryParse(_claims(token)['role']?.toString() ?? '');
+    return v != null && v <= 1;
+  }
+
   static int? funcionarioId(String token) {
     final v = _claims(token)['funcionarioId'];
     return v != null ? int.tryParse(v.toString()) : null;

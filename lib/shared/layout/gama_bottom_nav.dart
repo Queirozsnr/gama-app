@@ -35,6 +35,7 @@ class GamaBottomNav extends ConsumerWidget {
     final currentIndex = navigationShell.currentIndex;
     final token = ref.watch(authNotifierProvider).valueOrNull?.token ?? '';
     final adminMode = token.isNotEmpty && JwtDecoder.isAdmin(token);
+    final isGestor = token.isNotEmpty && JwtDecoder.isGestor(token);
     final maisActive = currentIndex == 4;
 
     return Container(
@@ -65,7 +66,7 @@ class GamaBottomNav extends ConsumerWidget {
                   label: 'Mais',
                   icon: Icons.menu_outlined,
                   isActive: maisActive,
-                  onTap: () => _showMais(context, adminMode),
+                  onTap: () => _showMais(context, adminMode, isGestor),
                 ),
               ),
             ],
@@ -75,8 +76,12 @@ class GamaBottomNav extends ConsumerWidget {
     );
   }
 
-  void _showMais(BuildContext context, bool adminMode) {
-    final items = adminMode ? [..._maisRoutes, _adminRoute] : _maisRoutes;
+  void _showMais(BuildContext context, bool adminMode, bool isGestor) {
+    const restricted = {'/funcionarios', '/receitas', '/configuracoes-oficina'};
+    final base = isGestor
+        ? _maisRoutes
+        : _maisRoutes.where((i) => !restricted.contains(i.route)).toList();
+    final items = adminMode ? [...base, _adminRoute] : base;
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,

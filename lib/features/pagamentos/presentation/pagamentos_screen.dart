@@ -8,6 +8,7 @@ import '../../../shared/widgets/gama_snack_bar.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../../shared/widgets/stat_card.dart';
 import '../../../shared/widgets/chips/payment_badge.dart';
+import '../../../core/utils/jwt_decoder.dart';
 import '../../auth/presentation/auth_notifier.dart';
 import '../../funcionarios/domain/remuneracao.dart';
 import '../domain/pagamento.dart';
@@ -71,11 +72,22 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
   void _syncTopBar() {
     final isDesktop = MediaQuery.of(context).size.width >= 800;
     final auth = ref.read(authNotifierProvider).valueOrNull;
+    final token = auth?.token ?? '';
     final oficinaNome = auth?.availableOficinas
         .cast<dynamic>()
         .firstWhere((o) => o.id == auth.oficinaId, orElse: () => null)
         ?.nome as String?;
     final mes = _mesAno(DateTime.now());
+
+    if (!JwtDecoder.isGestor(token)) {
+      setTopBarSlot(TopBarSlot(
+        pageTitle: 'Meus pagamentos',
+        mobileStyle: MobileTopBarStyle.dark,
+        mobileSubtitle: oficinaNome != null ? '• $oficinaNome' : null,
+        desktopSubtitle: oficinaNome != null ? '$mes · ${oficinaNome.toUpperCase()}' : mes,
+      ));
+      return;
+    }
 
     setTopBarSlot(TopBarSlot(
       pageTitle: 'Pagamento da equipe',
@@ -162,6 +174,12 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
 
   @override
   Widget build(BuildContext context) {
+    final token = ref.watch(authNotifierProvider).valueOrNull?.token ?? '';
+    final isGestor = JwtDecoder.isGestor(token);
+    final meuId = JwtDecoder.funcionarioId(token);
+
+    if (!isGestor && meuId != null) return _buildMecanicoView(meuId);
+
     final asyncData = ref.watch(pagamentosNotifierProvider);
 
     return asyncData.when(
@@ -186,6 +204,51 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
       data: (todos) {
         final isDesktop = MediaQuery.sizeOf(context).width >= 800;
         return isDesktop ? _buildDesktop(todos) : _buildMobile(todos);
+      },
+    );
+  }
+
+  Widget _buildMecanicoView(int funcionarioId) {
+    final asyncData = ref.watch(pagamentosNotifierProvider);
+    return asyncData.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: AppColors.ink3),
+            const SizedBox(height: 12),
+            const Text('Erro ao carregar pagamentos',
+                style: TextStyle(color: AppColors.ink2)),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () => ref.invalidate(pagamentosNotifierProvider),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Tentar novamente'),
+            ),
+          ],
+        ),
+      ),
+      data: (todos) {
+        final meu = todos.cast<FuncionarioAcumulado?>().firstWhere(
+          (f) => f?.funcionarioId == funcionarioId,
+          orElse: () => null,
+        );
+        if (meu == null) {
+          return const Center(
+            child: Text('Dados não encontrados.',
+                style: TextStyle(color: AppColors.ink2)),
+          );
+        }
+        return SingleChildScrollView(
+          child: _DetailPanel(
+            key: ValueKey(meu.funcionarioId),
+            funcionario: meu,
+            showActions: false,
+            onPagar: () => _abrirPagamento(meu),
+            onHistorico: () => _abrirHistorico(meu),
+          ),
+        );
       },
     );
   }
@@ -779,11 +842,13 @@ class _DetailPanel extends ConsumerWidget {
     required this.funcionario,
     required this.onPagar,
     required this.onHistorico,
+    this.showActions = true,
   });
 
   final FuncionarioAcumulado funcionario;
   final VoidCallback onPagar;
   final VoidCallback onHistorico;
+  final bool showActions;
 
   String get _initials {
     final parts = funcionario.nome.trim().split(' ');
@@ -859,7 +924,7 @@ class _DetailPanel extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // ── actions ──
-          if (!isGerente) ...[
+          if (showActions && !isGerente) ...[
             FilledButton(
               onPressed: onPagar,
               style: FilledButton.styleFrom(
@@ -877,7 +942,7 @@ class _DetailPanel extends ConsumerWidget {
                 _                   => 'Pagar ${_fmt(funcionario.valorAcumulado)}',
               }),
             ),
-          ] else ...[
+          ] else if (showActions) ...[
             FilledButton.icon(
               onPressed: onPagar,
               icon: const Icon(Icons.open_in_new, size: 16),

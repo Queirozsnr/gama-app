@@ -14,19 +14,19 @@ class GamaSidebar extends ConsumerWidget {
 
   final bool collapsed;
 
-  static const _sections = [
-    _NavSection('Principal', [
+  static List<_NavSection> _buildSections(bool isGestor) => [
+    const _NavSection('Principal', [
       _NavItem('Painel',            Icons.space_dashboard_outlined,   '/home'),
       _NavItem('Ordens de Serviço', Icons.receipt_long_outlined,      '/ordens-servico'),
       _NavItem('Clientes',          Icons.groups_outlined,            '/clientes'),
       _NavItem('Veículos',          Icons.directions_car_outlined,    '/veiculos'),
     ]),
     _NavSection('Operação', [
-      _NavItem('Estoque',       Icons.inventory_2_outlined,    '/estoque'),
-      _NavItem('Fornecedores',  Icons.local_shipping_outlined, '/fornecedores'),
-      _NavItem('Funcionários',  Icons.badge_outlined,          '/funcionarios'),
-      _NavItem('Pagamentos',    Icons.payments_outlined,       '/pagamentos'),
-      _NavItem('Receitas',      Icons.trending_up_outlined,    '/receitas'),
+      const _NavItem('Estoque',      Icons.inventory_2_outlined,    '/estoque'),
+      const _NavItem('Fornecedores', Icons.local_shipping_outlined, '/fornecedores'),
+      const _NavItem('Pagamentos',   Icons.payments_outlined,       '/pagamentos'),
+      if (isGestor) const _NavItem('Funcionários', Icons.badge_outlined,       '/funcionarios'),
+      if (isGestor) const _NavItem('Receitas',     Icons.trending_up_outlined, '/receitas'),
     ]),
   ];
 
@@ -59,6 +59,7 @@ class GamaSidebar extends ConsumerWidget {
     final userCargo = token.isNotEmpty ? (JwtDecoder.cargoLabel(token) ?? '') : '';
     final userInitials = _initials(userName);
     final adminMode = token.isNotEmpty && JwtDecoder.isAdmin(token);
+    final isGestor = token.isNotEmpty && JwtDecoder.isGestor(token);
 
     return Container(
       decoration: BoxDecoration(
@@ -86,7 +87,7 @@ class GamaSidebar extends ConsumerWidget {
             child: ListView(
               padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 10),
               children: [
-                for (final section in _sections) ...[
+                for (final section in _buildSections(isGestor)) ...[
                   if (!collapsed)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(8, 14, 8, 4),
@@ -135,18 +136,20 @@ class GamaSidebar extends ConsumerWidget {
               ],
             ),
           ),
-          Container(
-            height: 1,
-            color: AppColors.sidebarLine,
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 10, vertical: 8),
-            child: _SidebarNavItem(
-              item: const _NavItem('Configurações', Icons.settings_outlined, '/configuracoes-oficina'),
-              isActive: currentRoute.startsWith('/configuracoes-oficina'),
-              collapsed: collapsed,
+          if (isGestor) ...[
+            Container(
+              height: 1,
+              color: AppColors.sidebarLine,
             ),
-          ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 10, vertical: 8),
+              child: _SidebarNavItem(
+                item: const _NavItem('Configurações', Icons.settings_outlined, '/configuracoes-oficina'),
+                isActive: currentRoute.startsWith('/configuracoes-oficina'),
+                collapsed: collapsed,
+              ),
+            ),
+          ],
           Container(height: 1, color: AppColors.sidebarLine),
           _UserProfile(
             initials: userInitials,

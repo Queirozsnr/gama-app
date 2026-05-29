@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/jwt_decoder.dart';
 import '../../../shared/widgets/gama_confirm_dialog.dart';
+import '../../auth/presentation/auth_notifier.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../data/pagamentos_remote_data_source.dart';
 import '../domain/pagamento.dart';
@@ -69,6 +71,10 @@ class _PagamentoDetalheBodyState
 
   PagamentoDetalhe get p => widget.pagamento;
   bool get _isPendente => p.status == 'Pendente';
+  bool get _isGestor {
+    final token = ref.read(authNotifierProvider).valueOrNull?.token ?? '';
+    return JwtDecoder.isGestor(token);
+  }
 
   Future<void> _pagar() async {
     final confirmar = await GamaConfirmDialog.show(
@@ -154,7 +160,7 @@ class _PagamentoDetalheBodyState
             ],
           ),
         ),
-        if (_isPendente) _Rodape(loading: _loading, onEditar: _editar, onPagar: _pagar, onExcluir: _excluir),
+        if (_isPendente && _isGestor) _Rodape(loading: _loading, onEditar: _editar, onPagar: _pagar, onExcluir: _excluir),
       ],
     );
   }
