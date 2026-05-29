@@ -1278,8 +1278,11 @@ class _PagamentoDarkArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.sidebarBg,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.line)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
       child: Row(
         children: [
           _MobileStatBox(value: _fmt(totalAPagar), label: 'A PAGAR', accent: true),
@@ -1364,7 +1367,7 @@ class _MobileStatBox extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: accent ? AppColors.accent : Colors.white,
+              color: accent ? AppColors.accent : AppColors.ink,
               height: 1.1,
             ),
             overflow: TextOverflow.ellipsis,
@@ -1375,7 +1378,7 @@ class _MobileStatBox extends StatelessWidget {
             style: const TextStyle(
               fontSize: 8,
               fontWeight: FontWeight.w600,
-              color: AppColors.sidebarText,
+              color: AppColors.ink2,
               letterSpacing: 0.5,
             ),
           ),

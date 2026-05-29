@@ -633,8 +633,11 @@ class _ClienteDarkArea extends StatelessWidget {
         .length;
 
     return Container(
-      color: AppColors.sidebarBg,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.line)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
       child: Row(
         children: [
           _StatBox(value: '$ativos', label: 'ATIVOS'),
@@ -716,20 +719,20 @@ class _StatBox extends StatelessWidget {
         children: [
           Text(
             value,
-            style: TextStyle(fontFamily: 'Inter', 
+            style: TextStyle(fontFamily: 'Inter',
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: accent ? AppColors.accent : Colors.white,
+              color: accent ? AppColors.accent : AppColors.ink,
               height: 1.1,
             ),
           ),
           const SizedBox(height: 1),
           Text(
             label,
-            style: TextStyle(fontFamily: 'Inter', 
+            style: const TextStyle(fontFamily: 'Inter',
               fontSize: 9,
               fontWeight: FontWeight.w600,
-              color: AppColors.sidebarText,
+              color: AppColors.ink2,
               letterSpacing: 0.5,
             ),
           ),
