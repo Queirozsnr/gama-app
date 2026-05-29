@@ -11,11 +11,14 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     if (token != null) {
       final groups = await _fetchGroups();
       final oficinas = await _fetchOficinas();
+      final currentToken = await ref.read(authRepositoryProvider).getStoredToken();
+      if (currentToken == null) return AuthState.initial();
+
       return AuthState(
-        token: token,
-        userId: JwtDecoder.userId(token),
-        grupoOficinaId: JwtDecoder.grupoOficinaId(token),
-        oficinaId: JwtDecoder.oficinaId(token),
+        token: currentToken,
+        userId: JwtDecoder.userId(currentToken),
+        grupoOficinaId: JwtDecoder.grupoOficinaId(currentToken),
+        oficinaId: JwtDecoder.oficinaId(currentToken),
         isAuthenticated: true,
         availableGroups: groups,
         availableOficinas: oficinas,

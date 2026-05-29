@@ -48,6 +48,7 @@ class AuthInterceptor extends Interceptor {
     try {
       final refreshToken = await _storage.readRefreshToken();
       if (refreshToken == null) {
+        await _clearTokens();
         onRefreshFailed();
         handler.next(err);
         return;
