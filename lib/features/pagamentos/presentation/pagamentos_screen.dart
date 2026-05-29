@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/filter_tab_bar.dart';
 import '../../../shared/widgets/gama_avatar.dart';
+import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../../shared/widgets/stat_card.dart';
@@ -36,6 +37,16 @@ String _mesAno(DateTime d) {
 }
 
 enum _StatusPag { aPagar, pendente, pago, apuracao, semDados }
+
+bool _pagoEsteMes(FuncionarioAcumulado f) {
+  final u = f.ultimoPagamentoEm;
+  if (u == null) return false;
+  final now = DateTime.now();
+  return u.month == now.month && u.year == now.year;
+}
+
+String _fmtDia(DateTime d) =>
+    '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
 
 _StatusPag _statusOf(FuncionarioAcumulado f) {
   if (f.tipoRemuneracao == 'Socio') return _StatusPag.apuracao;
@@ -525,7 +536,19 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
     );
   }
 
-  void _abrirPagamento(FuncionarioAcumulado f) {
+  Future<void> _abrirPagamento(FuncionarioAcumulado f) async {
+    if (f.tipoRemuneracao == 'Fixo' && _pagoEsteMes(f)) {
+      final continuar = await GamaConfirmDialog.show(
+        context,
+        title: 'Pagamento duplicado',
+        message:
+            '${f.nome} já recebeu salário fixo em ${_fmtDia(f.ultimoPagamentoEm!)} deste mês. Deseja pagar novamente?',
+        confirmLabel: 'Pagar mesmo assim',
+        confirmColor: AppColors.warn,
+      );
+      if (!mounted || !continuar) return;
+    }
+
     if (f.tipoRemuneracao == 'Socio') {
       Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
         builder: (_) => AcompanhamentoSocioScreen(
@@ -700,6 +723,19 @@ class _FuncionarioRow extends StatelessWidget {
                     _descricao,
                     style: const TextStyle(fontSize: 11, color: AppColors.ink3),
                   ),
+                  if (funcionario.ultimoPagamentoEm != null && funcionario.tipoRemuneracao != 'Socio') ...[
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline, size: 11, color: AppColors.ok),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Pago em ${_fmtDia(funcionario.ultimoPagamentoEm!)}',
+                          style: const TextStyle(fontSize: 10, color: AppColors.ok),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1543,6 +1579,19 @@ class _PagamentoMobileCard extends StatelessWidget {
                       style: const TextStyle(fontSize: 11, color: AppColors.ink2),
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (funcionario.ultimoPagamentoEm != null && funcionario.tipoRemuneracao != 'Socio') ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          const Icon(Icons.check_circle_outline, size: 11, color: AppColors.ok),
+                          const SizedBox(width: 3),
+                          Text(
+                            'Pago em ${_fmtDia(funcionario.ultimoPagamentoEm!)}',
+                            style: const TextStyle(fontSize: 10, color: AppColors.ok),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 6),
                     Row(
                       children: [
