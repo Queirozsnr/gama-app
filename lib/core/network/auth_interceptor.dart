@@ -2,11 +2,20 @@ import 'package:dio/dio.dart';
 import '../storage/token_storage.dart';
 
 class AuthInterceptor extends Interceptor {
-  AuthInterceptor(this._storage, this._baseUrl, {required this.onRefreshFailed});
+  AuthInterceptor(
+    this._storage,
+    this._baseUrl, {
+    required this.onRefreshFailed,
+    this.onPlanLimitReached,
+  });
 
   final TokenStorage _storage;
   final String _baseUrl;
   final void Function() onRefreshFailed;
+
+  /// Chamado quando o backend retorna 402 (limite de plano atingido).
+  /// Recebe a mensagem de erro do backend para exibir ao usuário.
+  final void Function(String mensagem)? onPlanLimitReached;
 
   bool _isRefreshing = false;
 
@@ -31,6 +40,16 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
+    if (err.response?.statusCode == 402) {
+      final data = err.response?.data;
+      final mensagem = (data is Map && data['error'] != null)
+          ? data['error'] as String
+          : 'Limite do plano atingido. Faça upgrade para continuar.';
+      onPlanLimitReached?.call(mensagem);
+      handler.next(err);
+      return;
+    }
+
     if (err.response?.statusCode != 401 || _isRefreshing) {
       handler.next(err);
       return;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/plan/plan_limits_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/gama_avatar.dart';
 import '../../../shared/widgets/gama_button.dart';
@@ -33,12 +34,23 @@ class GerenciarOficinasScreen extends ConsumerWidget {
           ],
         ),
       ),
-      data: (oficinas) => _Content(
-        oficinas: oficinas,
-        onAdd: () => _showForm(context, ref, null),
-        onEdit: (o) => _showForm(context, ref, o),
-        onDelete: (o) => _confirmDelete(context, ref, o),
-      ),
+      data: (oficinas) {
+        final limitsAsync = ref.watch(planLimitsProvider);
+        final canAdd = limitsAsync.when(
+          data: (l) =>
+              l.maxOficinas == null ||
+              oficinas.where((o) => o.ativo).length < l.maxOficinas!,
+          loading: () => false,
+          error: (_, _) => true,
+        );
+        return _Content(
+          oficinas: oficinas,
+          canAdd: canAdd,
+          onAdd: () => _showForm(context, ref, null),
+          onEdit: (o) => _showForm(context, ref, o),
+          onDelete: (o) => _confirmDelete(context, ref, o),
+        );
+      },
     );
   }
 
@@ -87,12 +99,14 @@ class GerenciarOficinasScreen extends ConsumerWidget {
 class _Content extends StatelessWidget {
   const _Content({
     required this.oficinas,
+    required this.canAdd,
     required this.onAdd,
     required this.onEdit,
     required this.onDelete,
   });
 
   final List<OficinaModel> oficinas;
+  final bool canAdd;
   final VoidCallback onAdd;
   final void Function(OficinaModel) onEdit;
   final void Function(OficinaModel) onDelete;

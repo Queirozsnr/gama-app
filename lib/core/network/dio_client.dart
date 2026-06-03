@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
+import '../plan/plan_limit_notifier.dart';
 import 'api_constants.dart';
 import 'auth_interceptor.dart';
 import '../storage/token_storage.dart';
@@ -20,6 +21,8 @@ final dioClientProvider = Provider<Dio>((ref) {
     ref.read(tokenStorageProvider),
     kBaseUrl,
     onRefreshFailed: () => ref.invalidate(authNotifierProvider),
+    onPlanLimitReached: (msg) =>
+        ref.read(planLimitNotifierProvider.notifier).set(msg),
   ));
 
   if (kDebugMode) {

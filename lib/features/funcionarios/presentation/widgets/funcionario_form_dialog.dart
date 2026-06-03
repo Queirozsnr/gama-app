@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -123,8 +124,12 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
         });
       }
       if (mounted) Navigator.pop(context, true);
-    } catch (_) {
-      if (mounted) GamaSnackBar.error(context, 'Erro ao salvar funcionário.');
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e is DioException
+          ? ((e.response?.data as Map?)?['error'] as String? ?? 'Erro ao salvar funcionário.')
+          : 'Erro ao salvar funcionário.';
+      GamaSnackBar.error(context, msg);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

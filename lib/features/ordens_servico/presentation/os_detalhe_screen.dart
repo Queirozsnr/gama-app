@@ -27,6 +27,7 @@ import 'os_orcamento_pdf.dart';
 import '../../auth/presentation/auth_notifier.dart';
 import '../../estoque/data/estoque_remote_data_source.dart';
 import '../../estoque/domain/estoque.dart';
+import '../../../../core/plan/plan_limits_provider.dart';
 import '../../oficinas/presentation/oficinas_notifier.dart';
 
 final _osDoVeiculoProvider =
@@ -2706,7 +2707,7 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
 
 // ── Fotos e vídeos card ───────────────────────────────────────────────────────
 
-class _FotosVideosCard extends StatefulWidget {
+class _FotosVideosCard extends ConsumerStatefulWidget {
   const _FotosVideosCard({
     required this.midias,
     required this.podeEditar,
@@ -2724,10 +2725,10 @@ class _FotosVideosCard extends StatefulWidget {
   final Future<bool> Function(OsMidia) onRemoverQuiet;
 
   @override
-  State<_FotosVideosCard> createState() => _FotosVideosCardState();
+  ConsumerState<_FotosVideosCard> createState() => _FotosVideosCardState();
 }
 
-class _FotosVideosCardState extends State<_FotosVideosCard> {
+class _FotosVideosCardState extends ConsumerState<_FotosVideosCard> {
   bool _picking = false;
   final Set<int> _selected = {};
 
@@ -2951,6 +2952,8 @@ class _FotosVideosCardState extends State<_FotosVideosCard> {
 
   @override
   Widget build(BuildContext context) {
+    final podeFotos = ref.watch(planLimitsProvider).whenData((l) => l.fotosVideosOS).valueOrNull ?? true;
+
     return _Section(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3027,14 +3030,14 @@ class _FotosVideosCardState extends State<_FotosVideosCard> {
                   ),
                 ),
                 const Spacer(),
-                if (widget.podeEditar && widget.isDesktop)
+                if (widget.podeEditar && podeFotos && widget.isDesktop)
                   _HeaderBtn(Icons.photo_library_outlined, 'Galeria foto',
                       (_picking || _atLimit) ? () {} : _pickMultiple),
               ],
             ),
 
           // Botões de ação mobile (escondidos no modo seleção)
-          if (widget.podeEditar && !widget.isDesktop && !_selectMode) ...[
+          if (widget.podeEditar && podeFotos && !widget.isDesktop && !_selectMode) ...[
             const SizedBox(height: 10),
             Row(
               children: [

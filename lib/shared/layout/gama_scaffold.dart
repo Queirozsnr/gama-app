@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/plan/plan_limit_notifier.dart';
 import '../state/top_bar_scope.dart';
+import '../widgets/gama_snack_bar.dart';
 import 'gama_bottom_nav.dart';
 import 'gama_sidebar.dart';
 import 'gama_top_bar.dart';
@@ -8,7 +11,7 @@ import 'gama_top_bar.dart';
 // Number of shell branches — must match the StatefulShellRoute in app_router.
 const _kBranchCount = 5;
 
-class GamaScaffold extends StatefulWidget {
+class GamaScaffold extends ConsumerStatefulWidget {
   const GamaScaffold({
     super.key,
     required this.navigationShell,
@@ -21,10 +24,10 @@ class GamaScaffold extends StatefulWidget {
   final String? pageSubtitle;
 
   @override
-  State<GamaScaffold> createState() => _GamaScaffoldState();
+  ConsumerState<GamaScaffold> createState() => _GamaScaffoldState();
 }
 
-class _GamaScaffoldState extends State<GamaScaffold> {
+class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // One notifier per branch — screens in inactive branches push to their own
@@ -72,6 +75,12 @@ class _GamaScaffoldState extends State<GamaScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(planLimitNotifierProvider, (_, msg) {
+      if (msg == null) return;
+      GamaSnackBar.error(context, msg);
+      ref.read(planLimitNotifierProvider.notifier).clear();
+    });
+
     final isDesktop = MediaQuery.of(context).size.width >= 800;
 
     // BranchTopBarScope lets the router's navigatorContainerBuilder read the
