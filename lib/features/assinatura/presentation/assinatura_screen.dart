@@ -5,6 +5,7 @@ import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../../../shared/widgets/section_card.dart';
+import '../../../shared/widgets/suporte_modal.dart';
 import '../data/assinatura_remote_data_source.dart';
 import '../domain/assinatura_models.dart';
 import 'assinatura_notifier.dart';
@@ -87,7 +88,14 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    setTopBarSlot(const TopBarSlot(pageTitle: 'Assinatura'));
+    setTopBarSlot(TopBarSlot(
+      pageTitle: 'Assinatura',
+      action: OutlinedButton.icon(
+        onPressed: () => showSuporteModal(context),
+        icon: const Icon(Icons.headset_mic_outlined, size: 16),
+        label: const Text('Falar com suporte'),
+      ),
+    ));
   }
 
   @override
