@@ -1,6 +1,6 @@
 enum NomePlano { solo, oficina, rede }
 
-enum StatusAssinatura { ativa, cancelada, suspensa, trialing }
+enum StatusAssinatura { ativa, cancelada, suspensa, trialing, cancelamentoAgendado }
 
 enum CicloCobranca { mensal, anual }
 
@@ -14,10 +14,11 @@ extension NomePlanoExt on NomePlano {
 
 extension StatusAssinaturaExt on StatusAssinatura {
   String get label => switch (this) {
-        StatusAssinatura.ativa     => 'ASSINATURA ATIVA',
-        StatusAssinatura.cancelada => 'CANCELADA',
-        StatusAssinatura.suspensa  => 'SUSPENSA',
-        StatusAssinatura.trialing  => 'PERÍODO DE TESTE',
+        StatusAssinatura.ativa                => 'ASSINATURA ATIVA',
+        StatusAssinatura.cancelada            => 'CANCELADA',
+        StatusAssinatura.suspensa             => 'SUSPENSA',
+        StatusAssinatura.trialing             => 'PERÍODO DE TESTE',
+        StatusAssinatura.cancelamentoAgendado => 'CANCELA NO VENCIMENTO',
       };
 }
 

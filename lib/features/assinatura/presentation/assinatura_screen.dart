@@ -126,6 +126,7 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
           const SizedBox(height: 20),
           _MudarDePlanoSection(
             planoAtual: detalhes.plano,
+            cancelamentoAgendado: detalhes.status == StatusAssinatura.cancelamentoAgendado,
             ciclo: _ciclo,
             submitting: _submitting,
             onCicloChanged: (v) => setState(() => _ciclo = v),
@@ -154,6 +155,7 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
               children: [
                 _MudarDePlanoSection(
                   planoAtual: detalhes.plano,
+                  cancelamentoAgendado: detalhes.status == StatusAssinatura.cancelamentoAgendado,
                   ciclo: _ciclo,
                   submitting: _submitting,
                   onCicloChanged: (v) => setState(() => _ciclo = v),
@@ -242,6 +244,7 @@ class _PlanoAtualCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cancelando = detalhes.status == StatusAssinatura.cancelamentoAgendado;
     final cicloLabel = detalhes.ciclo == CicloCobranca.mensal
         ? 'Cobrança mensal'
         : 'Cobrança anual';
@@ -294,25 +297,29 @@ class _PlanoAtualCard extends StatelessWidget {
                         size: 13, color: AppColors.sidebarText),
                     const SizedBox(width: 5),
                     Text(
-                      'Renova em: ${_fmtDate(detalhes.proximaCobranca)}',
+                      cancelando
+                          ? 'Ativo até: ${_fmtDate(detalhes.proximaCobranca)}'
+                          : 'Renova em: ${_fmtDate(detalhes.proximaCobranca)}',
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: AppColors.sidebarText,
+                        color: cancelando ? AppColors.danger : AppColors.sidebarText,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Icon(Icons.refresh_outlined,
-                        size: 13, color: AppColors.sidebarText),
-                    const SizedBox(width: 5),
-                    Text(
-                      cicloLabel,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        color: AppColors.sidebarText,
+                    if (!cancelando) ...[
+                      const SizedBox(width: 16),
+                      Icon(Icons.refresh_outlined,
+                          size: 13, color: AppColors.sidebarText),
+                      const SizedBox(width: 5),
+                      Text(
+                        cicloLabel,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          color: AppColors.sidebarText,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ],
@@ -347,24 +354,29 @@ class _PlanoAtualCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  OutlinedButton(
-                    onPressed: onCancelar,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.danger,
-                      side: const BorderSide(color: AppColors.danger),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Cancelar plano',
-                        style:
-                            TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+              if (detalhes.status == StatusAssinatura.cancelamentoAgendado)
+                Text(
+                  'Cancela em ${_fmtDate(detalhes.proximaCobranca)}',
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    color: AppColors.danger,
                   ),
-                ],
-              ),
+                )
+              else
+                OutlinedButton(
+                  onPressed: onCancelar,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: AppColors.danger),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Cancelar plano',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                ),
             ],
           ),
         ],
@@ -381,10 +393,11 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = switch (status) {
-      StatusAssinatura.ativa     => (AppColors.ok, AppColors.okSoft),
-      StatusAssinatura.trialing  => (AppColors.info, AppColors.infoSoft),
-      StatusAssinatura.suspensa  => (AppColors.warn, AppColors.warnSoft),
-      StatusAssinatura.cancelada => (AppColors.danger, AppColors.dangerSoft),
+      StatusAssinatura.ativa                => (AppColors.ok, AppColors.okSoft),
+      StatusAssinatura.trialing             => (AppColors.info, AppColors.infoSoft),
+      StatusAssinatura.suspensa             => (AppColors.warn, AppColors.warnSoft),
+      StatusAssinatura.cancelada            => (AppColors.danger, AppColors.dangerSoft),
+      StatusAssinatura.cancelamentoAgendado => (AppColors.danger, AppColors.dangerSoft),
     };
 
     return Container(
@@ -570,6 +583,7 @@ class _UsoItemTile extends StatelessWidget {
 class _MudarDePlanoSection extends StatelessWidget {
   const _MudarDePlanoSection({
     required this.planoAtual,
+    required this.cancelamentoAgendado,
     required this.ciclo,
     required this.submitting,
     required this.onCicloChanged,
@@ -577,6 +591,7 @@ class _MudarDePlanoSection extends StatelessWidget {
   });
 
   final NomePlano planoAtual;
+  final bool cancelamentoAgendado;
   final CicloCobranca ciclo;
   final bool submitting;
   final ValueChanged<CicloCobranca> onCicloChanged;
@@ -599,6 +614,7 @@ class _MudarDePlanoSection extends StatelessWidget {
                   child: _PlanoCard(
                     opcao: opcao,
                     isAtual: opcao.plano == planoAtual,
+                    cancelamentoAgendado: cancelamentoAgendado,
                     ciclo: ciclo,
                     submitting: submitting,
                     onMudar: () => onMudar(opcao.plano),
@@ -616,6 +632,7 @@ class _MudarDePlanoSection extends StatelessWidget {
                 child: _PlanoCard(
                   opcao: _planosDisponiveis[i],
                   isAtual: _planosDisponiveis[i].plano == planoAtual,
+                  cancelamentoAgendado: cancelamentoAgendado,
                   ciclo: ciclo,
                   submitting: submitting,
                   onMudar: () => onMudar(_planosDisponiveis[i].plano),
@@ -702,6 +719,7 @@ class _PlanoCard extends StatelessWidget {
   const _PlanoCard({
     required this.opcao,
     required this.isAtual,
+    required this.cancelamentoAgendado,
     required this.ciclo,
     required this.submitting,
     required this.onMudar,
@@ -709,6 +727,7 @@ class _PlanoCard extends StatelessWidget {
 
   final _PlanoOpcao opcao;
   final bool isAtual;
+  final bool cancelamentoAgendado;
   final CicloCobranca ciclo;
   final bool submitting;
   final VoidCallback onMudar;
@@ -812,7 +831,21 @@ class _PlanoCard extends StatelessWidget {
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            child: isAtual
+            child: isAtual && cancelamentoAgendado
+                ? FilledButton(
+                    onPressed: submitting ? null : onMudar,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                      foregroundColor: AppColors.ink,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    child: const Text('Reativar plano',
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600)),
+                  )
+                : isAtual
                 ? OutlinedButton(
                     onPressed: null,
                     style: OutlinedButton.styleFrom(

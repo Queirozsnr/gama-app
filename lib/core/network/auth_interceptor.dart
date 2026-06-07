@@ -7,15 +7,18 @@ class AuthInterceptor extends Interceptor {
     this._baseUrl, {
     required this.onRefreshFailed,
     this.onPlanLimitReached,
+    this.onPlanExpired,
   });
 
   final TokenStorage _storage;
   final String _baseUrl;
   final void Function() onRefreshFailed;
 
-  /// Chamado quando o backend retorna 402 (limite de plano atingido).
-  /// Recebe a mensagem de erro do backend para exibir ao usuário.
+  /// Chamado quando o backend retorna 402 com type "plan_limit" (feature bloqueada).
   final void Function(String mensagem)? onPlanLimitReached;
+
+  /// Chamado quando o backend retorna 402 com type "plan_expired" (assinatura vencida).
+  final void Function(String mensagem)? onPlanExpired;
 
   bool _isRefreshing = false;
 
@@ -45,8 +48,15 @@ class AuthInterceptor extends Interceptor {
       final mensagem = (data is Map && data['error'] != null)
           ? data['error'] as String
           : 'Limite do plano atingido. Faça upgrade para continuar.';
-      onPlanLimitReached?.call(mensagem);
-      handler.next(err);
+      final tipo = (data is Map) ? data['type'] as String? : null;
+      if (tipo == 'plan_expired') {
+        onPlanExpired?.call(mensagem);
+        // Não completa o handler — request fica em loading enquanto o redirect ocorre
+        return;
+      } else {
+        onPlanLimitReached?.call(mensagem);
+        handler.next(err);
+      }
       return;
     }
 

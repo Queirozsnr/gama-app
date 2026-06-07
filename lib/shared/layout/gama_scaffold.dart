@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
 import '../../core/plan/plan_limit_notifier.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/jwt_decoder.dart';
+import '../../features/assinatura/presentation/assinatura_notifier.dart';
+import '../../features/auth/presentation/auth_notifier.dart';
 import '../state/top_bar_scope.dart';
 import '../widgets/gama_snack_bar.dart';
 import 'gama_bottom_nav.dart';
@@ -39,6 +44,7 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
   // Prevents didUpdateWidget from re-recording a history entry when we're
   // already navigating back through history.
   bool _poppingBranch = false;
+  Timer? _assinaturaRefreshTimer;
 
   TopBarNotifier get _activeNotifier =>
       _branchNotifiers[widget.navigationShell.currentIndex];
@@ -67,6 +73,7 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
 
   @override
   void dispose() {
+    _assinaturaRefreshTimer?.cancel();
     for (final n in _branchNotifiers) {
       n.dispose();
     }
@@ -81,7 +88,39 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
       ref.read(planLimitNotifierProvider.notifier).clear();
     });
 
+    ref.listen(planoExpiradoNotifierProvider, (_, msg) {
+      if (msg == null) return;
+      ref.read(planoExpiradoNotifierProvider.notifier).clear();
+      ref.invalidate(assinaturaProvider);
+      final token = ref.read(authNotifierProvider).value?.token;
+      final isGestor = token != null && JwtDecoder.isGestor(token);
+      if (isGestor) {
+        context.go('/assinatura');
+        GamaSnackBar.error(context, msg);
+      } else {
+        GamaSnackBar.error(context, 'Plano expirado. Entre em contato com o responsável.');
+      }
+    });
+
     final isDesktop = MediaQuery.of(context).size.width >= 800;
+
+    // Banner proativo: uma request por sessão, refresh automático a cada 2 min
+    // enquanto o banner estiver visível (para sumir sozinho após renovação).
+    final expiracaoAviso = ref.watch(assinaturaProvider).whenOrNull(
+      data: (d) {
+        final dias = d.proximaCobranca.difference(DateTime.now()).inDays;
+        return (dias >= 0 && dias <= 3) ? dias : null;
+      },
+    );
+
+    if (expiracaoAviso != null) {
+      _assinaturaRefreshTimer ??= Timer.periodic(const Duration(minutes: 2), (_) {
+        ref.invalidate(assinaturaProvider);
+      });
+    } else {
+      _assinaturaRefreshTimer?.cancel();
+      _assinaturaRefreshTimer = null;
+    }
 
     // BranchTopBarScope lets the router's navigatorContainerBuilder read the
     // per-branch notifiers and wrap each branch navigator in its own TopBarScope.
@@ -104,6 +143,11 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
                         pageTitle: widget.pageTitle,
                         pageSubtitle: widget.pageSubtitle,
                       ),
+                      if (expiracaoAviso != null)
+                        _ExpiracaoBanner(
+                          dias: expiracaoAviso,
+                          onTap: () => context.go('/assinatura'),
+                        ),
                       Expanded(child: widget.navigationShell),
                     ],
                   ),
@@ -115,7 +159,6 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
       );
     }
 
-  
     return BranchTopBarScope(
       notifiers: _branchNotifiers,
       child: BackButtonListener(
@@ -144,11 +187,59 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
                     pageTitle: widget.pageTitle,
                     pageSubtitle: widget.pageSubtitle,
                   ),
+                  if (expiracaoAviso != null)
+                    _ExpiracaoBanner(
+                      dias: expiracaoAviso,
+                      onTap: () => context.go('/assinatura'),
+                    ),
                   Expanded(child: widget.navigationShell),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+}
+
+// ── Banner proativo de expiração ──────────────────────────────────────────────
+
+class _ExpiracaoBanner extends StatelessWidget {
+  const _ExpiracaoBanner({required this.dias, required this.onTap});
+
+  final int dias;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = dias == 0
+        ? 'Sua assinatura expira hoje.'
+        : 'Sua assinatura expira em $dias ${dias == 1 ? 'dia' : 'dias'}.';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        color: AppColors.warn,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '$label  Toque para ver o plano →',
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

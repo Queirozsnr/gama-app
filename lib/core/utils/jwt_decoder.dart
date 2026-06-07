@@ -49,4 +49,9 @@ abstract final class JwtDecoder {
     final v = _claims(token)['funcionarioId'];
     return v != null ? int.tryParse(v.toString()) : null;
   }
+
+  static DateTime? planoExpiraEm(String token) {
+    final v = _claims(token)['planoExpiraEm'] as String?;
+    return v != null ? DateTime.tryParse(v) : null;
+  }
 }

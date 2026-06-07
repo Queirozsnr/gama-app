@@ -23,6 +23,8 @@ final dioClientProvider = Provider<Dio>((ref) {
     onRefreshFailed: () => ref.invalidate(authNotifierProvider),
     onPlanLimitReached: (msg) =>
         ref.read(planLimitNotifierProvider.notifier).set(msg),
+    onPlanExpired: (msg) =>
+        ref.read(planoExpiradoNotifierProvider.notifier).set(msg),
   ));
 
   if (kDebugMode) {
