@@ -22,6 +22,7 @@ class AdminRemoteDataSource {
     required String nomeUsuario,
     required String email,
     String? novaSenha,
+    bool? bloqueado,
   }) async {
     await _dio.put('/admin/grupos/$grupoId', data: {
       'plano': plano,
@@ -30,6 +31,7 @@ class AdminRemoteDataSource {
       'nomeUsuario': nomeUsuario,
       'email': email,
       'novaSenha': novaSenha,
+      if (bloqueado != null) 'bloqueado': bloqueado,
     });
   }
 

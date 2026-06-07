@@ -6,6 +6,7 @@ class GrupoAdminItem {
     required this.plano,
     required this.planoExpiraEm,
     required this.ativo,
+    required this.cancelamentoAgendado,
     required this.totalOficinas,
     required this.totalUsuarios,
     this.userId,
@@ -18,6 +19,7 @@ class GrupoAdminItem {
   final String plano;
   final DateTime planoExpiraEm;
   final bool ativo;
+  final bool cancelamentoAgendado;
   final int totalOficinas;
   final int totalUsuarios;
   final int? userId;
@@ -30,6 +32,7 @@ class GrupoAdminItem {
         plano: json['plano'] as String,
         planoExpiraEm: DateTime.parse(json['planoExpiraEm'] as String),
         ativo: json['ativo'] as bool,
+        cancelamentoAgendado: json['cancelamentoAgendado'] as bool? ?? false,
         totalOficinas: (json['totalOficinas'] as num).toInt(),
         totalUsuarios: (json['totalUsuarios'] as num).toInt(),
         userId: json['userId'] != null ? (json['userId'] as num).toInt() : null,

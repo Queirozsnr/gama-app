@@ -12,11 +12,13 @@ import 'admin_notifier.dart';
 
 // ── Status derivado ───────────────────────────────────────────────────────────
 
-enum _GrupoStatus { trial, ativo, expirado }
+enum _GrupoStatus { trial, ativo, cancelando, expirado, bloqueado }
 
 extension _GrupoAdminItemX on GrupoAdminItem {
   _GrupoStatus get status {
+    if (!ativo) return _GrupoStatus.bloqueado;
     if (planoExpiraEm.isBefore(DateTime.now())) return _GrupoStatus.expirado;
+    if (cancelamentoAgendado) return _GrupoStatus.cancelando;
     if (plano == 'Trial') return _GrupoStatus.trial;
     return _GrupoStatus.ativo;
   }
@@ -642,6 +644,7 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
 
   late String _plano;
   late DateTime _expiraEm;
+  late bool _bloqueado;
   late final TextEditingController _nome;
   late final TextEditingController _email;
   final TextEditingController _senha = TextEditingController();
@@ -653,6 +656,7 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
     super.initState();
     _plano = widget.grupo.plano;
     _expiraEm = widget.grupo.planoExpiraEm;
+    _bloqueado = !widget.grupo.ativo;
     _nome = TextEditingController(text: widget.grupo.nomeUsuario ?? '');
     _email = TextEditingController(text: widget.grupo.email);
   }
@@ -678,6 +682,7 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
             nomeUsuario: _nome.text.trim(),
             email: _email.text.trim(),
             novaSenha: _senha.text.isNotEmpty ? _senha.text : null,
+            bloqueado: _bloqueado != !widget.grupo.ativo ? _bloqueado : null,
           );
       if (mounted) {
         Navigator.pop(context);
@@ -848,6 +853,43 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Bloquear acesso',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        Text(
+                          _bloqueado
+                              ? 'Login e API bloqueados'
+                              : 'Conta ativa normalmente',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _bloqueado ? AppColors.danger : AppColors.ink3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: _bloqueado,
+                    onChanged: (v) => setState(() => _bloqueado = v),
+                    activeThumbColor: AppColors.danger,
+                    activeTrackColor: AppColors.danger.withValues(alpha: 0.3),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1129,9 +1171,19 @@ class _StatusChip extends StatelessWidget {
           const Color(0xFF22C55E).withValues(alpha: 0.12),
           const Color(0xFF16A34A)
         ),
+      _GrupoStatus.cancelando => (
+          'CANCELA',
+          AppColors.warn.withValues(alpha: 0.12),
+          AppColors.warn
+        ),
       _GrupoStatus.expirado => (
           'EXPIRADO',
           AppColors.danger.withValues(alpha: 0.1),
+          AppColors.danger
+        ),
+      _GrupoStatus.bloqueado => (
+          'BLOQUEADO',
+          AppColors.danger.withValues(alpha: 0.15),
           AppColors.danger
         ),
     };

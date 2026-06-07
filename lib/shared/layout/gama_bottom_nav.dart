@@ -20,12 +20,13 @@ class GamaBottomNav extends ConsumerWidget {
   ];
 
   static const _maisRoutes = [
-    _Item('Veículos',      Icons.directions_car_outlined,  '/veiculos'),
-    _Item('Funcionários',  Icons.badge_outlined,            '/funcionarios'),
-    _Item('Fornecedores',  Icons.local_shipping_outlined,   '/fornecedores'),
-    _Item('Pagamentos',    Icons.payments_outlined,         '/pagamentos'),
-    _Item('Receitas',      Icons.trending_up_outlined,      '/receitas'),
-    _Item('Configurações', Icons.settings_outlined,         '/configuracoes-oficina'),
+    _Item('Veículos',      Icons.directions_car_outlined,   '/veiculos'),
+    _Item('Funcionários',  Icons.badge_outlined,             '/funcionarios'),
+    _Item('Fornecedores',  Icons.local_shipping_outlined,    '/fornecedores'),
+    _Item('Pagamentos',    Icons.payments_outlined,          '/pagamentos'),
+    _Item('Receitas',      Icons.trending_up_outlined,       '/receitas'),
+    _Item('Assinatura',    Icons.workspace_premium_outlined, '/assinatura'),
+    _Item('Configurações', Icons.settings_outlined,          '/configuracoes-oficina'),
   ];
 
   static const _adminRoute = _Item('Admin', Icons.shield_outlined, '/admin');

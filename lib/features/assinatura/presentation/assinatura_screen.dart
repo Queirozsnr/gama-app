@@ -147,7 +147,10 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _MobileUsoHeader(detalhes: detalhes),
+          _MobileUsoHeader(
+            detalhes: detalhes,
+            onCancelar: _confirmarCancelamento,
+          ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -1038,13 +1041,18 @@ class _PagoChip extends StatelessWidget {
 // ── _MobileUsoHeader ──────────────────────────────────────────────────────────
 
 class _MobileUsoHeader extends StatelessWidget {
-  const _MobileUsoHeader({required this.detalhes});
+  const _MobileUsoHeader({
+    required this.detalhes,
+    required this.onCancelar,
+  });
 
   final AssinaturaDetalhes detalhes;
+  final VoidCallback onCancelar;
 
   @override
   Widget build(BuildContext context) {
     final uso = detalhes.uso;
+    final cancelando = detalhes.status == StatusAssinatura.cancelamentoAgendado;
 
     return Container(
       color: AppColors.sidebarBg,
@@ -1102,6 +1110,49 @@ class _MobileUsoHeader extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          // Date + ciclo row
+          Row(
+            children: [
+              Icon(
+                cancelando
+                    ? Icons.calendar_today_outlined
+                    : Icons.autorenew_outlined,
+                size: 13,
+                color: cancelando
+                    ? AppColors.danger
+                    : AppColors.sidebarText.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                cancelando
+                    ? 'Ativo até: ${_fmtDate(detalhes.proximaCobranca)}'
+                    : 'Renova em: ${_fmtDate(detalhes.proximaCobranca)}',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  color: cancelando
+                      ? AppColors.danger
+                      : AppColors.sidebarText.withValues(alpha: 0.7),
+                ),
+              ),
+              if (!cancelando) ...[
+                const SizedBox(width: 12),
+                Icon(Icons.refresh_outlined,
+                    size: 13,
+                    color: AppColors.sidebarText.withValues(alpha: 0.7)),
+                const SizedBox(width: 4),
+                Text(
+                  detalhes.ciclo == CicloCobranca.mensal ? 'Mensal' : 'Anual',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    color: AppColors.sidebarText.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ],
+          ),
           const SizedBox(height: 16),
           // 2x2 usage grid
           Row(
@@ -1143,6 +1194,33 @@ class _MobileUsoHeader extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          // Cancel / Reactivate button
+          if (cancelando)
+            Text(
+              'Cancela em ${_fmtDate(detalhes.proximaCobranca)}',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: AppColors.danger,
+              ),
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: onCancelar,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.danger,
+                  side: const BorderSide(color: AppColors.danger),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Cancelar assinatura',
+                    style: TextStyle(fontSize: 13)),
+              ),
+            ),
         ],
       ),
     );

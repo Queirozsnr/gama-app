@@ -49,7 +49,7 @@ class AuthInterceptor extends Interceptor {
           ? data['error'] as String
           : 'Limite do plano atingido. Faça upgrade para continuar.';
       final tipo = (data is Map) ? data['type'] as String? : null;
-      if (tipo == 'plan_expired') {
+      if (tipo == 'plan_expired' || tipo == 'account_disabled') {
         onPlanExpired?.call(mensagem);
         // Não completa o handler — request fica em loading enquanto o redirect ocorre
         return;
