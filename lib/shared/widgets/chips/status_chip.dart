@@ -28,7 +28,7 @@ extension OsStatusX on OsStatus {
     OsStatus.emAndamento    => AppColors.accent,
     OsStatus.aguardandoPeca => AppColors.warn,
     OsStatus.concluida      => AppColors.ok,
-    OsStatus.entregue       => AppColors.ink2,
+    OsStatus.entregue       => AppColors.info,
   };
 
   Color get bgColor => switch (this) {
@@ -36,7 +36,7 @@ extension OsStatusX on OsStatus {
     OsStatus.emAndamento    => AppColors.accentSoft,
     OsStatus.aguardandoPeca => AppColors.warnSoft,
     OsStatus.concluida      => AppColors.okSoft,
-    OsStatus.entregue       => AppColors.surface2,
+    OsStatus.entregue       => AppColors.infoSoft,
   };
 
   Color get textColor => switch (this) {
@@ -44,7 +44,7 @@ extension OsStatusX on OsStatus {
     OsStatus.emAndamento    => AppColors.accent,
     OsStatus.aguardandoPeca => AppColors.warn,
     OsStatus.concluida      => AppColors.ok,
-    OsStatus.entregue       => AppColors.ink2,
+    OsStatus.entregue       => AppColors.info,
   };
 
   Color get accentColor => switch (this) {
@@ -52,7 +52,7 @@ extension OsStatusX on OsStatus {
     OsStatus.emAndamento    => AppColors.accent,
     OsStatus.aguardandoPeca => AppColors.warn,
     OsStatus.concluida      => AppColors.ok,
-    OsStatus.entregue       => AppColors.ink2,
+    OsStatus.entregue       => AppColors.info,
   };
 }
 

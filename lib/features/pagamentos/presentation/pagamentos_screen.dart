@@ -38,6 +38,11 @@ String _mesAno(DateTime d) {
 
 enum _StatusPag { aPagar, pendente, pago, apuracao, semDados }
 
+double _totalComissao(AsyncValue<List<OsAberta>> osAsync, FuncionarioAcumulado f) =>
+    osAsync.whenOrNull(
+      data: (osList) => osList.fold<double>(0.0, (s, os) => s + os.valorContribuicao),
+    ) ?? f.valorAcumulado;
+
 bool _pagoEsteMes(FuncionarioAcumulado f) {
   final u = f.ultimoPagamentoEm;
   if (u == null) return false;
@@ -903,6 +908,14 @@ class _DetailPanel extends ConsumerWidget {
     final isGerente = funcionario.tipoRemuneracao == 'Socio';
     final status = _statusOf(funcionario);
 
+    final isComissao = funcionario.tipoRemuneracao == 'Porcentagem';
+    final osAsync = isComissao
+        ? ref.watch(osAbertasProvider(funcionario.funcionarioId))
+        : const AsyncData<List<OsAberta>>([]);
+    final totalReal = isComissao
+        ? _totalComissao(osAsync, funcionario)
+        : funcionario.valorAcumulado;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -975,7 +988,7 @@ class _DetailPanel extends ConsumerWidget {
               child: Text(switch (status) {
                 _StatusPag.pago     => 'Ver recibo',
                 _StatusPag.pendente => 'Confirmar pagamento',
-                _                   => 'Pagar ${_fmt(funcionario.valorAcumulado)}',
+                _                   => 'Pagar ${_fmt(totalReal)}',
               }),
             ),
           ] else if (showActions) ...[
@@ -1019,11 +1032,14 @@ class _ComissaoBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isComissao = funcionario.tipoRemuneracao == 'Porcentagem';
-    final receita = isComissao && (funcionario.porcentagem ?? 0) > 0
-        ? funcionario.valorAcumulado * 100 / funcionario.porcentagem!
-        : 0.0;
 
     final osAsync = ref.watch(osAbertasProvider(funcionario.funcionarioId));
+
+    final totalReal = _totalComissao(osAsync, funcionario);
+
+    final receitaServicos = isComissao && (funcionario.porcentagem ?? 0) > 0
+        ? totalReal * 100 / funcionario.porcentagem!
+        : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1036,7 +1052,7 @@ class _ComissaoBreakdown extends StatelessWidget {
               if (isComissao) ...[
                 _InfoRow('OS faturadas no período',
                     '${funcionario.osAbertasCount}'),
-                _InfoRow('Receita gerada', _fmt(receita)),
+                _InfoRow('Receita de serviços', _fmt(receitaServicos)),
                 _InfoRow(
                     'Comissão sobre serviços', '${funcionario.porcentagem}%'),
               ] else ...[
@@ -1050,7 +1066,7 @@ class _ComissaoBreakdown extends StatelessWidget {
                       style: TextStyle(
                           fontWeight: FontWeight.w600, fontSize: 13)),
                   Text(
-                    _fmt(funcionario.valorAcumulado),
+                    _fmt(totalReal),
                     style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
