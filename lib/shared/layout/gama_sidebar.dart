@@ -27,6 +27,7 @@ class GamaSidebar extends ConsumerWidget {
       const _NavItem('Pagamentos',   Icons.payments_outlined,       '/pagamentos'),
       if (isGestor) const _NavItem('Funcionários', Icons.badge_outlined,       '/funcionarios'),
       if (isGestor) const _NavItem('Receitas',     Icons.trending_up_outlined, '/receitas'),
+      if (isGestor) const _NavItem('Assinatura',   Icons.workspace_premium_outlined, '/assinatura'),
     ]),
   ];
 

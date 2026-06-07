@@ -28,6 +28,7 @@ import '../../features/oficinas/presentation/gerenciar_oficinas_screen.dart';
 import '../../features/oficinas/presentation/configuracoes_oficina_screen.dart';
 import '../../features/auth/presentation/trocar_senha_screen.dart';
 import '../../features/admin/presentation/admin_screen.dart';
+import '../../features/assinatura/presentation/assinatura_screen.dart';
 import '../../shared/layout/gama_scaffold.dart';
 import '../../shared/state/top_bar_scope.dart';
 
@@ -54,6 +55,7 @@ abstract final class AppRoutes {
   static const admin             = '/admin';
   static const selectOficina    = '/select-oficina';
   static const trocarSenha      = '/trocar-senha';
+  static const assinatura        = '/assinatura';
   static const estoqueProdutoNovo    = '/estoque/produto/novo';
   static const estoqueProdutoDetalhe = '/estoque/produto/:id';
   static const estoqueProdutoEditar  = '/estoque/produto/:id/editar';
@@ -71,6 +73,7 @@ const _pageTitles = <String, String>{
   AppRoutes.receitas:          'Receitas',
   AppRoutes.gerenciarOficinas:    'Gerenciar Oficinas',
   AppRoutes.configuracoesOficina: 'Configurações da Oficina',
+  AppRoutes.assinatura:           'Assinatura',
   AppRoutes.admin: 'Admin',
 };
 
@@ -254,6 +257,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             GoRoute(path: AppRoutes.gerenciarOficinas,    pageBuilder: _fade((ctx, st) => const GerenciarOficinasScreen())),
             GoRoute(path: AppRoutes.configuracoesOficina, pageBuilder: _fade((ctx, st) => const ConfiguracoesOficinaScreen())),
             GoRoute(path: AppRoutes.admin,                pageBuilder: _fade((ctx, st) => const AdminScreen())),
+            GoRoute(path: AppRoutes.assinatura,           pageBuilder: _fade((ctx, st) => const AssinaturaScreen())),
           ]),
         ],
       ),
