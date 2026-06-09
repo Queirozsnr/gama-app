@@ -4,6 +4,7 @@ class GrupoAdminItem {
     required this.nome,
     required this.email,
     required this.plano,
+    required this.ciclo,
     required this.planoExpiraEm,
     required this.ativo,
     required this.cancelamentoAgendado,
@@ -17,6 +18,7 @@ class GrupoAdminItem {
   final String nome;
   final String email;
   final String plano;
+  final String ciclo;
   final DateTime planoExpiraEm;
   final bool ativo;
   final bool cancelamentoAgendado;
@@ -30,6 +32,7 @@ class GrupoAdminItem {
         nome: json['nome'] as String,
         email: json['email'] as String,
         plano: json['plano'] as String,
+        ciclo: (json['ciclo'] as String? ?? 'Mensal').toLowerCase(),
         planoExpiraEm: DateTime.parse(json['planoExpiraEm'] as String),
         ativo: json['ativo'] as bool,
         cancelamentoAgendado: json['cancelamentoAgendado'] as bool? ?? false,

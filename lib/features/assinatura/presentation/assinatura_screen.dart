@@ -9,6 +9,7 @@ import '../../../shared/widgets/suporte_modal.dart';
 import '../data/assinatura_remote_data_source.dart';
 import '../domain/assinatura_models.dart';
 import 'assinatura_notifier.dart';
+import 'widgets/mudar_plano_whatsapp_modal.dart';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,9 @@ class _PlanoOpcao {
     required this.descricao,
     required this.precoMensal,
     required this.precoAnual,
+    required this.features,
+    this.herda,
+    this.popular = false,
   });
 
   final NomePlano plano;
@@ -45,29 +49,58 @@ class _PlanoOpcao {
   final String descricao;
   final double precoMensal;
   final double precoAnual;
+  final List<String> features;
+  final String? herda;
+  final bool popular;
+
+  double get precoAnualTotal => precoAnual * 12;
 }
 
 const _planosDisponiveis = [
   _PlanoOpcao(
     plano: NomePlano.solo,
     label: 'Solo',
-    descricao: 'Para uma oficina só',
-    precoMensal: 99.0,
-    precoAnual: 79.0,
+    descricao: 'Ideal para começar',
+    precoMensal: 30.0,
+    precoAnual: 24.0,
+    features: [
+      '1 oficina · 5 usuários',
+      '100 ordens de serviço/mês',
+      '300 produtos no estoque',
+      'Clientes e veículos',
+      'Relatórios básicos',
+    ],
   ),
   _PlanoOpcao(
     plano: NomePlano.oficina,
     label: 'Oficina',
-    descricao: 'Operação completa do dia a dia',
-    precoMensal: 249.0,
-    precoAnual: 199.0,
+    descricao: 'Para quem quer crescer',
+    precoMensal: 50.0,
+    precoAnual: 40.0,
+    popular: true,
+    herda: 'Solo',
+    features: [
+      'Até 2 oficinas · 12 usuários',
+      '500 OS por mês · 2.000 produtos',
+      'Fotos e vídeos nas OS (20 GB)',
+      'Pagamento de funcionários',
+      'Relatórios financeiros completos',
+    ],
   ),
   _PlanoOpcao(
     plano: NomePlano.rede,
     label: 'Rede',
-    descricao: 'Para rede com mais de uma unidade',
-    precoMensal: 399.0,
-    precoAnual: 319.0,
+    descricao: 'Para múltiplas unidades',
+    precoMensal: 100.0,
+    precoAnual: 80.0,
+    herda: 'Oficina',
+    features: [
+      'Oficinas e usuários ilimitados',
+      'OS e estoque ilimitados',
+      'Fotos e vídeos ilimitados',
+      'Dashboard gerencial multi-unidade',
+      'Auditoria e logs completos',
+    ],
   ),
 ];
 
@@ -210,35 +243,16 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
   }
 
   Future<void> _confirmarMudancaPlano(NomePlano novoPlano) async {
-    final opcao =
-        _planosDisponiveis.firstWhere((p) => p.plano == novoPlano);
+    final opcao = _planosDisponiveis.firstWhere((p) => p.plano == novoPlano);
     final preco =
         _ciclo == CicloCobranca.mensal ? opcao.precoMensal : opcao.precoAnual;
-    final cicloLabel =
-        _ciclo == CicloCobranca.mensal ? 'mensalmente' : 'anualmente';
 
-    final ok = await GamaConfirmDialog.show(
+    showMudarPlanoWhatsappModal(
       context,
-      title: 'Mudar para ${opcao.label}',
-      message:
-          'Você será cobrado ${_fmtBrl(preco)}/mês $cicloLabel a partir do próximo ciclo. Deseja confirmar?',
-      confirmLabel: 'Confirmar mudança',
+      plano: novoPlano,
+      preco: preco,
+      ciclo: _ciclo,
     );
-    if (!ok || !mounted) return;
-    setState(() => _submitting = true);
-    try {
-      await ref
-          .read(assinaturaRemoteDataSourceProvider)
-          .mudarPlano(novoPlano, _ciclo);
-      if (mounted) {
-        ref.invalidate(assinaturaProvider);
-        GamaSnackBar.success(context, 'Plano atualizado para ${opcao.label}.');
-      }
-    } catch (e) {
-      if (mounted) GamaSnackBar.error(context, e.toString());
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
   }
 }
 
@@ -747,149 +761,259 @@ class _PlanoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final preco =
         ciclo == CicloCobranca.mensal ? opcao.precoMensal : opcao.precoAnual;
+    final highlight = isAtual || opcao.popular;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isAtual ? AppColors.accentSoft : AppColors.surface2,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isAtual ? AppColors.accent : AppColors.line,
-          width: isAtual ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                opcao.label,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.ink,
-                ),
-              ),
-              if (isAtual) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'PLANO ATUAL',
-                    style: TextStyle(
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            opcao.descricao,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              color: AppColors.ink2,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          decoration: BoxDecoration(
+            color: isAtual ? AppColors.accentSoft : AppColors.surface2,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: highlight ? AppColors.accent : AppColors.line,
+              width: highlight ? 2 : 1,
             ),
           ),
-          const SizedBox(height: 12),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: _fmtBrl(preco),
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── cabeçalho ──────────────────────────────────────────
+              if (opcao.popular) const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    opcao.label,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  if (isAtual) ...[
+                    const SizedBox(width: 8),
+                    _chip('PLANO ATUAL', AppColors.accent, Colors.white),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                opcao.descricao,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  color: AppColors.ink3,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // ── preço ──────────────────────────────────────────────
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: _fmtBrl(preco),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const TextSpan(
+                      text: '/mês',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        color: AppColors.ink3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (ciclo == CicloCobranca.anual) ...[
+                const SizedBox(height: 3),
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(fontFamily: 'Inter', fontSize: 11),
+                    children: [
+                      TextSpan(
+                        text: _fmtBrl(opcao.precoAnualTotal),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink2,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '/ano  ·  você economiza ',
+                        style: TextStyle(color: AppColors.ink3),
+                      ),
+                      TextSpan(
+                        text: _fmtBrl(
+                            (opcao.precoMensal - opcao.precoAnual) * 12),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF16A34A),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const TextSpan(
-                  text: '/mês',
+              ] else ...[
+                const SizedBox(height: 3),
+                Text(
+                  'ou ${_fmtBrl(opcao.precoAnual)}/mês no plano anual',
                   style: TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 12,
-                    color: AppColors.ink2,
+                    fontSize: 11,
+                    color: AppColors.ink3,
                   ),
                 ),
               ],
-            ),
+
+              const SizedBox(height: 14),
+              const Divider(height: 1, color: Color(0xFFE0D9CF)),
+              const SizedBox(height: 12),
+
+              // ── herança ────────────────────────────────────────────
+              if (opcao.herda != null) ...[
+                Row(
+                  children: [
+                    const Icon(Icons.layers_outlined,
+                        size: 13, color: AppColors.accentDark),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Tudo do ${opcao.herda!}, mais:',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.accentDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+
+              // ── features ───────────────────────────────────────────
+              ...opcao.features.map(
+                (f) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Icon(
+                          Icons.check_circle_rounded,
+                          size: 14,
+                          color: isAtual
+                              ? AppColors.accentDark
+                              : AppColors.accent,
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          f,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            color: AppColors.ink2,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── botão ──────────────────────────────────────────────
+              SizedBox(
+                width: double.infinity,
+                child: isAtual && cancelamentoAgendado
+                    ? FilledButton(
+                        onPressed: submitting ? null : onMudar,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.accent,
+                          foregroundColor: AppColors.ink,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                        ),
+                        child: const Text('Reativar plano',
+                            style: TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w600)),
+                      )
+                    : isAtual
+                    ? OutlinedButton(
+                        onPressed: null,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.line),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                        ),
+                        child: const Text('Plano atual',
+                            style: TextStyle(
+                                fontSize: 13, color: AppColors.ink2)),
+                      )
+                    : FilledButton(
+                        onPressed: submitting ? null : onMudar,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.accent,
+                          foregroundColor: AppColors.ink,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                        ),
+                        child: Text(
+                          _btnLabel(opcao.plano),
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+              ),
+            ],
           ),
-          if (ciclo == CicloCobranca.anual) ...[
-            const SizedBox(height: 2),
-            Text(
-              'cobrado anualmente',
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 11,
-                color: AppColors.ink3,
+        ),
+
+        // ── badge "Mais popular" flutuante no topo ─────────────────
+        if (opcao.popular)
+          Positioned(
+            top: -12,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  '⭐  MAIS POPULAR',
+                  style: TextStyle(
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
             ),
-          ],
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: isAtual && cancelamentoAgendado
-                ? FilledButton(
-                    onPressed: submitting ? null : onMudar,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      foregroundColor: AppColors.ink,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    child: const Text('Reativar plano',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600)),
-                  )
-                : isAtual
-                ? OutlinedButton(
-                    onPressed: null,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.line),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    child: const Text('Plano atual',
-                        style: TextStyle(
-                            fontSize: 13, color: AppColors.ink2)),
-                  )
-                : FilledButton(
-                    onPressed: submitting ? null : onMudar,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      foregroundColor: AppColors.ink,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    child: Text(
-                      opcao.plano.index < NomePlano.values
-                              .indexOf(opcao.plano)
-                          ? 'Fazer downgrade'
-                          : _btnLabel(opcao.plano),
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
-                  ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -899,6 +1023,26 @@ class _PlanoCard extends StatelessWidget {
       NomePlano.oficina => 'Mudar para Oficina',
       NomePlano.rede    => 'Fazer upgrade →',
     };
+  }
+
+  Widget _chip(String label, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'JetBrains Mono',
+          fontSize: 8,
+          fontWeight: FontWeight.w700,
+          color: fg,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
   }
 }
 

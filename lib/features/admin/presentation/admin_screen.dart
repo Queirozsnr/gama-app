@@ -8,6 +8,7 @@ import '../../../shared/widgets/gama_snack_bar.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../data/admin_remote_data_source.dart';
 import '../domain/admin_models.dart';
+import '../../../features/assinatura/presentation/assinatura_notifier.dart';
 import 'admin_notifier.dart';
 
 // ── Status derivado ───────────────────────────────────────────────────────────
@@ -643,6 +644,7 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
   static const _planos = ['Trial', 'Basico', 'Pro', 'Enterprise'];
 
   late String _plano;
+  late String _ciclo;
   late DateTime _expiraEm;
   late bool _bloqueado;
   late final TextEditingController _nome;
@@ -655,6 +657,7 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
   void initState() {
     super.initState();
     _plano = widget.grupo.plano;
+    _ciclo = widget.grupo.ciclo;
     _expiraEm = widget.grupo.planoExpiraEm;
     _bloqueado = !widget.grupo.ativo;
     _nome = TextEditingController(text: widget.grupo.nomeUsuario ?? '');
@@ -677,6 +680,7 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
       await ref.read(adminRemoteDataSourceProvider).atualizarCliente(
             grupoId: widget.grupo.id,
             plano: _plano,
+            ciclo: _ciclo,
             expiraEm: _expiraEm,
             userId: userId,
             nomeUsuario: _nome.text.trim(),
@@ -687,6 +691,7 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
       if (mounted) {
         Navigator.pop(context);
         widget.onUpdated();
+        ref.invalidate(assinaturaProvider);
         GamaSnackBar.success(context, 'Cliente atualizado.');
       }
     } catch (e) {
@@ -802,6 +807,26 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
                           DropdownMenuItem(value: p, child: Text(p)))
                       .toList(),
                   onChanged: (v) => setState(() => _plano = v!),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const _DialogLabel('Ciclo de cobrança'),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.line),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButton<String>(
+                  value: _ciclo,
+                  isExpanded: true,
+                  underline: const SizedBox.shrink(),
+                  items: const [
+                    DropdownMenuItem(value: 'mensal', child: Text('Mensal')),
+                    DropdownMenuItem(value: 'anual', child: Text('Anual')),
+                  ],
+                  onChanged: (v) => setState(() => _ciclo = v!),
                 ),
               ),
               const SizedBox(height: 12),

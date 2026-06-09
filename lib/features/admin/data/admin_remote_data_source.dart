@@ -17,6 +17,7 @@ class AdminRemoteDataSource {
   Future<void> atualizarCliente({
     required int grupoId,
     required String plano,
+    required String ciclo,
     required DateTime expiraEm,
     required int userId,
     required String nomeUsuario,
@@ -26,6 +27,7 @@ class AdminRemoteDataSource {
   }) async {
     await _dio.put('/admin/grupos/$grupoId', data: {
       'plano': plano,
+      'ciclo': ciclo,
       'expiraEm': expiraEm.toIso8601String(),
       'userId': userId,
       'nomeUsuario': nomeUsuario,
