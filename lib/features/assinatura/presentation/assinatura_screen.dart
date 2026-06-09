@@ -648,23 +648,25 @@ class _MudarDePlanoSection extends StatelessWidget {
             ],
           );
         }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (int i = 0; i < _planosDisponiveis.length; i++) ...[
-              if (i > 0) const SizedBox(width: 12),
-              Expanded(
-                child: _PlanoCard(
-                  opcao: _planosDisponiveis[i],
-                  isAtual: _planosDisponiveis[i].plano == planoAtual,
-                  cancelamentoAgendado: cancelamentoAgendado,
-                  ciclo: ciclo,
-                  submitting: submitting,
-                  onMudar: () => onMudar(_planosDisponiveis[i].plano),
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (int i = 0; i < _planosDisponiveis.length; i++) ...[
+                if (i > 0) const SizedBox(width: 12),
+                Expanded(
+                  child: _PlanoCard(
+                    opcao: _planosDisponiveis[i],
+                    isAtual: _planosDisponiveis[i].plano == planoAtual,
+                    cancelamentoAgendado: cancelamentoAgendado,
+                    ciclo: ciclo,
+                    submitting: submitting,
+                    onMudar: () => onMudar(_planosDisponiveis[i].plano),
+                  ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         );
       }),
     );
@@ -777,210 +779,208 @@ class _PlanoCard extends StatelessWidget {
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── cabeçalho ──────────────────────────────────────────
-              if (opcao.popular) const SizedBox(height: 10),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              // ── conteúdo superior ──────────────────────────────────
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (opcao.popular) const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        opcao.label,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      if (isAtual) ...[
+                        const SizedBox(width: 8),
+                        _chip('PLANO ATUAL', AppColors.accent, Colors.white),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
                   Text(
-                    opcao.label,
+                    opcao.descricao,
                     style: const TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
+                      fontSize: 12,
+                      color: AppColors.ink3,
                     ),
                   ),
-                  if (isAtual) ...[
-                    const SizedBox(width: 8),
-                    _chip('PLANO ATUAL', AppColors.accent, Colors.white),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                opcao.descricao,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  color: AppColors.ink3,
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // ── preço ──────────────────────────────────────────────
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: _fmtBrl(preco),
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ink,
+                  const SizedBox(height: 14),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: _fmtBrl(preco),
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: '/mês',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            color: AppColors.ink3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (ciclo == CicloCobranca.anual) ...[
+                    const SizedBox(height: 3),
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(fontFamily: 'Inter', fontSize: 11),
+                        children: [
+                          TextSpan(
+                            text: _fmtBrl(opcao.precoAnualTotal),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.ink2,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '/ano  ·  você economiza ',
+                            style: const TextStyle(color: AppColors.ink3),
+                          ),
+                          TextSpan(
+                            text: _fmtBrl((opcao.precoMensal - opcao.precoAnual) * 12),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF16A34A),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const TextSpan(
-                      text: '/mês',
-                      style: TextStyle(
+                  ] else ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      'ou ${_fmtBrl(opcao.precoAnual)}/mês no plano anual',
+                      style: const TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 13,
+                        fontSize: 11,
                         color: AppColors.ink3,
                       ),
                     ),
                   ],
-                ),
-              ),
-              if (ciclo == CicloCobranca.anual) ...[
-                const SizedBox(height: 3),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontFamily: 'Inter', fontSize: 11),
-                    children: [
-                      TextSpan(
-                        text: _fmtBrl(opcao.precoAnualTotal),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.ink2,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '/ano  ·  você economiza ',
-                        style: TextStyle(color: AppColors.ink3),
-                      ),
-                      TextSpan(
-                        text: _fmtBrl(
-                            (opcao.precoMensal - opcao.precoAnual) * 12),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF16A34A),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ] else ...[
-                const SizedBox(height: 3),
-                Text(
-                  'ou ${_fmtBrl(opcao.precoAnual)}/mês no plano anual',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 11,
-                    color: AppColors.ink3,
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 14),
-              const Divider(height: 1, color: Color(0xFFE0D9CF)),
-              const SizedBox(height: 12),
-
-              // ── herança ────────────────────────────────────────────
-              if (opcao.herda != null) ...[
-                Row(
-                  children: [
-                    const Icon(Icons.layers_outlined,
-                        size: 13, color: AppColors.accentDark),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Tudo do ${opcao.herda!}, mais:',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.accentDark,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
-
-              // ── features ───────────────────────────────────────────
-              ...opcao.features.map(
-                (f) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 1),
-                        child: Icon(
-                          Icons.check_circle_rounded,
-                          size: 14,
-                          color: isAtual
-                              ? AppColors.accentDark
-                              : AppColors.accent,
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      Expanded(
-                        child: Text(
-                          f,
+                  const SizedBox(height: 14),
+                  const Divider(height: 1, color: Color(0xFFE0D9CF)),
+                  const SizedBox(height: 12),
+                  if (opcao.herda != null) ...[
+                    Row(
+                      children: [
+                        const Icon(Icons.layers_outlined,
+                            size: 13, color: AppColors.accentDark),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Tudo do ${opcao.herda!}, mais:',
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 12,
-                            color: AppColors.ink2,
-                            height: 1.4,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.accentDark,
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  ...opcao.features.map(
+                    (f) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 1),
+                            child: Icon(
+                              Icons.check_circle_rounded,
+                              size: 14,
+                              color: isAtual
+                                  ? AppColors.accentDark
+                                  : AppColors.accent,
+                            ),
+                          ),
+                          const SizedBox(width: 7),
+                          Expanded(
+                            child: Text(
+                              f,
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                color: AppColors.ink2,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-
-              const SizedBox(height: 16),
-
               // ── botão ──────────────────────────────────────────────
-              SizedBox(
-                width: double.infinity,
-                child: isAtual && cancelamentoAgendado
-                    ? FilledButton(
-                        onPressed: submitting ? null : onMudar,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.accent,
-                          foregroundColor: AppColors.ink,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(vertical: 11),
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: isAtual && cancelamentoAgendado
+                      ? FilledButton(
+                          onPressed: submitting ? null : onMudar,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.accent,
+                            foregroundColor: AppColors.ink,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                          ),
+                          child: const Text('Reativar plano',
+                              style: TextStyle(
+                                  fontSize: 13, fontWeight: FontWeight.w600)),
+                        )
+                      : isAtual
+                      ? OutlinedButton(
+                          onPressed: null,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.line),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                          ),
+                          child: const Text('Plano atual',
+                              style: TextStyle(
+                                  fontSize: 13, color: AppColors.ink2)),
+                        )
+                      : FilledButton(
+                          onPressed: submitting ? null : onMudar,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.accent,
+                            foregroundColor: AppColors.ink,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                          ),
+                          child: Text(
+                            _btnLabel(opcao.plano),
+                            style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
                         ),
-                        child: const Text('Reativar plano',
-                            style: TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w600)),
-                      )
-                    : isAtual
-                    ? OutlinedButton(
-                        onPressed: null,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.line),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(vertical: 11),
-                        ),
-                        child: const Text('Plano atual',
-                            style: TextStyle(
-                                fontSize: 13, color: AppColors.ink2)),
-                      )
-                    : FilledButton(
-                        onPressed: submitting ? null : onMudar,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.accent,
-                          foregroundColor: AppColors.ink,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(vertical: 11),
-                        ),
-                        child: Text(
-                          _btnLabel(opcao.plano),
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                ),
               ),
             ],
           ),

@@ -32,7 +32,7 @@ extension _GrupoAdminItemX on GrupoAdminItem {
 
 // ── Filtro ────────────────────────────────────────────────────────────────────
 
-enum _Filtro { todos, trial, ativo, expirado }
+enum _Filtro { todos, trial, ativo, expirado, faturaPendente }
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -280,8 +280,8 @@ class _GruposSectionState extends ConsumerState<_GruposSection> {
         _Filtro.todos => todos,
         _Filtro.trial => todos.where((g) => g.status == _GrupoStatus.trial).toList(),
         _Filtro.ativo => todos.where((g) => g.status == _GrupoStatus.ativo).toList(),
-        _Filtro.expirado =>
-          todos.where((g) => g.status == _GrupoStatus.expirado).toList(),
+        _Filtro.expirado => todos.where((g) => g.status == _GrupoStatus.expirado).toList(),
+        _Filtro.faturaPendente => todos.where((g) => g.temFaturaPendente).toList(),
       };
 
   @override
@@ -340,12 +340,10 @@ class _FilterTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     int count(_Filtro f) => switch (f) {
           _Filtro.todos => todos.length,
-          _Filtro.trial =>
-            todos.where((g) => g.status == _GrupoStatus.trial).length,
-          _Filtro.ativo =>
-            todos.where((g) => g.status == _GrupoStatus.ativo).length,
-          _Filtro.expirado =>
-            todos.where((g) => g.status == _GrupoStatus.expirado).length,
+          _Filtro.trial => todos.where((g) => g.status == _GrupoStatus.trial).length,
+          _Filtro.ativo => todos.where((g) => g.status == _GrupoStatus.ativo).length,
+          _Filtro.expirado => todos.where((g) => g.status == _GrupoStatus.expirado).length,
+          _Filtro.faturaPendente => todos.where((g) => g.temFaturaPendente).length,
         };
 
     return Padding(
@@ -359,6 +357,7 @@ class _FilterTabs extends StatelessWidget {
             _Filtro.trial => 'Trial',
             _Filtro.ativo => 'Ativos',
             _Filtro.expirado => 'Expirados',
+            _Filtro.faturaPendente => 'Fat. pendente',
           };
           return GestureDetector(
             onTap: () => onChanged(f),
@@ -400,7 +399,7 @@ class _DesktopGruposTable extends StatelessWidget {
   static const _kColExpira = 100.0;
   static const _kColOfic   = 44.0;
   static const _kColUsu    = 44.0;
-  static const _kColAcoes  = 64.0;
+  static const _kColAcoes  = 36.0;
   static const _kPadH      = 16.0;
 
   @override
@@ -510,19 +509,7 @@ class _DesktopGruposTable extends StatelessWidget {
         ),
         SizedBox(
           width: _kColAcoes,
-          child: TextButton(
-            onPressed: () => showDialog(
-              context: context,
-              builder: (_) => _EditClienteDialog(grupo: g, onUpdated: onUpdated),
-            ),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.accent,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: const Text('Editar', style: TextStyle(fontSize: 12)),
-          ),
+          child: _AcoesMenu(grupo: g, onUpdated: onUpdated),
         ),
       ]),
     );
@@ -575,8 +562,7 @@ class _MobileGruposList extends StatelessWidget {
         return Column(
           children: [
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   Expanded(
@@ -610,14 +596,7 @@ class _MobileGruposList extends StatelessWidget {
                       ],
                     ),
                   ),
-                  TextButton(
-                    onPressed: () => showDialog(
-                      context: context,
-                      builder: (_) =>
-                          _EditClienteDialog(grupo: g, onUpdated: onUpdated),
-                    ),
-                    child: const Text('Editar plano'),
-                  ),
+                  _AcoesMenu(grupo: g, onUpdated: onUpdated),
                 ],
               ),
             ),
@@ -629,39 +608,108 @@ class _MobileGruposList extends StatelessWidget {
   }
 }
 
-// ── Edit dialog ───────────────────────────────────────────────────────────────
+// ── Menu de ações ─────────────────────────────────────────────────────────────
 
-class _EditClienteDialog extends ConsumerStatefulWidget {
-  const _EditClienteDialog({required this.grupo, required this.onUpdated});
+class _AcoesMenu extends StatelessWidget {
+  const _AcoesMenu({required this.grupo, required this.onUpdated});
   final GrupoAdminItem grupo;
   final VoidCallback onUpdated;
 
   @override
-  ConsumerState<_EditClienteDialog> createState() => _EditClienteDialogState();
+  Widget build(BuildContext context) {
+    return PopupMenuButton<_Acao>(
+      icon: const Icon(Icons.more_vert, size: 18, color: AppColors.ink3),
+      padding: EdgeInsets.zero,
+      itemBuilder: (_) => [
+        const PopupMenuItem(
+          value: _Acao.editarGrupo,
+          child: _MenuItemContent(
+            icon: Icons.manage_accounts_outlined,
+            label: 'Editar grupo',
+          ),
+        ),
+        const PopupMenuItem(
+          value: _Acao.editarPlano,
+          child: _MenuItemContent(
+            icon: Icons.workspace_premium_outlined,
+            label: 'Editar plano',
+          ),
+        ),
+        const PopupMenuItem(
+          value: _Acao.faturas,
+          child: _MenuItemContent(
+            icon: Icons.receipt_long_outlined,
+            label: 'Faturas',
+          ),
+        ),
+      ],
+      onSelected: (acao) {
+        switch (acao) {
+          case _Acao.editarGrupo:
+            showDialog(
+              context: context,
+              builder: (_) => _EditGrupoDialog(grupo: grupo, onUpdated: onUpdated),
+            );
+          case _Acao.editarPlano:
+            showDialog(
+              context: context,
+              builder: (_) => _EditPlanoDialog(grupo: grupo, onUpdated: onUpdated),
+            );
+          case _Acao.faturas:
+            showDialog(
+              context: context,
+              builder: (_) => _FaturasDialog(grupo: grupo),
+            );
+        }
+      },
+    );
+  }
 }
 
-class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
-  static const _planos = ['Trial', 'Basico', 'Pro', 'Enterprise'];
+enum _Acao { editarGrupo, editarPlano, faturas }
 
-  late String _plano;
-  late String _ciclo;
-  late DateTime _expiraEm;
-  late bool _bloqueado;
+class _MenuItemContent extends StatelessWidget {
+  const _MenuItemContent({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.ink2),
+        const SizedBox(width: 10),
+        Text(label, style: const TextStyle(fontSize: 13, color: AppColors.ink)),
+      ],
+    );
+  }
+}
+
+// ── Dialog: Editar grupo (usuário + bloquear) ─────────────────────────────────
+
+class _EditGrupoDialog extends ConsumerStatefulWidget {
+  const _EditGrupoDialog({required this.grupo, required this.onUpdated});
+  final GrupoAdminItem grupo;
+  final VoidCallback onUpdated;
+
+  @override
+  ConsumerState<_EditGrupoDialog> createState() => _EditGrupoDialogState();
+}
+
+class _EditGrupoDialogState extends ConsumerState<_EditGrupoDialog> {
   late final TextEditingController _nome;
   late final TextEditingController _email;
   final TextEditingController _senha = TextEditingController();
+  late bool _bloqueado;
   bool _loading = false;
   bool _obscure = true;
 
   @override
   void initState() {
     super.initState();
-    _plano = widget.grupo.plano;
-    _ciclo = widget.grupo.ciclo;
-    _expiraEm = widget.grupo.planoExpiraEm;
-    _bloqueado = !widget.grupo.ativo;
     _nome = TextEditingController(text: widget.grupo.nomeUsuario ?? '');
     _email = TextEditingController(text: widget.grupo.email);
+    _bloqueado = !widget.grupo.ativo;
   }
 
   @override
@@ -679,9 +727,6 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
     try {
       await ref.read(adminRemoteDataSourceProvider).atualizarCliente(
             grupoId: widget.grupo.id,
-            plano: _plano,
-            ciclo: _ciclo,
-            expiraEm: _expiraEm,
             userId: userId,
             nomeUsuario: _nome.text.trim(),
             email: _email.text.trim(),
@@ -691,8 +736,7 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
       if (mounted) {
         Navigator.pop(context);
         widget.onUpdated();
-        ref.invalidate(assinaturaProvider);
-        GamaSnackBar.success(context, 'Cliente atualizado.');
+        GamaSnackBar.success(context, 'Grupo atualizado.');
       }
     } catch (e) {
       if (mounted) GamaSnackBar.error(context, e.toString());
@@ -701,32 +745,21 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
     }
   }
 
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _expiraEm.isBefore(DateTime.now()) ? DateTime.now() : _expiraEm,
-      firstDate: DateTime(2020), // admins podem ver/corrigir datas passadas
-      lastDate: DateTime.now().add(const Duration(days: 3650)),
-    );
-    if (picked != null) setState(() => _expiraEm = picked);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final expiraLabel = '${_expiraEm.day.toString().padLeft(2, '0')}/'
-        '${_expiraEm.month.toString().padLeft(2, '0')}/'
-        '${_expiraEm.year}';
-    final expirado = _expiraEm.isBefore(DateTime.now());
-
     return AlertDialog(
       backgroundColor: AppColors.surface,
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: Text(widget.grupo.nome,
-          style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.grupo.nome,
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          const Text('Editar grupo',
+              style: TextStyle(fontSize: 12, color: AppColors.ink3)),
+        ],
+      ),
       content: SizedBox(
         width: 400,
         child: SingleChildScrollView(
@@ -740,10 +773,9 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
                 controller: _nome,
                 decoration: InputDecoration(
                   hintText: 'Nome completo',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
               ),
               const SizedBox(height: 12),
@@ -754,25 +786,22 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   hintText: 'email@exemplo.com',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
               ),
               const SizedBox(height: 12),
-              const _DialogLabel(
-                  'Nova senha (deixe em branco para manter)'),
+              const _DialogLabel('Nova senha (deixe em branco para manter)'),
               const SizedBox(height: 6),
               TextField(
                 controller: _senha,
                 obscureText: _obscure,
                 decoration: InputDecoration(
                   hintText: 'Mínimo 8 caracteres',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscure
@@ -781,101 +810,7 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
                       size: 18,
                       color: AppColors.ink3,
                     ),
-                    onPressed: () =>
-                        setState(() => _obscure = !_obscure),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 12),
-              const _DialogLabel('Plano'),
-              const SizedBox(height: 6),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.line),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: DropdownButton<String>(
-                  value: _plano,
-                  isExpanded: true,
-                  underline: const SizedBox.shrink(),
-                  items: _planos
-                      .map((p) =>
-                          DropdownMenuItem(value: p, child: Text(p)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _plano = v!),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const _DialogLabel('Ciclo de cobrança'),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.line),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: DropdownButton<String>(
-                  value: _ciclo,
-                  isExpanded: true,
-                  underline: const SizedBox.shrink(),
-                  items: const [
-                    DropdownMenuItem(value: 'mensal', child: Text('Mensal')),
-                    DropdownMenuItem(value: 'anual', child: Text('Anual')),
-                  ],
-                  onChanged: (v) => setState(() => _ciclo = v!),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const _DialogLabel('Expira em'),
-              const SizedBox(height: 6),
-              InkWell(
-                onTap: _pickDate,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        color: expirado
-                            ? AppColors.danger
-                            : AppColors.line),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today_outlined,
-                          size: 16,
-                          color: expirado
-                              ? AppColors.danger
-                              : AppColors.ink3),
-                      const SizedBox(width: 8),
-                      Text(expiraLabel,
-                          style: TextStyle(
-                              fontSize: 14,
-                              color: expirado
-                                  ? AppColors.danger
-                                  : AppColors.ink)),
-                      if (expirado) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.danger.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text('expirado',
-                              style: TextStyle(
-                                  fontSize: 9,
-                                  color: AppColors.danger,
-                                  fontWeight: FontWeight.w600)),
-                        ),
-                      ],
-                    ],
+                    onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
               ),
@@ -888,14 +823,11 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Bloquear acesso',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.ink,
-                          ),
-                        ),
+                        const Text('Bloquear acesso',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.ink)),
                         Text(
                           _bloqueado
                               ? 'Login e API bloqueados'
@@ -920,26 +852,557 @@ class _EditClienteDialogState extends ConsumerState<_EditClienteDialog> {
           ),
         ),
       ),
+      actions: _dialogActions(
+        context,
+        loading: _loading,
+        onSalvar: _salvar,
+      ),
+    );
+  }
+}
+
+// ── Dialog: Editar plano ──────────────────────────────────────────────────────
+
+class _EditPlanoDialog extends ConsumerStatefulWidget {
+  const _EditPlanoDialog({required this.grupo, required this.onUpdated});
+  final GrupoAdminItem grupo;
+  final VoidCallback onUpdated;
+
+  @override
+  ConsumerState<_EditPlanoDialog> createState() => _EditPlanoDialogState();
+}
+
+class _EditPlanoDialogState extends ConsumerState<_EditPlanoDialog> {
+  static const _planos = ['Trial', 'Basico', 'Pro', 'Enterprise'];
+
+  late String _plano;
+  late String _ciclo;
+  late DateTime _expiraEm;
+  bool _gerarFatura = false;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _plano = widget.grupo.plano;
+    _ciclo = widget.grupo.ciclo;
+    _expiraEm = widget.grupo.planoExpiraEm;
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _expiraEm.isBefore(DateTime.now()) ? DateTime.now() : _expiraEm,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 3650)),
+    );
+    if (picked != null) setState(() => _expiraEm = picked);
+  }
+
+  void _renovar(int meses) {
+    final base = _expiraEm.isAfter(DateTime.now()) ? _expiraEm : DateTime.now();
+    setState(() => _expiraEm = DateTime(base.year, base.month + meses, base.day));
+  }
+
+  Future<void> _salvar() async {
+    setState(() => _loading = true);
+    try {
+      await ref.read(adminRemoteDataSourceProvider).atualizarPlano(
+            grupoId: widget.grupo.id,
+            plano: _plano,
+            ciclo: _ciclo,
+            expiraEm: _expiraEm,
+            gerarFatura: _gerarFatura,
+          );
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onUpdated();
+        ref.invalidate(assinaturaProvider);
+        GamaSnackBar.success(
+          context,
+          _gerarFatura ? 'Plano atualizado e fatura gerada.' : 'Plano atualizado.',
+        );
+      }
+    } catch (e) {
+      if (mounted) GamaSnackBar.error(context, e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final expiraLabel = '${_expiraEm.day.toString().padLeft(2, '0')}/'
+        '${_expiraEm.month.toString().padLeft(2, '0')}/'
+        '${_expiraEm.year}';
+    final expirado = _expiraEm.isBefore(DateTime.now());
+
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.grupo.nome,
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          const Text('Editar plano',
+              style: TextStyle(fontSize: 12, color: AppColors.ink3)),
+        ],
+      ),
+      content: SizedBox(
+        width: 400,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _DialogLabel('Plano'),
+              const SizedBox(height: 6),
+              _Dropdown(
+                value: _plano,
+                items: _planos,
+                onChanged: (v) => setState(() => _plano = v!),
+              ),
+              const SizedBox(height: 12),
+              const _DialogLabel('Ciclo de cobrança'),
+              const SizedBox(height: 6),
+              _Dropdown(
+                value: _ciclo,
+                items: const ['mensal', 'anual'],
+                labels: const {'mensal': 'Mensal', 'anual': 'Anual'},
+                onChanged: (v) => setState(() => _ciclo = v!),
+              ),
+              const SizedBox(height: 12),
+              const _DialogLabel('Expira em'),
+              const SizedBox(height: 6),
+              InkWell(
+                onTap: _pickDate,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        color: expirado ? AppColors.danger : AppColors.line),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined,
+                          size: 16,
+                          color: expirado ? AppColors.danger : AppColors.ink3),
+                      const SizedBox(width: 8),
+                      Text(expiraLabel,
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: expirado ? AppColors.danger : AppColors.ink)),
+                      if (expirado) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.danger.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text('expirado',
+                              style: TextStyle(
+                                  fontSize: 9,
+                                  color: AppColors.danger,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Botões rápidos de renovação
+              Row(
+                children: [
+                  _RenovarBtn(label: '+1 mês', onTap: () => _renovar(1)),
+                  const SizedBox(width: 6),
+                  _RenovarBtn(label: '+3 meses', onTap: () => _renovar(3)),
+                  const SizedBox(width: 6),
+                  _RenovarBtn(label: '+1 ano', onTap: () => _renovar(12)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              // Checkbox gerar fatura
+              InkWell(
+                onTap: () => setState(() => _gerarFatura = !_gerarFatura),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: Checkbox(
+                          value: _gerarFatura,
+                          onChanged: (v) =>
+                              setState(() => _gerarFatura = v ?? false),
+                          activeColor: AppColors.accent,
+                          side: const BorderSide(color: AppColors.line, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Gerar fatura ao salvar',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.ink)),
+                            Text(
+                              'Registra uma fatura no histórico do cliente',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: _gerarFatura
+                                      ? AppColors.accentDark
+                                      : AppColors.ink3),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: _dialogActions(
+        context,
+        loading: _loading,
+        onSalvar: _salvar,
+      ),
+    );
+  }
+}
+
+// ── Dialog: Faturas ───────────────────────────────────────────────────────────
+
+class _FaturasDialog extends ConsumerWidget {
+  const _FaturasDialog({required this.grupo});
+  final GrupoAdminItem grupo;
+
+  String _fmtBrl(double v) {
+    final parts = v.toStringAsFixed(2).split('.');
+    final intPart = parts[0].replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    return 'R\$ $intPart,${parts[1]}';
+  }
+
+  String _fmtDate(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/'
+      '${d.month.toString().padLeft(2, '0')}/'
+      '${d.year}';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final faturasAsync = ref.watch(_faturasProvider(grupo.id));
+
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(grupo.nome,
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          const Text('Histórico de faturas',
+              style: TextStyle(fontSize: 12, color: AppColors.ink3)),
+        ],
+      ),
+      content: SizedBox(
+        width: 520,
+        child: faturasAsync.when(
+          loading: () => const SizedBox(
+            height: 80,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('Erro: $e',
+                style: const TextStyle(color: AppColors.danger)),
+          ),
+          data: (faturas) {
+            if (faturas.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 32),
+                child: Center(
+                  child: Text(
+                    'Nenhuma fatura registrada.',
+                    style: TextStyle(fontSize: 13, color: AppColors.ink3),
+                  ),
+                ),
+              );
+            }
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  // cabeçalho
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface2,
+                      border: Border(bottom: BorderSide(color: AppColors.line)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Expanded(flex: 3, child: _ColLabel('COMPETÊNCIA')),
+                        Expanded(flex: 2, child: _ColLabel('PLANO')),
+                        Expanded(flex: 2, child: _ColLabel('CICLO')),
+                        Expanded(flex: 2, child: _ColLabel('VALOR')),
+                        SizedBox(width: 80, child: _ColLabel('STATUS')),
+                      ],
+                    ),
+                  ),
+                  for (final f in faturas) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(f.competencia,
+                                    style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.ink)),
+                                Text(_fmtDate(f.emissao),
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.ink3,
+                                        fontFamily: 'JetBrains Mono')),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(f.plano,
+                                style: const TextStyle(
+                                    fontSize: 13, color: AppColors.ink)),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              f.ciclo == 'anual' ? 'Anual' : 'Mensal',
+                              style: const TextStyle(
+                                  fontSize: 13, color: AppColors.ink2),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(_fmtBrl(f.valor),
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.ink)),
+                          ),
+                          SizedBox(
+                            width: 80,
+                            child: _FaturaStatusCell(
+                              fatura: f,
+                              grupoId: grupo.id,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: AppColors.line),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+      ),
       actions: [
         TextButton(
-          onPressed: _loading ? null : () => Navigator.pop(context),
-          child: const Text('Cancelar',
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Fechar',
               style: TextStyle(color: AppColors.ink2)),
         ),
-        FilledButton(
-          onPressed: _loading ? null : _salvar,
-          style: FilledButton.styleFrom(
-              backgroundColor: AppColors.accent),
-          child: _loading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white))
-              : const Text('Salvar',
-                  style: TextStyle(color: Colors.black87)),
-        ),
       ],
+    );
+  }
+}
+
+// ── Status + botão de pagamento ───────────────────────────────────────────────
+
+class _FaturaStatusCell extends ConsumerStatefulWidget {
+  const _FaturaStatusCell({required this.fatura, required this.grupoId});
+  final FaturaAdminItem fatura;
+  final int grupoId;
+
+  @override
+  ConsumerState<_FaturaStatusCell> createState() => _FaturaStatusCellState();
+}
+
+class _FaturaStatusCellState extends ConsumerState<_FaturaStatusCell> {
+  bool _loading = false;
+
+  Future<void> _marcarPago() async {
+    setState(() => _loading = true);
+    try {
+      await ref
+          .read(adminRemoteDataSourceProvider)
+          .marcarFaturaPaga(widget.grupoId, widget.fatura.id);
+      ref.invalidate(_faturasProvider(widget.grupoId));
+    } catch (e) {
+      if (mounted) GamaSnackBar.error(context, e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.fatura.pago) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle_outline,
+              size: 13, color: const Color(0xFF16A34A)),
+          const SizedBox(width: 4),
+          const Text(
+            'Pago',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF16A34A),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return FilledButton(
+      onPressed: _loading ? null : _marcarPago,
+      style: FilledButton.styleFrom(
+        backgroundColor: AppColors.ok,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+      child: _loading
+          ? const SizedBox(
+              width: 10,
+              height: 10,
+              child: CircularProgressIndicator(
+                  strokeWidth: 1.5, color: Colors.white),
+            )
+          : const Text('Marcar pago'),
+    );
+  }
+}
+
+// Provider scoped por grupoId
+final _faturasProvider = FutureProvider.autoDispose
+    .family<List<FaturaAdminItem>, int>((ref, grupoId) async {
+  return ref.read(adminRemoteDataSourceProvider).listarFaturas(grupoId);
+});
+
+// ── Helpers compartilhados ────────────────────────────────────────────────────
+
+List<Widget> _dialogActions(
+  BuildContext context, {
+  required bool loading,
+  required VoidCallback onSalvar,
+}) =>
+    [
+      TextButton(
+        onPressed: loading ? null : () => Navigator.pop(context),
+        child: const Text('Cancelar', style: TextStyle(color: AppColors.ink2)),
+      ),
+      FilledButton(
+        onPressed: loading ? null : onSalvar,
+        style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+        child: loading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white))
+            : const Text('Salvar',
+                style: TextStyle(color: Colors.black87)),
+      ),
+    ];
+
+class _Dropdown extends StatelessWidget {
+  const _Dropdown({
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    this.labels,
+  });
+
+  final String value;
+  final List<String> items;
+  final Map<String, String>? labels;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.line),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButton<String>(
+        value: value,
+        isExpanded: true,
+        underline: const SizedBox.shrink(),
+        items: items
+            .map((v) => DropdownMenuItem(
+                value: v, child: Text(labels?[v] ?? v)))
+            .toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+class _RenovarBtn extends StatelessWidget {
+  const _RenovarBtn({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.accentDark,
+        side: const BorderSide(color: AppColors.accentDark),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+      child: Text(label),
     );
   }
 }
@@ -1064,8 +1527,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
                           : Icons.visibility_off_outlined,
                       size: 18,
                       color: AppColors.ink3),
-                  onPressed: () =>
-                      setState(() => _obscure = !_obscure),
+                  onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
               validator: (v) {
@@ -1090,8 +1552,7 @@ class _RegisterFormState extends ConsumerState<_RegisterForm> {
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.black87))
+                            strokeWidth: 2, color: Colors.black87))
                     : const Text('Criar cliente',
                         style: TextStyle(
                             fontSize: 14,
@@ -1129,8 +1590,7 @@ class _Field extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        border:
-            OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
       validator: validator,
     );
