@@ -116,6 +116,30 @@ O token JWT é persistido com `flutter_secure_storage`. Na próxima abertura do 
 
 | Variável | Padrão | Descrição |
 |---|---|---|
-| `BASE_URL` | `http://10.0.2.2:5000` | URL base da API |
+| `BASE_URL` | `http://localhost:5181` | URL base da API |
 
 Configure via `--dart-define=BASE_URL=valor` no `flutter run`.
+
+---
+
+## Build e release de produção
+
+### Pré-requisitos
+- GitHub CLI instalado e autenticado (`gh auth login`)
+- Keystore em `android/gama-release.jks` + `android/key.properties` configurado
+
+### Subir nova versão
+
+1. Atualize a versão em `pubspec.yaml`:
+   ```
+   version: X.Y.Z+N   # ex: 1.0.3+4
+   ```
+   Sempre incremente os dois valores — `X.Y.Z` é o que o usuário vê, `+N` é o build number interno do Android.
+
+2. Rode o script de build e publicação:
+   ```bash
+   ./build_prod.sh
+   ```
+   O script builda o APK com a URL de produção, cria a release no GitHub (`queirozsnr/gama-app`) e faz o upload automático do APK.
+
+3. O app detecta a nova versão automaticamente ao abrir e exibe o dialog de atualização para os usuários.
