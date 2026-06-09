@@ -7,7 +7,7 @@ TAG="v$VERSION"
 APK="build/app/outputs/flutter-apk/app-release.apk"
 
 echo "==> Buildando versão $VERSION..."
-flutter build apk --release --dart-define=BASE_URL=http://147.15.59.213
+flutter build apk --release --dart-define=BASE_URL=http://147.15.59.213/api
 
 echo ""
 echo "==> Criando release $TAG no GitHub..."
