@@ -20,6 +20,7 @@ class _UpdateDialog extends StatefulWidget {
 
 class _UpdateDialogState extends State<_UpdateDialog> {
   double? _progress; // null = não iniciou, 0..1 = baixando, 1.0 = concluído
+  String? _apkPath;
 
   @override
   Widget build(BuildContext context) {
@@ -162,9 +163,12 @@ class _UpdateDialogState extends State<_UpdateDialog> {
           ),
         ] else if (done) ...[
           FilledButton.icon(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              if (_apkPath != null) await UpdateService.install(_apkPath!);
+            },
             icon: const Icon(Icons.install_mobile_outlined, size: 16),
-            label: const Text('Fechar'),
+            label: const Text('Instalar'),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.accent,
               foregroundColor: Colors.white,
@@ -180,11 +184,11 @@ class _UpdateDialogState extends State<_UpdateDialog> {
   Future<void> _iniciarDownload() async {
     setState(() => _progress = 0.0);
     try {
-      await UpdateService.downloadAndInstall(
+      final path = await UpdateService.download(
         widget.info,
         onProgress: (p) => setState(() => _progress = p),
       );
-      setState(() => _progress = 1.0);
+      setState(() { _progress = 1.0; _apkPath = path; });
     } catch (_) {
       if (mounted) {
         setState(() => _progress = null);

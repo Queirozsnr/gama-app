@@ -58,7 +58,7 @@ class UpdateService {
     }
   }
 
-  static Future<void> downloadAndInstall(
+  static Future<String> download(
     UpdateInfo info, {
     required void Function(double progress) onProgress,
   }) async {
@@ -74,6 +74,10 @@ class UpdateService {
       },
     );
 
+    return apkPath;
+  }
+
+  static Future<void> install(String apkPath) async {
     await OpenFile.open(apkPath, type: 'application/vnd.android.package-archive');
   }
 
