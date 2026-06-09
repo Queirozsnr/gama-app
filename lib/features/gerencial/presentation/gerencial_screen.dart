@@ -459,24 +459,25 @@ class _KpiRow extends StatelessWidget {
       _KpiCard(
         label: 'RECEITA BRUTA',
         value: _fmtK(d.receitaBruta),
-        delta: _fmtDelta(d.receitaBrutaDeltaPct),
+        delta: d.receitaBruta == 0 ? null : _fmtDelta(d.receitaBrutaDeltaPct),
         deltaPositive: d.receitaBrutaDeltaPct >= 0,
         sub: 'Ticket médio ${_fmtK(d.ticketMedio)}',
       ),
       _KpiCard(
         label: 'LUCRO LÍQUIDO',
         value: _fmtK(d.lucroLiquido),
-        delta: _fmtDelta(d.lucroDeltaPp, pp: true),
+        delta: d.receitaBruta == 0 ? null : _fmtDelta(d.lucroDeltaPp, pp: true),
         deltaPositive: d.lucroDeltaPp >= 0,
         sub: 'Margem ${d.margemLucro.toStringAsFixed(1)}%',
       ),
       _KpiCard(
         label: 'OS NO PERÍODO',
         value: d.totalOs.toString(),
-        delta: _fmtDelta(d.totalOsDelta.toDouble()),
+        delta: d.totalOsDelta == 0
+            ? null
+            : '${d.totalOsDelta > 0 ? '+' : ''}${d.totalOsDelta}',
         deltaPositive: d.totalOsDelta >= 0,
         sub: 'vs período anterior',
-        deltaIsAbs: true,
       ),
       _KpiCard(
         label: 'EQUIPE ATIVA',
@@ -537,7 +538,6 @@ class _KpiCard extends StatelessWidget {
     required this.value,
     this.delta,
     this.deltaPositive = true,
-    this.deltaIsAbs = false,
     this.sub,
     this.showBar = false,
     this.barValue = 0.0,
@@ -547,7 +547,6 @@ class _KpiCard extends StatelessWidget {
   final String value;
   final String? delta;
   final bool deltaPositive;
-  final bool deltaIsAbs;
   final String? sub;
   final bool showBar;
   final double barValue;
