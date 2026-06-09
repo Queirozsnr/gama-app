@@ -12,7 +12,7 @@ flutter build apk --release --dart-define=BASE_URL=http://147.15.59.213
 echo ""
 echo "==> Criando release $TAG no GitHub..."
 gh release create "$TAG" "$APK" \
-  --repo queirozsnr/gama \
+  --repo queirozsnr/gama-app \
   --title "GAMA $TAG" \
   --notes "Release $TAG"
 

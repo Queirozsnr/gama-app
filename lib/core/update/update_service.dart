@@ -5,7 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
 // Repositório GitHub no formato "owner/repo"
-const _kGithubRepo = 'queirozsnr/gama'; // ajuste se necessário
+const _kGithubRepo = 'queirozsnr/gama-app';
 
 class UpdateInfo {
   const UpdateInfo({
