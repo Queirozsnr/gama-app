@@ -3,8 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:open_file/open_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-// Repositório GitHub no formato "owner/repo"
 const _kGithubRepo = 'queirozsnr/gama-app';
 
 class UpdateInfo {
@@ -58,23 +58,45 @@ class UpdateService {
     }
   }
 
+  static Future<String> _apkPath(String version) async {
+    final dir = await getTemporaryDirectory();
+    return '${dir.path}/gama_update_$version.apk';
+  }
+
+  /// Retorna o caminho se o APK desta versão já foi baixado.
+  static Future<String?> cachedApk(String version) async {
+    final path = await _apkPath(version);
+    final file = File(path);
+    return (await file.exists()) ? path : null;
+  }
+
   static Future<String> download(
     UpdateInfo info, {
     required void Function(double progress) onProgress,
+    CancelToken? cancelToken,
   }) async {
-    final dir = await getTemporaryDirectory();
-    final apkPath = '${dir.path}/gama_update.apk';
+    final path = await _apkPath(info.version);
 
     final dio = Dio();
     await dio.download(
       info.downloadUrl,
-      apkPath,
+      path,
+      cancelToken: cancelToken,
       onReceiveProgress: (received, total) {
         if (total > 0) onProgress(received / total);
       },
     );
 
-    return apkPath;
+    return path;
+  }
+
+  static Future<bool> hasInstallPermission() async {
+    if (!Platform.isAndroid) return true;
+    return Permission.requestInstallPackages.isGranted;
+  }
+
+  static Future<void> openInstallSettings() async {
+    await openAppSettings();
   }
 
   static Future<void> install(String apkPath) async {
