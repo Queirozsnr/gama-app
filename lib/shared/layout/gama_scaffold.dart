@@ -37,6 +37,7 @@ class GamaScaffold extends ConsumerStatefulWidget {
 
 class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool? _sidebarCollapsed; // null = segue breakpoint automático
 
   // One notifier per branch — screens in inactive branches push to their own
   // notifier and don't bleed into the active branch's topbar.
@@ -120,7 +121,10 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
       }
     });
 
-    final isDesktop = MediaQuery.of(context).size.width >= 800;
+    final width = MediaQuery.of(context).size.width;
+    final isDesktop = width >= 800;
+    final autoCollapsed = isDesktop && width < 1100;
+    final sidebarCollapsed = _sidebarCollapsed ?? autoCollapsed;
 
     // Banner proativo: uma request por sessão, refresh automático a cada 2 min
     // enquanto o banner estiver visível (para sumir sozinho após renovação).
@@ -152,7 +156,15 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
             notifier: _activeNotifier,
             child: Row(
               children: [
-                const SizedBox(width: 260, child: GamaSidebar()),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  width: sidebarCollapsed ? 64 : 260,
+                  child: GamaSidebar(
+                    collapsed: sidebarCollapsed,
+                    onToggle: () => setState(() => _sidebarCollapsed = !sidebarCollapsed),
+                  ),
+                ),
                 Expanded(
                   child: Column(
                     children: [

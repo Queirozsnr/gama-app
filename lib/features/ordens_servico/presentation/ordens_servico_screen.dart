@@ -272,12 +272,12 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _MobileDarkStats(lista: lista, periodo: _periodo),
               if (_searchOpen)
                 _MobileSearchRow(
                   controller: _buscaCtrl,
                   onChanged: (v) => setState(() => _busca = v.toLowerCase()),
                 ),
+              _MobileDarkStats(lista: lista, periodo: _periodo),
               _PeriodBar(periodo: _periodo, onChanged: _setPeriodo),
               filtersBar,
               Expanded(

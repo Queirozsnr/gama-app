@@ -71,21 +71,10 @@ class _EstoqueScreenState extends ConsumerState<EstoqueScreen>
       onSearchChanged: isMobile ? null : (v) => _aplicarFiltro(busca: v),
       action: isMobile
           ? null
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.upload_outlined, size: 16),
-                  label: const Text('Importar planilha'),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: _abrirNovoProduto,
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Nova entrada'),
-                ),
-              ],
+          : FilledButton.icon(
+              onPressed: _abrirNovoProduto,
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('Nova entrada'),
             ),
       mobileAction: IconButton(
         onPressed: _toggleSearch,
@@ -296,11 +285,12 @@ class _EstoqueScreenState extends ConsumerState<EstoqueScreen>
         children: [
           if (_searchOpen)
             Container(
-              color: AppColors.surface,
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              color: AppColors.sidebarBg,
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
               child: _MobileSearchField(
                 controller: _searchController,
                 onChanged: (v) => _aplicarFiltro(busca: v),
+                dark: true,
               ),
             ),
           Expanded(
@@ -963,32 +953,38 @@ class _DesktopProdutoRow extends StatelessWidget {
 // ─── Mobile: search field ─────────────────────────────────────────────────────
 
 class _MobileSearchField extends StatelessWidget {
-  const _MobileSearchField({this.controller, this.onChanged});
+  const _MobileSearchField({this.controller, this.onChanged, this.dark = false});
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
+    final bg = dark ? AppColors.sidebarLine : AppColors.surface2;
+    final border = dark ? Colors.transparent : AppColors.line;
+    final textColor = dark ? Colors.white : AppColors.ink;
+    final hintColor = dark ? AppColors.sidebarText : AppColors.ink3;
+
     return Container(
       height: 40,
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: bg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: border),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          const Icon(Icons.search, size: 17, color: AppColors.ink3),
+          Icon(Icons.search, size: 17, color: hintColor),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: const TextStyle(fontSize: 13, color: AppColors.ink),
-              decoration: const InputDecoration(
+              style: TextStyle(fontSize: 13, color: textColor),
+              decoration: InputDecoration(
                 hintText: 'Buscar por nome, código…',
-                hintStyle: TextStyle(fontSize: 13, color: AppColors.ink3),
+                hintStyle: TextStyle(fontSize: 13, color: hintColor),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,

@@ -10,9 +10,10 @@ import '../widgets/gama_avatar.dart';
 import '../widgets/gama_snack_bar.dart';
 
 class GamaSidebar extends ConsumerWidget {
-  const GamaSidebar({super.key, this.collapsed = false});
+  const GamaSidebar({super.key, this.collapsed = false, this.onToggle});
 
   final bool collapsed;
+  final VoidCallback? onToggle;
 
   static List<_NavSection> _buildSections(bool isGestor) => [
     const _NavSection('Principal', [
@@ -72,7 +73,7 @@ class GamaSidebar extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Logo(collapsed: collapsed),
+          _Logo(collapsed: collapsed, onToggle: onToggle),
           _GroupCard(
             initials: groupInitials,
             name: groupName,
@@ -171,8 +172,9 @@ class GamaSidebar extends ConsumerWidget {
 }
 
 class _Logo extends StatelessWidget {
-  const _Logo({required this.collapsed});
+  const _Logo({required this.collapsed, this.onToggle});
   final bool collapsed;
+  final VoidCallback? onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -185,40 +187,52 @@ class _Logo extends StatelessWidget {
       ),
       child: collapsed
           ? Center(
-              child: Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'G',
-                  style: TextStyle(fontFamily: 'Inter', 
-                    color: const Color(0xFF1A1714),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: onToggle,
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'G',
+                      style: TextStyle(fontFamily: 'Inter',
+                        color: Color(0xFF1A1714),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                    ),
                   ),
                 ),
               ),
             )
           : Row(
               children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'G',
-                    style: TextStyle(fontFamily: 'Inter', 
-                      color: const Color(0xFF1A1714),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: onToggle,
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'G',
+                        style: TextStyle(fontFamily: 'Inter',
+                          color: Color(0xFF1A1714),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -703,9 +717,65 @@ class _SidebarNavItem extends StatelessWidget {
     );
 
     if (collapsed) {
-      return Tooltip(message: item.label, preferBelow: false, child: tile);
+      return _CollapsedHoverLabel(label: item.label, child: tile);
     }
     return tile;
+  }
+}
+
+class _CollapsedHoverLabel extends StatefulWidget {
+  const _CollapsedHoverLabel({required this.label, required this.child});
+  final String label;
+  final Widget child;
+
+  @override
+  State<_CollapsedHoverLabel> createState() => _CollapsedHoverLabelState();
+}
+
+class _CollapsedHoverLabelState extends State<_CollapsedHoverLabel> {
+  final _controller = OverlayPortalController();
+  final _link = LayerLink();
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _link,
+      child: MouseRegion(
+        onEnter: (_) => _controller.show(),
+        onExit: (_) => _controller.hide(),
+        child: OverlayPortal(
+          controller: _controller,
+          overlayChildBuilder: (_) => CompositedTransformFollower(
+            link: _link,
+            targetAnchor: Alignment.centerRight,
+            followerAnchor: Alignment.centerLeft,
+            offset: const Offset(6, 0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.sidebarBg,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.sidebarLine),
+                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(2, 0))],
+                ),
+                child: Text(
+                  widget.label,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.sidebarText,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          child: widget.child,
+        ),
+      ),
+    );
   }
 }
 

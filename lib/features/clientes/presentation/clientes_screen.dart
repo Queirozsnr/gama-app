@@ -265,13 +265,13 @@ class _ClientesScreenState extends ConsumerState<ClientesScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _ClienteDarkArea(lista: todos),
               if (_searchOpen)
                 _MobileSearchRow(
                   controller: _searchController,
                   hint: 'Buscar nome, telefone, placa…',
                   onChanged: _onSearch,
                 ),
+              _ClienteDarkArea(lista: todos),
               _FiltroTabs(
                 filtro: _filtro,
                 lista: todos,

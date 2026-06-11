@@ -123,10 +123,18 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
     super.didChangeDependencies();
     setTopBarSlot(TopBarSlot(
       pageTitle: 'Assinatura',
+      mobileStyle: MobileTopBarStyle.dark,
       action: OutlinedButton.icon(
         onPressed: () => showSuporteModal(context),
         icon: const Icon(Icons.headset_mic_outlined, size: 16),
         label: const Text('Falar com suporte'),
+      ),
+      mobileAction: IconButton(
+        onPressed: () => showSuporteModal(context),
+        icon: const Icon(Icons.headset_mic_outlined, size: 20, color: Colors.white),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        tooltip: 'Falar com suporte',
       ),
     ));
   }

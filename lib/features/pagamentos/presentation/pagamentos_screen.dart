@@ -113,25 +113,10 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
       searchController: isDesktop ? _searchController : null,
       searchHint: isDesktop ? 'Buscar funcionário…' : null,
       onSearchChanged: isDesktop ? (v) => setState(() => _query = v.toLowerCase()) : null,
-      action: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          OutlinedButton.icon(
-            onPressed: () => GamaSnackBar.info(context, 'Exportação será implementada em breve.'),
-            icon: const Icon(Icons.download_outlined, size: 16),
-            label: const Text('Exportar folha'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Colors.white30),
-            ),
-          ),
-          const SizedBox(width: 10),
-          FilledButton.icon(
-            onPressed: () => GamaSnackBar.info(context, 'Pagamento em lote será implementado em breve.'),
-            icon: const Icon(Icons.payments_outlined, size: 16),
-            label: const Text('Pagar todos'),
-          ),
-        ],
+      action: OutlinedButton.icon(
+        onPressed: () => GamaSnackBar.info(context, 'Exportação será implementada em breve.'),
+        icon: const Icon(Icons.download_outlined, size: 16),
+        label: const Text('Exportar folha'),
       ),
       mobileAction: IconButton(
         onPressed: _toggleSearch,
@@ -486,18 +471,18 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
 
     return Column(
       children: [
-        _PagamentoDarkArea(
-          totalAPagar: totalAPagar,
-          totalComissoes: totalComissoes,
-          totalSalarios: totalSalarios,
-          gerenteValor: gerente?.valorAcumulado ?? 0,
-        ),
         if (_searchOpen)
           _MobileSearchRow(
             controller: _searchController,
             hint: 'Buscar funcionário…',
             onChanged: (v) => setState(() => _query = v.toLowerCase()),
           ),
+        _PagamentoDarkArea(
+          totalAPagar: totalAPagar,
+          totalComissoes: totalComissoes,
+          totalSalarios: totalSalarios,
+          gerenteValor: gerente?.valorAcumulado ?? 0,
+        ),
         _MobileFiltroBar(
           tabLabels: tabLabels,
           selectedIndex: _filtroIdx,
