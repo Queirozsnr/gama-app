@@ -87,9 +87,16 @@ class OsDetalheScreen extends ConsumerStatefulWidget {
 }
 
 class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
-    with TopBarSlotMixin<OsDetalheScreen> {
+    with TopBarSlotMixin<OsDetalheScreen>, TickerProviderStateMixin {
   bool _actionLoading = false;
   bool _menuAberto = false;
+  late final TabController _mobileTabController = TabController(length: 3, vsync: this);
+
+  @override
+  void dispose() {
+    _mobileTabController.dispose();
+    super.dispose();
+  }
 
   String? _primaryActionLabel(String status) {
     switch (status) {
@@ -116,6 +123,11 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
   }
 
   Future<void> _alterarStatusDireto(OrdemServicoDetalhe os, String novoStatus) async {
+    if (novoStatus == 'Entregue' && os.formaPagamento == null) {
+      GamaSnackBar.error(context, 'Registre o pagamento antes de marcar como Entregue.');
+      _mobileTabController.animateTo(1);
+      return;
+    }
     setState(() => _actionLoading = true);
     try {
       await ref.read(ordensServicoRemoteDataSourceProvider).alterarStatus(os.id, novoStatus);
@@ -222,6 +234,11 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
       ),
     );
     if (escolhido == null || !mounted) return;
+    if (escolhido == 'Entregue' && os.formaPagamento == null) {
+      GamaSnackBar.error(context, 'Registre o pagamento antes de marcar como Entregue.');
+      _mobileTabController.animateTo(1);
+      return;
+    }
 
     setState(() => _actionLoading = true);
     try {
@@ -237,6 +254,15 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
   }
 
   Future<void> _ingressar(int osId) async {
+    final ok = await GamaConfirmDialog.show(
+      context,
+      title: 'Ingressar na OS',
+      message: 'Tem certeza que deseja entrar nesta Ordem de Serviço?',
+      confirmLabel: 'Ingressar',
+      confirmColor: AppColors.accent,
+    );
+    if (!ok || !mounted) return;
+
     setState(() => _actionLoading = true);
     try {
       await ref.read(ordensServicoRemoteDataSourceProvider).ingressar(osId);
@@ -244,6 +270,26 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
       if (mounted) GamaSnackBar.success(context, 'Você ingressou na OS.');
     } catch (e) {
       if (mounted) GamaSnackBar.error(context, _dioError(e, 'Erro ao ingressar na OS.'));
+    } finally {
+      if (mounted) setState(() => _actionLoading = false);
+    }
+  }
+
+  Future<void> _registrarPagamento(OrdemServicoDetalhe os) async {
+    final total = os.total - os.totalDescontos;
+    final forma = await showDialog<String>(
+      context: context,
+      builder: (_) => _PagamentoFormDialog(total: total),
+    );
+    if (forma == null || !mounted) return;
+    setState(() => _actionLoading = true);
+    try {
+      await ref.read(ordensServicoRemoteDataSourceProvider).atualizar(os.id, {'formaPagamento': forma});
+      ref.invalidate(osDetalheProvider(widget.osId));
+      ref.invalidate(ordensServicoNotifierProvider);
+      if (mounted) GamaSnackBar.success(context, 'Pagamento registrado: ${_formasPagamentoLabels[forma] ?? forma}.');
+    } catch (e) {
+      if (mounted) GamaSnackBar.error(context, _dioError(e, 'Erro ao registrar pagamento.'));
     } finally {
       if (mounted) setState(() => _actionLoading = false);
     }
@@ -556,6 +602,12 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
         os: os,
         actionLoading: _actionLoading,
         podeEditar: os.status != 'Entregue',
+        mobileTabController: _mobileTabController,
+        primaryActionLabel: _primaryActionLabel(os.status),
+        onPrimaryAction: () {
+          final target = _primaryActionTarget(os.status);
+          if (target != null) _alterarStatusDireto(os, target);
+        },
         onAlterarStatus: () => _alterarStatus(os),
         onIngressar: () => _ingressar(os.id),
         onAdicionarMecanico: () => _adicionarMecanico(os.id),
@@ -565,6 +617,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
         onRemoverItem: (item) => _removerItem(os.id, item),
         onAdicionarDesconto: () => _adicionarDesconto(os.id),
         onRemoverDesconto: (d) => _removerDesconto(os.id, d),
+        onRegistrarPagamento: () => _registrarPagamento(os),
         onEditarConclusao: () => _editarConclusao(os),
         onExcluir: () => _excluir(os),
         onAdicionarMidia: (bytes, name) => _adicionarMidia(os.id, bytes, name),
@@ -582,6 +635,9 @@ class _Body extends ConsumerWidget {
     required this.os,
     required this.actionLoading,
     required this.podeEditar,
+    required this.mobileTabController,
+    required this.primaryActionLabel,
+    required this.onPrimaryAction,
     required this.onAlterarStatus,
     required this.onIngressar,
     required this.onAdicionarMecanico,
@@ -591,6 +647,7 @@ class _Body extends ConsumerWidget {
     required this.onRemoverItem,
     required this.onAdicionarDesconto,
     required this.onRemoverDesconto,
+    required this.onRegistrarPagamento,
     required this.onEditarConclusao,
     required this.onExcluir,
     required this.onAdicionarMidia,
@@ -601,6 +658,9 @@ class _Body extends ConsumerWidget {
   final OrdemServicoDetalhe os;
   final bool actionLoading;
   final bool podeEditar;
+  final TabController mobileTabController;
+  final String? primaryActionLabel;
+  final VoidCallback onPrimaryAction;
   final VoidCallback onAlterarStatus;
   final VoidCallback onIngressar;
   final VoidCallback onAdicionarMecanico;
@@ -610,6 +670,7 @@ class _Body extends ConsumerWidget {
   final void Function(ItemOs) onRemoverItem;
   final VoidCallback onAdicionarDesconto;
   final void Function(DescontoOs) onRemoverDesconto;
+  final VoidCallback onRegistrarPagamento;
   final VoidCallback onEditarConclusao;
   final VoidCallback onExcluir;
   final Future<void> Function(Uint8List bytes, String filename) onAdicionarMidia;
@@ -796,6 +857,7 @@ class _Body extends ConsumerWidget {
                   podeEditar: podeEditar,
                   onAdicionarDesconto: onAdicionarDesconto,
                   onRemoverDesconto: onRemoverDesconto,
+                  onRegistrarPagamento: onRegistrarPagamento,
                 ),
                 const SizedBox(height: 12),
 
@@ -833,9 +895,7 @@ class _Body extends ConsumerWidget {
     final pecas    = os.itens.where((i) =>  i.isPeca).toList();
     final totalFinal = os.total - os.totalDescontos;
 
-    return DefaultTabController(
-      length: 3,
-      child: Column(
+    return Column(
         children: [
           // ── Status bar ────────────────────────────────────────────────
           Container(
@@ -866,6 +926,7 @@ class _Body extends ConsumerWidget {
           Container(
             color: AppColors.surface,
             child: TabBar(
+              controller: mobileTabController,
               labelColor: AppColors.accent,
               unselectedLabelColor: AppColors.ink2,
               indicatorColor: AppColors.accent,
@@ -883,6 +944,7 @@ class _Body extends ConsumerWidget {
           // ── Tab views ─────────────────────────────────────────────────
           Expanded(
             child: TabBarView(
+              controller: mobileTabController,
               children: [
                 // Resumo
                 _ResumoTab(
@@ -908,6 +970,7 @@ class _Body extends ConsumerWidget {
                   onRemoverItem: onRemoverItem,
                   onAdicionarDesconto: onAdicionarDesconto,
                   onRemoverDesconto: onRemoverDesconto,
+                  onRegistrarPagamento: onRegistrarPagamento,
                 ),
                 // Histórico
                 _HistoricoTab(outrasOs: outrasOs),
@@ -945,7 +1008,7 @@ class _Body extends ConsumerWidget {
                   const Spacer(),
                   if (proximos.isNotEmpty)
                     FilledButton(
-                      onPressed: actionLoading ? null : onAlterarStatus,
+                      onPressed: actionLoading ? null : (primaryActionLabel != null ? onPrimaryAction : onAlterarStatus),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.accent,
                         foregroundColor: AppColors.sidebarBg,
@@ -954,7 +1017,7 @@ class _Body extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
                       ),
                       child: Text(
-                        'Alterar status',
+                        primaryActionLabel ?? 'Alterar status',
                         style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -963,8 +1026,7 @@ class _Body extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 }
 
@@ -1125,6 +1187,7 @@ class _PecasTab extends StatelessWidget {
     required this.onRemoverItem,
     required this.onAdicionarDesconto,
     required this.onRemoverDesconto,
+    required this.onRegistrarPagamento,
   });
 
   final OrdemServicoDetalhe os;
@@ -1134,6 +1197,7 @@ class _PecasTab extends StatelessWidget {
   final void Function(ItemOs) onRemoverItem;
   final VoidCallback onAdicionarDesconto;
   final void Function(DescontoOs) onRemoverDesconto;
+  final VoidCallback onRegistrarPagamento;
 
   @override
   Widget build(BuildContext context) {
@@ -1186,6 +1250,52 @@ class _PecasTab extends StatelessWidget {
                 const SizedBox(height: 6),
               ],
               _TotalRow('Total', os.total - os.totalDescontos, bold: true),
+              const SizedBox(height: 14),
+              if (os.formaPagamento == null && podeEditar)
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: onRegistrarPagamento,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.okSoft,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.ok.withValues(alpha: 0.4)),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle_outline, size: 15, color: AppColors.ok),
+                          SizedBox(width: 7),
+                          Text('Registrar pagamento',
+                              style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ok)),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else if (os.formaPagamento != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.okSoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_circle, size: 14, color: AppColors.ok),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Pago · ${_formasPagamentoLabels[os.formaPagamento] ?? os.formaPagamento!}',
+                        style: const TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ok),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -1666,11 +1776,13 @@ class _ResumoFinanceiroCard extends StatelessWidget {
     required this.podeEditar,
     required this.onAdicionarDesconto,
     required this.onRemoverDesconto,
+    required this.onRegistrarPagamento,
   });
   final OrdemServicoDetalhe os;
   final bool podeEditar;
   final VoidCallback onAdicionarDesconto;
   final void Function(DescontoOs) onRemoverDesconto;
+  final VoidCallback onRegistrarPagamento;
 
   @override
   Widget build(BuildContext context) {
@@ -1687,10 +1799,13 @@ class _ResumoFinanceiroCard extends StatelessWidget {
                   style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
               const Spacer(),
               if (podeEditar)
-                GestureDetector(
-                  onTap: onAdicionarDesconto,
-                  child: Text('+ Desconto',
-                      style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600)),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: onAdicionarDesconto,
+                    child: Text('+ Desconto',
+                        style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600)),
+                  ),
                 ),
             ],
           ),
@@ -1721,17 +1836,55 @@ class _ResumoFinanceiroCard extends StatelessWidget {
               ),
             ],
           ),
-          if (pagamentoPendente) ...[
-            const SizedBox(height: 6),
-            Text('PAGAMENTO PENDENTE',
-                style: TextStyle(fontFamily: 'Inter', 
-                    fontSize: 10, fontWeight: FontWeight.w700,
-                    color: AppColors.ink3, letterSpacing: 0.5)),
-          ] else if (os.formaPagamento != null) ...[
-            const SizedBox(height: 6),
-            Text(_formasPagamentoLabels[os.formaPagamento] ?? os.formaPagamento!,
-                style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.ink2)),
-          ],
+          const SizedBox(height: 12),
+          if (pagamentoPendente && podeEditar)
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onRegistrarPagamento,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  decoration: BoxDecoration(
+                    color: AppColors.okSoft,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.ok.withValues(alpha: 0.4)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle_outline, size: 15, color: AppColors.ok),
+                      SizedBox(width: 7),
+                      Text('Registrar pagamento',
+                          style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ok)),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (pagamentoPendente)
+            const Text('PAGAMENTO PENDENTE',
+                style: TextStyle(fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.ink3, letterSpacing: 0.5))
+          else if (os.formaPagamento != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.okSoft,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_circle, size: 14, color: AppColors.ok),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Pago · ${_formasPagamentoLabels[os.formaPagamento] ?? os.formaPagamento!}',
+                    style: const TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ok),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -1968,16 +2121,22 @@ class _ResponsavelCard extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      GestureDetector(
-                        onTap: onIngressar,
-                        child: Text('Ingressar',
-                            style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600)),
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: onIngressar,
+                          child: Text('Ingressar',
+                              style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600)),
+                        ),
                       ),
                       const SizedBox(width: 10),
-                      GestureDetector(
-                        onTap: onAdicionarMecanico,
-                        child: Text('+ Adicionar',
-                            style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600)),
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: onAdicionarMecanico,
+                          child: Text('+ Adicionar',
+                              style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600)),
+                        ),
                       ),
                     ],
                   ),
@@ -2073,13 +2232,16 @@ class _HeaderBtn extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => TextButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 15),
-        label: Text(label, style: const TextStyle(fontSize: 13)),
-        style: TextButton.styleFrom(
-            foregroundColor: AppColors.accent,
-            padding: const EdgeInsets.symmetric(horizontal: 6)),
+  Widget build(BuildContext context) => MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: TextButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 15),
+          label: Text(label, style: const TextStyle(fontSize: 13)),
+          style: TextButton.styleFrom(
+              foregroundColor: AppColors.accent,
+              padding: const EdgeInsets.symmetric(horizontal: 6)),
+        ),
       );
 }
 
@@ -3295,3 +3457,129 @@ class _ItemFormDialogState extends ConsumerState<_ItemFormDialog> {
     );
   }
 }
+
+// ── Pagamento: dialog de seleção de forma ─────────────────────────────────────
+
+const _formasPagamentoIcones = <(String, IconData)>[
+  ('Dinheiro',      Icons.payments_outlined),
+  ('Pix',           Icons.qr_code_2_outlined),
+  ('CartaoDebito',  Icons.credit_card_outlined),
+  ('CartaoCredito', Icons.credit_score_outlined),
+  ('Transferencia', Icons.account_balance_outlined),
+  ('Outro',         Icons.more_horiz),
+];
+
+class _PagamentoFormDialog extends StatefulWidget {
+  const _PagamentoFormDialog({required this.total});
+  final double total;
+
+  @override
+  State<_PagamentoFormDialog> createState() => _PagamentoFormDialogState();
+}
+
+class _PagamentoFormDialogState extends State<_PagamentoFormDialog> {
+  String? _selecionado;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+      contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Registrar pagamento',
+              style: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          const SizedBox(height: 2),
+          Text(
+            'Total: R\$ ${widget.total.toStringAsFixed(2).replaceAll('.', ',')}',
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.ok, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: 340,
+        child: GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.15,
+          children: [
+            for (final (label, icon) in _formasPagamentoIcones)
+              _FormaCard(
+                label: label,
+                icon: icon,
+                selected: _selecionado == label,
+                onTap: () => setState(() => _selecionado = label),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: _selecionado == null ? null : () => Navigator.pop(context, _selecionado),
+          style: FilledButton.styleFrom(backgroundColor: AppColors.ok),
+          child: const Text('Confirmar'),
+        ),
+      ],
+    );
+  }
+}
+
+class _FormaCard extends StatelessWidget {
+  const _FormaCard({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.okSoft : AppColors.surface2,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: selected ? AppColors.ok : AppColors.line,
+                width: selected ? 1.5 : 1,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 22, color: selected ? AppColors.ok : AppColors.ink2),
+                const SizedBox(height: 5),
+                Text(
+                  _formasPagamentoLabels[label] ?? label,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 10,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected ? AppColors.ok : AppColors.ink2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
