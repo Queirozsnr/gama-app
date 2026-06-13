@@ -150,7 +150,7 @@ class _Content extends StatelessWidget {
                 label: 'Nova oficina',
                 icon: Icons.add,
                 isFullWidth: false,
-                onPressed: onAdd,
+                onPressed: canAdd ? onAdd : () => GamaSnackBar.error(context, 'Seu plano não permite adicionar mais oficinas. Faça upgrade para continuar.'),
               ),
             ],
           ),
@@ -160,14 +160,18 @@ class _Content extends StatelessWidget {
           if (oficinas.isEmpty)
             _EmptyState(onAdd: onAdd)
           else
-            ...oficinas.map((o) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _OficinaCard(
-                    oficina: o,
-                    onEdit: () => onEdit(o),
-                    onDelete: () => onDelete(o),
-                  ),
-                )),
+            ...() {
+              final idPrincipal = oficinas.map((o) => o.id).reduce((a, b) => a < b ? a : b);
+              return oficinas.map((o) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _OficinaCard(
+                      oficina: o,
+                      isPrincipal: o.id == idPrincipal,
+                      onEdit: () => onEdit(o),
+                      onDelete: () => onDelete(o),
+                    ),
+                  ));
+            }(),
         ],
       ),
     );
@@ -175,8 +179,9 @@ class _Content extends StatelessWidget {
 }
 
 class _OficinaCard extends StatefulWidget {
-  const _OficinaCard({required this.oficina, required this.onEdit, required this.onDelete});
+  const _OficinaCard({required this.oficina, required this.isPrincipal, required this.onEdit, required this.onDelete});
   final OficinaModel oficina;
+  final bool isPrincipal;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -286,13 +291,15 @@ class _OficinaCardState extends State<_OficinaCard> {
                     tooltip: 'Editar',
                     onTap: widget.onEdit,
                   ),
-                  const SizedBox(width: 4),
-                  _ActionButton(
-                    icon: Icons.delete_outline,
-                    color: AppColors.error,
-                    tooltip: 'Excluir',
-                    onTap: widget.onDelete,
-                  ),
+                  if (!widget.isPrincipal) ...[
+                    const SizedBox(width: 4),
+                    _ActionButton(
+                      icon: Icons.delete_outline,
+                      color: AppColors.error,
+                      tooltip: 'Excluir',
+                      onTap: widget.onDelete,
+                    ),
+                  ],
                 ],
               ),
             ),

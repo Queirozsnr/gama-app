@@ -29,6 +29,9 @@ class GamaBottomNav extends ConsumerWidget {
     _Item('Configurações', Icons.settings_outlined,          '/configuracoes-oficina'),
   ];
 
+  static const _gerenciarOficinasRoute =
+      _Item('Gerenciar Oficinas', Icons.store_outlined, '/gerenciar-oficinas');
+
   static const _adminRoute = _Item('Admin', Icons.shield_outlined, '/admin');
 
   @override
@@ -37,6 +40,7 @@ class GamaBottomNav extends ConsumerWidget {
     final token = ref.watch(authNotifierProvider).valueOrNull?.token ?? '';
     final adminMode = token.isNotEmpty && JwtDecoder.isAdmin(token);
     final isGestor = token.isNotEmpty && JwtDecoder.isGestor(token);
+    final podeGerenciarOficinas = token.isNotEmpty && JwtDecoder.permissaoGerenciarOficinas(token);
     final maisActive = currentIndex == 4;
 
     return Container(
@@ -67,7 +71,7 @@ class GamaBottomNav extends ConsumerWidget {
                   label: 'Mais',
                   icon: Icons.menu_outlined,
                   isActive: maisActive,
-                  onTap: () => _showMais(context, adminMode, isGestor),
+                  onTap: () => _showMais(context, adminMode, isGestor, podeGerenciarOficinas),
                 ),
               ),
             ],
@@ -77,12 +81,13 @@ class GamaBottomNav extends ConsumerWidget {
     );
   }
 
-  void _showMais(BuildContext context, bool adminMode, bool isGestor) {
+  void _showMais(BuildContext context, bool adminMode, bool isGestor, bool podeGerenciarOficinas) {
     const restricted = {'/funcionarios', '/receitas', '/configuracoes-oficina'};
     final base = isGestor
         ? _maisRoutes
         : _maisRoutes.where((i) => !restricted.contains(i.route)).toList();
-    final items = adminMode ? [...base, _adminRoute] : base;
+    var items = adminMode ? [...base, _adminRoute] : base;
+    if (podeGerenciarOficinas) items = [...items, _gerenciarOficinasRoute];
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
