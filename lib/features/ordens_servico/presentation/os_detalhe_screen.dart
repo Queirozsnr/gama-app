@@ -862,7 +862,7 @@ class _Body extends ConsumerWidget {
                 const SizedBox(height: 12),
 
                 // Histórico do veículo
-                _HistoricoCard(outrasOs: outrasOs),
+                _HistoricoCard(outrasOs: outrasOs, veiculoId: os.veiculoId),
                 const SizedBox(height: 12),
 
                 // Responsável (mecânicos)
@@ -1896,8 +1896,9 @@ class _ResumoFinanceiroCard extends StatelessWidget {
 // ── Sidebar: Histórico ────────────────────────────────────────────────────────
 
 class _HistoricoCard extends StatelessWidget {
-  const _HistoricoCard({required this.outrasOs});
+  const _HistoricoCard({required this.outrasOs, required this.veiculoId});
   final List<OrdemServico> outrasOs;
+  final int veiculoId;
 
   @override
   Widget build(BuildContext context) {
@@ -1915,7 +1916,7 @@ class _HistoricoCard extends StatelessWidget {
               const Spacer(),
               if (sorted.isNotEmpty)
                 TextButton(
-                  onPressed: () => context.go(AppRoutes.ordensServico),
+                  onPressed: () => context.go('${AppRoutes.veiculos}/$veiculoId'),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.accent,
                     textStyle: const TextStyle(fontFamily: 'Inter', fontSize: 11),
