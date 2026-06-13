@@ -19,10 +19,11 @@ final _veiculoDetalheProvider =
 });
 
 final _veiculoOsProvider =
-    FutureProvider.autoDispose.family<List<OrdemServico>, int>((ref, veiculoId) {
-  return ref
+    FutureProvider.autoDispose.family<List<OrdemServico>, int>((ref, veiculoId) async {
+  final result = await ref
       .read(ordensServicoRemoteDataSourceProvider)
       .listar(veiculoId: veiculoId);
+  return result.items;
 });
 
 class VeiculoDetalheScreen extends ConsumerStatefulWidget {

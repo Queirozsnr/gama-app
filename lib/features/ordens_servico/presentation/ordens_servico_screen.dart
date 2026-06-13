@@ -15,6 +15,18 @@ import '../domain/ordem_servico.dart';
 import 'ordens_servico_notifier.dart';
 import 'widgets/os_card.dart';
 
+(String?, String?) _periodoToDates(OsPeriodo periodo) {
+  final now = DateTime.now();
+  String iso(DateTime dt) =>
+      '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  return switch (periodo) {
+    OsPeriodo.hoje   => (iso(now), iso(now)),
+    OsPeriodo.semana => (iso(now.subtract(Duration(days: now.weekday - 1))), iso(now)),
+    OsPeriodo.mes    => (iso(DateTime(now.year, now.month, 1)), iso(now)),
+    OsPeriodo.tudo   => (null, null),
+  };
+}
+
 typedef _PeriodoOpt = ({String label, OsPeriodo value});
 const _periodos = <_PeriodoOpt>[
   (label: 'Hoje',        value: OsPeriodo.hoje),
@@ -55,11 +67,19 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
   final _buscaCtrl = TextEditingController();
   String _busca = '';
   bool _searchOpen = false;
+  final _scrollCtrl = ScrollController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _scrollCtrl.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
+      ref.read(ordensServicoNotifierProvider.notifier).loadMore();
+    }
   }
 
   @override
@@ -98,7 +118,7 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
         constraints: const BoxConstraints(),
       ),
       action: FilledButton.icon(
-        onPressed: () => context.go('/ordens-servico/nova'),
+        onPressed: _navegarParaNova,
         icon: const Icon(Icons.add, size: 17),
         label: const Text('Nova OS'),
       ),
@@ -117,8 +137,22 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _scrollCtrl.dispose();
     WidgetsBinding.instance.addPostFrameCallback((_) => _buscaCtrl.dispose());
     super.dispose();
+  }
+
+  void _navegarParaNova() {
+    final dateRange = _periodoToDates(_periodo);
+    final resumo = ref.read(osResumoProvider(dateRange)).valueOrNull;
+    if (resumo != null && resumo.limiteAtingido) {
+      GamaSnackBar.error(
+        context,
+        'Limite de ${resumo.limiteOsPorMes} OS por mês atingido. Faça upgrade do plano.',
+      );
+      return;
+    }
+    context.go('/ordens-servico/nova');
   }
 
   void _setPeriodo(OsPeriodo p) {
@@ -200,7 +234,10 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
   Widget build(BuildContext context) {
     final osAsync = ref.watch(ordensServicoNotifierProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 800;
-    final lista = osAsync.valueOrNull ?? const [];
+    final osState = osAsync.valueOrNull;
+    final lista = osState?.items ?? const <OrdemServico>[];
+    final dateRange = _periodoToDates(_periodo);
+    ref.watch(osResumoProvider(dateRange)); // prefetch for _navegarParaNova check
 
     // Keep slot subtitle fresh when providers load
     ref.listen(authNotifierProvider, (_, _) { if (mounted) _syncSlot(); });
@@ -243,18 +280,24 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
                     ref.read(ordensServicoNotifierProvider.notifier).recarregar(),
               ),
               data: (loaded) {
-                final rows = _aplicarFiltros(loaded);
+                final rows = _aplicarFiltros(loaded.items);
                 return SingleChildScrollView(
+                  controller: _scrollCtrl,
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _KpiCards(lista: loaded, periodo: _periodo),
+                      _KpiCards(periodo: _periodo, dateRange: dateRange),
                       _OsTable(
                         lista: rows,
                         onTap: (os) => context.go('/ordens-servico/${os.id}'),
                         onDelete: _excluir,
                       ),
+                      if (loaded.isLoadingMore)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
                     ],
                   ),
                 );
@@ -277,7 +320,7 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
                   controller: _buscaCtrl,
                   onChanged: (v) => setState(() => _busca = v.toLowerCase()),
                 ),
-              _MobileDarkStats(lista: lista, periodo: _periodo),
+              _MobileDarkStats(periodo: _periodo, dateRange: dateRange),
               _PeriodBar(periodo: _periodo, onChanged: _setPeriodo),
               filtersBar,
               Expanded(
@@ -290,14 +333,18 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
                         .recarregar(),
                   ),
                   data: (loaded) {
-                    final rows = _aplicarFiltros(loaded);
+                    final rows = _aplicarFiltros(loaded.items);
                     return _OsMobileList(
                       lista: rows,
+                      isLoadingMore: loaded.isLoadingMore,
                       onTap: (os) => context.go('/ordens-servico/${os.id}'),
                       onDelete: _excluir,
                       onRefresh: () => ref
                           .read(ordensServicoNotifierProvider.notifier)
                           .recarregar(),
+                      onLoadMore: () => ref
+                          .read(ordensServicoNotifierProvider.notifier)
+                          .loadMore(),
                     );
                   },
                 ),
@@ -308,7 +355,7 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
         Positioned(
           right: 16,
           bottom: MediaQuery.of(context).padding.bottom + 16,
-          child: GamaFab(label: 'Nova OS', onTap: () => context.go('/ordens-servico/nova')),
+          child: GamaFab(label: 'Nova OS', onTap: _navegarParaNova),
         ),
       ],
     );
@@ -646,18 +693,14 @@ const _ordenarOpts = [
 
 // ── KPI cards ─────────────────────────────────────────────────────────────────
 
-class _KpiCards extends StatelessWidget {
-  const _KpiCards({required this.lista, required this.periodo});
-  final List<OrdemServico> lista;
+class _KpiCards extends ConsumerWidget {
+  const _KpiCards({required this.periodo, required this.dateRange});
   final OsPeriodo periodo;
+  final (String?, String?) dateRange;
 
   @override
-  Widget build(BuildContext context) {
-    final totalOs = lista.length;
-    final abertas = lista.where((os) => os.status == 'Aberta').length;
-    final prontas = lista.where((os) => os.status == 'Concluida').length;
-    final aguarda = lista.where((os) => os.status == 'AguardandoPecas').length;
-    final totalValor = lista.fold(0.0, (sum, os) => sum + os.total);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resumoAsync = ref.watch(osResumoProvider(dateRange));
     final periodLabel = switch (periodo) {
       OsPeriodo.hoje   => 'hoje',
       OsPeriodo.semana => 'da semana',
@@ -669,58 +712,71 @@ class _KpiCards extends StatelessWidget {
     final isDesktop = width >= 800;
     final useRow = width >= 550;
 
-    final cards = [
-      _KpiCardData(
-        label: 'OS NO PERÍODO',
-        value: '$totalOs',
-        subtitle: '$abertas abertas · $prontas prontas',
-      ),
-      _KpiCardData(
-        label: 'VALOR PREVISTO',
-        value: _fmtBrl(totalValor),
-        subtitle: 'soma $periodLabel',
-      ),
-      _KpiCardData(
-        label: 'CARGA DA EQUIPE',
-        value: '—',
-        subtitle: 'não calculado',
-      ),
-      _KpiCardData(
-        label: 'AGUARDA PEÇAS',
-        value: '$aguarda',
-        subtitle: aguarda == 1 ? 'OS bloqueada' : 'OS bloqueadas',
-      ),
-    ];
+    return resumoAsync.when(
+      loading: () => const SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (r) {
+        final limiteBadge = r.limiteOsPorMes != null
+            ? ' · ${r.osNoMes}/${r.limiteOsPorMes} este mês'
+            : '';
+        final subtitleOs = '${r.abertas} abertas · ${r.emAndamento} andamento$limiteBadge';
+        final cards = [
+          _KpiCardData(
+            label: 'OS NO PERÍODO',
+            value: '${r.totalOs}',
+            subtitle: subtitleOs,
+            warning: r.limiteAtingido ? 'Limite atingido' : (r.limiteProximo ? 'Próximo do limite' : null),
+          ),
+          _KpiCardData(
+            label: 'VALOR PREVISTO',
+            value: _fmtBrl(r.valorTotal),
+            subtitle: 'soma $periodLabel',
+          ),
+          _KpiCardData(
+            label: 'CARGA DA EQUIPE',
+            value: '—',
+            subtitle: 'não calculado',
+          ),
+          _KpiCardData(
+            label: 'AGUARDA PEÇAS',
+            value: '${r.aguardandoPeca}',
+            subtitle: r.aguardandoPeca == 1 ? 'OS bloqueada' : 'OS bloqueadas',
+          ),
+        ];
 
-    return Container(
-      color: AppColors.bg,
-      padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, 12, isDesktop ? 0 : 16, 12),
-      child: useRow
-          ? Row(
-              children: cards
-                  .map((c) => Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            right: cards.indexOf(c) < cards.length - 1 ? 10 : 0,
-                          ),
-                          child: _KpiCard(data: c),
-                        ),
-                      ))
-                  .toList(),
-            )
-          : GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 2.2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: cards.map((c) => _KpiCard(data: c)).toList(),
-            ),
+        return Container(
+          color: AppColors.bg,
+          padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, 12, isDesktop ? 0 : 16, 12),
+          child: useRow
+              ? Row(
+                  children: cards
+                      .asMap()
+                      .entries
+                      .map((e) => Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                right: e.key < cards.length - 1 ? 10 : 0,
+                              ),
+                              child: _KpiCard(data: e.value),
+                            ),
+                          ))
+                      .toList(),
+                )
+              : GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 2.2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: cards.map((c) => _KpiCard(data: c)).toList(),
+                ),
+        );
+      },
     );
   }
 
-  String _fmtBrl(double v) {
+  static String _fmtBrl(double v) {
     final parts = v.toStringAsFixed(2).split('.');
     final intPart = parts[0].replaceAllMapped(
       RegExp(r'(\d)(?=(\d{3})+$)'),
@@ -735,10 +791,12 @@ class _KpiCardData {
     required this.label,
     required this.value,
     required this.subtitle,
+    this.warning,
   });
   final String label;
   final String value;
   final String subtitle;
+  final String? warning;
 }
 
 class _KpiCard extends StatelessWidget {
@@ -758,19 +816,41 @@ class _KpiCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            data.label,
-            style: TextStyle(fontFamily: 'Inter', 
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink3,
-              letterSpacing: 0.7,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  data.label,
+                  style: TextStyle(fontFamily: 'Inter',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink3,
+                    letterSpacing: 0.7,
+                  ),
+                ),
+              ),
+              if (data.warning != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.dangerSoft,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    data.warning!,
+                    style: TextStyle(fontFamily: 'Inter',
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.danger,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
             data.value,
-            style: TextStyle(fontFamily: 'Inter', 
+            style: TextStyle(fontFamily: 'Inter',
               fontSize: 22,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
@@ -1136,25 +1216,52 @@ class _Avatar extends StatelessWidget {
 
 // ── Mobile list ────────────────────────────────────────────────────────────────
 
-class _OsMobileList extends StatelessWidget {
+class _OsMobileList extends StatefulWidget {
   const _OsMobileList({
     required this.lista,
+    required this.isLoadingMore,
     required this.onTap,
     required this.onDelete,
     required this.onRefresh,
+    required this.onLoadMore,
   });
   final List<OrdemServico> lista;
+  final bool isLoadingMore;
   final ValueChanged<OrdemServico> onTap;
   final Future<void> Function(OrdemServico) onDelete;
   final Future<void> Function() onRefresh;
+  final VoidCallback onLoadMore;
+
+  @override
+  State<_OsMobileList> createState() => _OsMobileListState();
+}
+
+class _OsMobileListState extends State<_OsMobileList> {
+  final _scrollCtrl = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollCtrl.addListener(() {
+      if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
+        widget.onLoadMore();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (lista.isEmpty) return const _EmptyState();
+    if (widget.lista.isEmpty) return const _EmptyState();
 
     // Group by date label
     final groups = <String, List<OrdemServico>>{};
-    for (final os in lista) {
+    for (final os in widget.lista) {
       groups.putIfAbsent(_groupLabel(os.dataEntrada), () => []).add(os);
     }
 
@@ -1167,15 +1274,24 @@ class _OsMobileList extends StatelessWidget {
       }
     }
 
+    final totalItems = items.length + (widget.isLoadingMore ? 1 : 0);
+
     return RefreshIndicator(
-      onRefresh: onRefresh,
+      onRefresh: widget.onRefresh,
       child: ListView.builder(
+        controller: _scrollCtrl,
         padding: EdgeInsets.fromLTRB(
           16, 8, 16,
           MediaQuery.of(context).padding.bottom + 80,
         ),
-        itemCount: items.length,
+        itemCount: totalItems,
         itemBuilder: (_, i) {
+          if (i == items.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
           final item = items[i];
           if (item.header != null) {
             return _DateGroupHeader(label: item.header!, count: item.count!);
@@ -1185,8 +1301,8 @@ class _OsMobileList extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 10),
             child: OsCard(
               os: os,
-              onTap: () => onTap(os),
-              onLongPress: os.status == 'Aberta' ? () => onDelete(os) : null,
+              onTap: () => widget.onTap(os),
+              onLongPress: os.status == 'Aberta' ? () => widget.onDelete(os) : null,
             ),
           );
         },
@@ -1210,17 +1326,14 @@ class _OsMobileList extends StatelessWidget {
 
 // ── Mobile dark stats ──────────────────────────────────────────────────────────
 
-class _MobileDarkStats extends StatelessWidget {
-  const _MobileDarkStats({required this.lista, required this.periodo});
-  final List<OrdemServico> lista;
+class _MobileDarkStats extends ConsumerWidget {
+  const _MobileDarkStats({required this.periodo, required this.dateRange});
   final OsPeriodo periodo;
+  final (String?, String?) dateRange;
 
   @override
-  Widget build(BuildContext context) {
-    final totalOs = lista.length;
-    final abertas = lista.where((os) => os.status == 'Aberta').length;
-    final prontas = lista.where((os) => os.status == 'Concluida').length;
-    final totalValor = lista.fold(0.0, (sum, os) => sum + os.total);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resumoAsync = ref.watch(osResumoProvider(dateRange));
 
     return Container(
       decoration: const BoxDecoration(
@@ -1228,13 +1341,17 @@ class _MobileDarkStats extends StatelessWidget {
         border: Border(bottom: BorderSide(color: AppColors.line)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-      child: Row(
-        children: [
-          _StatBox(value: '$totalOs', label: 'PERÍODO'),
-          _StatBox(value: '$abertas', label: 'ABERTAS'),
-          _StatBox(value: '$prontas', label: 'PRONTAS'),
-          _StatBox(value: _fmtShort(totalValor), label: 'PREVISTO'),
-        ],
+      child: resumoAsync.when(
+        loading: () => const SizedBox(height: 44, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+        error: (_, _) => const SizedBox(height: 44),
+        data: (r) => Row(
+          children: [
+            _StatBox(value: '${r.totalOs}', label: 'PERÍODO'),
+            _StatBox(value: '${r.abertas}', label: 'ABERTAS'),
+            _StatBox(value: '${r.emAndamento}', label: 'ANDAMENTO'),
+            _StatBox(value: _fmtShort(r.valorTotal), label: 'PREVISTO'),
+          ],
+        ),
       ),
     );
   }

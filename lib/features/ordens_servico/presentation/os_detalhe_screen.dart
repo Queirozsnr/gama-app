@@ -32,8 +32,8 @@ import '../../oficinas/presentation/oficinas_notifier.dart';
 
 final _osDoVeiculoProvider =
     FutureProvider.autoDispose.family<List<OrdemServico>, int>(
-  (ref, veiculoId) =>
-      ref.read(ordensServicoRemoteDataSourceProvider).listar(veiculoId: veiculoId),
+  (ref, veiculoId) async =>
+      (await ref.read(ordensServicoRemoteDataSourceProvider).listar(veiculoId: veiculoId)).items,
 );
 
 const _statusTransicoes = {
@@ -1251,7 +1251,7 @@ class _PecasTab extends StatelessWidget {
               ],
               _TotalRow('Total', os.total - os.totalDescontos, bold: true),
               const SizedBox(height: 14),
-              if (os.formaPagamento == null && podeEditar)
+              if (os.formaPagamento == null && os.status == 'Concluida' && podeEditar)
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
@@ -1529,6 +1529,8 @@ class _DesktopActions extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        StatusChip(status: OsStatus.fromString(os.status)),
+        const SizedBox(width: 12),
         // Imprimir
         OutlinedButton.icon(
           onPressed: onImprimir,
@@ -1787,7 +1789,7 @@ class _ResumoFinanceiroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = os.total - os.totalDescontos;
-    final pagamentoPendente = os.formaPagamento == null && os.status != 'Entregue';
+    final pagamentoPendente = os.formaPagamento == null && os.status == 'Concluida';
 
     return _Section(
       child: Column(

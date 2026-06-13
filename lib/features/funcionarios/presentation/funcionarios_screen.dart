@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/plan/plan_limits_provider.dart';
 import '../../../features/auth/domain/auth_state.dart';
 import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
@@ -88,6 +89,22 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
   }
 
   Future<void> _openForm({Funcionario? funcionario}) async {
+    if (funcionario == null) {
+      final limits = ref.read(planLimitsProvider).valueOrNull;
+      final total = ref.read(funcionariosNotifierProvider).valueOrNull?.length ?? 0;
+      if (limits != null &&
+          limits.maxUsuariosPorOficina != null &&
+          total >= limits.maxUsuariosPorOficina!) {
+        if (mounted) {
+          GamaSnackBar.error(
+            context,
+            'Seu plano não permite adicionar mais funcionários. Faça upgrade para continuar.',
+          );
+        }
+        return;
+      }
+    }
+
     final result = await showDialog<bool>(
       context: context,
       builder: (_) => FuncionarioFormDialog(funcionario: funcionario),

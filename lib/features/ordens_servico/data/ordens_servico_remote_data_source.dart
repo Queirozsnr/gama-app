@@ -4,12 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
 import '../domain/ordem_servico.dart';
 import '../domain/ordem_servico_detalhe.dart';
+import '../domain/os_resumo.dart';
 
 class OrdensServicoRemoteDataSource {
   OrdensServicoRemoteDataSource(this._dio);
   final Dio _dio;
 
-  Future<List<OrdemServico>> listar({
+  Future<({List<OrdemServico> items, int total, bool hasMore})> listar({
     String? status,
     int? clienteId,
     int? veiculoId,
@@ -17,7 +18,8 @@ class OrdensServicoRemoteDataSource {
     bool excluirEntregue = false,
     String? dataInicio,
     String? dataFim,
-    String? ordenar,
+    int page = 1,
+    int pageSize = 30,
   }) async {
     final resp = await _dio.get('/ordens-servico', queryParameters: {
       'status': ?status,
@@ -26,12 +28,24 @@ class OrdensServicoRemoteDataSource {
       'funcionarioId': ?funcionarioId,
       'dataInicio': ?dataInicio,
       'dataFim': ?dataFim,
-      'ordenar': ?ordenar,
       if (excluirEntregue) 'excluirEntregue': true,
+      'page': page,
+      'pageSize': pageSize,
     });
-    return (resp.data as List)
+    final body = resp.data as Map<String, dynamic>;
+    final items = (body['items'] as List)
         .map((e) => OrdemServico.fromJson(e as Map<String, dynamic>))
         .toList();
+    final total = (body['total'] as num).toInt();
+    return (items: items, total: total, hasMore: body['hasNextPage'] as bool);
+  }
+
+  Future<OsResumo> resumo({String? dataInicio, String? dataFim}) async {
+    final resp = await _dio.get('/ordens-servico/resumo', queryParameters: {
+      'dataInicio': ?dataInicio,
+      'dataFim': ?dataFim,
+    });
+    return OsResumo.fromJson(resp.data as Map<String, dynamic>);
   }
 
   Future<OrdemServicoDetalhe> obter(int id) async {
