@@ -82,7 +82,7 @@ const _planosDisponiveis = [
     features: [
       'Até 2 oficinas · 12 usuários',
       '500 OS por mês · 2.000 produtos',
-      'Fotos e vídeos nas OS (20 GB)',
+      'Fotos e vídeos nas OS (5 GB)',
       'Pagamento de funcionários',
       'Relatórios financeiros completos',
     ],
@@ -97,7 +97,7 @@ const _planosDisponiveis = [
     features: [
       'Oficinas e usuários ilimitados',
       'OS e estoque ilimitados',
-      'Fotos e vídeos ilimitados',
+      'Fotos e vídeos (100 GB por unidade)',
       'Dashboard gerencial multi-unidade',
       'Auditoria e logs completos',
     ],
@@ -488,14 +488,21 @@ class _UsoPlanoGrid extends StatelessWidget {
             ? '${uso.unidades} / ilimitado'
             : '${uso.unidades} / ${uso.unidadesMax}',
       ),
-      _UsoItem(
-        label: 'FOTOS & VÍDEOS',
-        usadoDouble: uso.fotosGb,
-        maxDouble: uso.fotosGbMax,
-        display: uso.fotosGbMax == null
-            ? '${_fmtGb(uso.fotosGb)} / ilimitado'
-            : '${_fmtGb(uso.fotosGb)} / ${_fmtGb(uso.fotosGbMax!)}',
-      ),
+      if (uso.fotosGbMax != null || uso.fotosGb > 0)
+        _UsoItem(
+          label: 'FOTOS & VÍDEOS',
+          usadoDouble: uso.fotosGb,
+          maxDouble: uso.fotosGbMax,
+          display: uso.fotosGbMax == null
+              ? '${_fmtGb(uso.fotosGb)} / ilimitado'
+              : '${_fmtGb(uso.fotosGb)} / ${_fmtGb(uso.fotosGbMax!)}',
+        )
+      else
+        const _UsoItem(
+          label: 'FOTOS & VÍDEOS',
+          display: 'Não incluso',
+          naoIncluso: true,
+        ),
     ];
 
     return SectionCard(
@@ -525,6 +532,7 @@ class _UsoItem {
     this.max,
     this.usadoDouble,
     this.maxDouble,
+    this.naoIncluso = false,
   });
 
   final String label;
@@ -533,20 +541,23 @@ class _UsoItem {
   final int? max;
   final double? usadoDouble;
   final double? maxDouble;
+  final bool naoIncluso;
 
   double get ratio {
-    if (usadoDouble != null && maxDouble != null) {
+    if (naoIncluso) return 0.0;
+    if (usadoDouble != null && maxDouble != null && maxDouble! > 0) {
       return (usadoDouble! / maxDouble!).clamp(0.0, 1.0);
     }
-    if (usado != null && max != null) {
+    if (usado != null && max != null && max! > 0) {
       return (usado! / max!).clamp(0.0, 1.0);
     }
     return 0.0;
   }
 
-  bool get ilimitado => max == null && maxDouble == null;
+  bool get ilimitado => !naoIncluso && max == null && maxDouble == null;
 
   Color get barColor {
+    if (naoIncluso) return AppColors.line;
     if (ilimitado) return AppColors.ok;
     if (ratio >= 1.0) return AppColors.danger;
     if (ratio >= 0.8) return AppColors.warn;
@@ -587,7 +598,15 @@ class _UsoItemTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          if (!item.ilimitado)
+          if (item.naoIncluso)
+            Container(
+              height: 5,
+              decoration: BoxDecoration(
+                color: AppColors.line,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            )
+          else if (!item.ilimitado)
             ClipRRect(
               borderRadius: BorderRadius.circular(3),
               child: LinearProgressIndicator(
