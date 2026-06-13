@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/network/api_constants.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/file_download.dart';
 import '../../../shared/state/top_bar_scope.dart';
@@ -10,6 +12,27 @@ import '../../ordens_servico/domain/os_midia.dart';
 import '../../ordens_servico/presentation/os_midia_viewer.dart';
 import '../data/midias_remote_data_source.dart';
 import '../domain/midia_global.dart';
+
+// ── view mode ─────────────────────────────────────────────────────────────────
+
+enum _ViewMode { grade, porOs }
+
+// ── OS group (para modo agrupado) ─────────────────────────────────────────────
+
+class _OsGroup {
+  _OsGroup({
+    required this.osId,
+    required this.clienteNome,
+    required this.veiculoDescricao,
+    required this.veiculoPlaca,
+  });
+
+  final int osId;
+  final String clienteNome;
+  final String veiculoDescricao;
+  final String? veiculoPlaca;
+  final List<MidiaGlobal> items = [];
+}
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -40,6 +63,7 @@ class _GerenciarMidiasScreenState
     extends ConsumerState<GerenciarMidiasScreen>
     with TopBarSlotMixin<GerenciarMidiasScreen> {
   String? _tipo; // null = todas | 'Imagem' | 'Video'
+  _ViewMode _viewMode = _ViewMode.grade;
   final List<MidiaGlobal> _items = [];
   int _total = 0;
   bool _hasMore = false;
@@ -49,6 +73,24 @@ class _GerenciarMidiasScreenState
   int _page = 1;
   final Set<int> _selected = {}; // IDs dos itens selecionados
   final ScrollController _scrollCtrl = ScrollController();
+
+  List<_OsGroup> get _groups {
+    final map = <int, _OsGroup>{};
+    final order = <int>[];
+    for (final m in _items) {
+      if (!map.containsKey(m.osId)) {
+        map[m.osId] = _OsGroup(
+          osId: m.osId,
+          clienteNome: m.clienteNome,
+          veiculoDescricao: m.veiculoDescricao,
+          veiculoPlaca: m.veiculoPlaca,
+        );
+        order.add(m.osId);
+      }
+      map[m.osId]!.items.add(m);
+    }
+    return order.map((id) => map[id]!).toList();
+  }
 
   bool get _selectMode => _selected.isNotEmpty;
   int get _selectedBytes => _items
@@ -83,6 +125,8 @@ class _GerenciarMidiasScreenState
     }
   }
 
+  int get _pageSize => _viewMode == _ViewMode.porOs ? 200 : 40;
+
   Future<void> _load() async {
     if (_loading) return;
     setState(() {
@@ -95,7 +139,7 @@ class _GerenciarMidiasScreenState
     try {
       final result = await ref
           .read(midiasRemoteDataSourceProvider)
-          .listar(tipo: _tipo, page: 1);
+          .listar(tipo: _tipo, page: 1, pageSize: _pageSize);
       if (!mounted) return;
       setState(() {
         _items.addAll(result.items);
@@ -117,7 +161,7 @@ class _GerenciarMidiasScreenState
     try {
       final result = await ref
           .read(midiasRemoteDataSourceProvider)
-          .listar(tipo: _tipo, page: _page + 1);
+          .listar(tipo: _tipo, page: _page + 1, pageSize: _pageSize);
       if (!mounted) return;
       setState(() {
         _items.addAll(result.items);
@@ -134,6 +178,12 @@ class _GerenciarMidiasScreenState
   void _setTipo(String? tipo) {
     if (_tipo == tipo) return;
     setState(() => _tipo = tipo);
+    _load();
+  }
+
+  void _setViewMode(_ViewMode mode) {
+    if (_viewMode == mode) return;
+    setState(() => _viewMode = mode);
     _load();
   }
 
@@ -339,29 +389,70 @@ class _GerenciarMidiasScreenState
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _FilterStrip(tipo: _tipo, total: _total, onChanged: _setTipo),
+            _FilterStrip(
+              tipo: _tipo,
+              total: _total,
+              viewMode: _viewMode,
+              onChanged: _setTipo,
+              onViewModeChanged: _setViewMode,
+            ),
             Expanded(
               child: _loading
                   ? const Center(
-                      child:
-                          CircularProgressIndicator(color: AppColors.accent))
+                      child: CircularProgressIndicator(color: AppColors.accent))
                   : _items.isEmpty
                       ? _EmptyState(tipo: _tipo)
-                      : GridView.builder(
-                          controller: _scrollCtrl,
-                          padding: const EdgeInsets.all(10),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: cols,
-                            crossAxisSpacing: 6,
-                            mainAxisSpacing: 6,
-                          ),
-                          itemCount:
-                              _items.length + (_loadingMore ? cols : 0),
-                          itemBuilder: (ctx, i) {
-                            if (i >= _items.length) {
-                              return i == _items.length
-                                  ? const Center(
+                      : _viewMode == _ViewMode.grade
+                          ? GridView.builder(
+                              controller: _scrollCtrl,
+                              padding: const EdgeInsets.all(10),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: cols,
+                                crossAxisSpacing: 6,
+                                mainAxisSpacing: 6,
+                              ),
+                              itemCount:
+                                  _items.length + (_loadingMore ? cols : 0),
+                              itemBuilder: (ctx, i) {
+                                if (i >= _items.length) {
+                                  return i == _items.length
+                                      ? const Center(
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: AppColors.accent,
+                                            ),
+                                          ),
+                                        )
+                                      : const SizedBox.shrink();
+                                }
+                                final m = _items[i];
+                                return _MidiaTile(
+                                  midia: m,
+                                  selected: _selected.contains(m.id),
+                                  selectMode: _selectMode,
+                                  onTap: () => _selectMode
+                                      ? _toggleSelect(m.id)
+                                      : _openViewer(i),
+                                  onLongPress: () {
+                                    if (!_selectMode) _toggleSelect(m.id);
+                                  },
+                                );
+                              },
+                            )
+                          : ListView.builder(
+                              controller: _scrollCtrl,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              itemCount:
+                                  _groups.length + (_loadingMore ? 1 : 0),
+                              itemBuilder: (ctx, i) {
+                                if (i >= _groups.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: Center(
                                       child: SizedBox(
                                         width: 20,
                                         height: 20,
@@ -370,23 +461,25 @@ class _GerenciarMidiasScreenState
                                           color: AppColors.accent,
                                         ),
                                       ),
-                                    )
-                                  : const SizedBox.shrink();
-                            }
-                            final m = _items[i];
-                            return _MidiaTile(
-                              midia: m,
-                              selected: _selected.contains(m.id),
-                              selectMode: _selectMode,
-                              onTap: () => _selectMode
-                                  ? _toggleSelect(m.id)
-                                  : _openViewer(i),
-                              onLongPress: () {
-                                if (!_selectMode) _toggleSelect(m.id);
+                                    ),
+                                  );
+                                }
+                                final group = _groups[i];
+                                return _OsGroupSection(
+                                  group: group,
+                                  selected: _selected,
+                                  selectMode: _selectMode,
+                                  onTapMidia: (m) => _selectMode
+                                      ? _toggleSelect(m.id)
+                                      : _openViewer(
+                                          _items.indexWhere(
+                                              (x) => x.id == m.id)),
+                                  onLongPressMidia: (m) {
+                                    if (!_selectMode) _toggleSelect(m.id);
+                                  },
+                                );
                               },
-                            );
-                          },
-                        ),
+                            ),
             ),
           ],
         ),
@@ -418,12 +511,16 @@ class _FilterStrip extends StatelessWidget {
   const _FilterStrip({
     required this.tipo,
     required this.total,
+    required this.viewMode,
     required this.onChanged,
+    required this.onViewModeChanged,
   });
 
   final String? tipo;
   final int total;
+  final _ViewMode viewMode;
   final void Function(String?) onChanged;
+  final void Function(_ViewMode) onViewModeChanged;
 
   Widget _chip(String? value, String label, String? current) {
     final active = current == value;
@@ -469,7 +566,61 @@ class _FilterStrip extends StatelessWidget {
               '$total arquivo${total == 1 ? '' : 's'}',
               style: const TextStyle(fontSize: 11, color: AppColors.ink3),
             ),
+          const SizedBox(width: 10),
+          _ViewModeToggle(
+            current: viewMode,
+            onChanged: onViewModeChanged,
+          ),
         ],
+      ),
+    );
+  }
+}
+
+// ── View mode toggle ──────────────────────────────────────────────────────────
+
+class _ViewModeToggle extends StatelessWidget {
+  const _ViewModeToggle({required this.current, required this.onChanged});
+
+  final _ViewMode current;
+  final void Function(_ViewMode) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _btn(_ViewMode.grade, Icons.grid_view_rounded, 'Grade'),
+          _btn(_ViewMode.porOs, Icons.view_list_rounded, 'Por OS'),
+        ],
+      ),
+    );
+  }
+
+  Widget _btn(_ViewMode mode, IconData icon, String tooltip) {
+    final active = current == mode;
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: () => onChanged(mode),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          decoration: BoxDecoration(
+            color: active ? AppColors.accent : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: active ? AppColors.sidebarBg : AppColors.ink3,
+          ),
+        ),
       ),
     );
   }
@@ -743,6 +894,116 @@ class _SelectionBar extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── OS group section (modo Por OS) ────────────────────────────────────────────
+
+class _OsGroupSection extends StatelessWidget {
+  const _OsGroupSection({
+    required this.group,
+    required this.selected,
+    required this.selectMode,
+    required this.onTapMidia,
+    required this.onLongPressMidia,
+  });
+
+  final _OsGroup group;
+  final Set<int> selected;
+  final bool selectMode;
+  final void Function(MidiaGlobal) onTapMidia;
+  final void Function(MidiaGlobal) onLongPressMidia;
+
+  @override
+  Widget build(BuildContext context) {
+    final placa = group.veiculoPlaca != null ? ' · ${group.veiculoPlaca}' : '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Cabeçalho da OS
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 10, 6),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'OS #${group.osId}',
+                          style: const TextStyle(
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                        Text(
+                          '$placa  ·  ${group.items.length} '
+                          '${group.items.length == 1 ? 'arquivo' : 'arquivos'}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.ink3,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '${group.clienteNome}  ·  ${group.veiculoDescricao}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                tooltip: 'Abrir OS',
+                color: AppColors.ink3,
+                onPressed: () =>
+                    context.go('/ordens-servico/${group.osId}'),
+              ),
+            ],
+          ),
+        ),
+
+        // Linha horizontal de thumbnails
+        SizedBox(
+          height: 110,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            itemCount: group.items.length,
+            itemBuilder: (ctx, i) {
+              final m = group.items[i];
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: SizedBox(
+                  width: 110,
+                  child: _MidiaTile(
+                    midia: m,
+                    selected: selected.contains(m.id),
+                    selectMode: selectMode,
+                    onTap: () => onTapMidia(m),
+                    onLongPress: () => onLongPressMidia(m),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+
+        const Divider(color: AppColors.border, height: 1, thickness: 1),
+      ],
     );
   }
 }
