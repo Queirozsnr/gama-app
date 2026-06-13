@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_confirm_dialog.dart';
@@ -505,8 +507,24 @@ class _UsoPlanoGrid extends StatelessWidget {
         ),
     ];
 
+    final temMidias = uso.fotosGbMax != null || uso.fotosGb > 0;
+
     return SectionCard(
       title: 'Uso do plano',
+      action: temMidias
+          ? TextButton.icon(
+              onPressed: () => context.go(AppRoutes.midias),
+              icon: const Icon(Icons.perm_media_outlined, size: 14),
+              label: const Text('Gerenciar mídias'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.accent,
+                textStyle: const TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 6),
+              ),
+            )
+          : null,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: LayoutBuilder(builder: (context, constraints) {
         final cols = constraints.maxWidth >= 600 ? 4 : 2;
