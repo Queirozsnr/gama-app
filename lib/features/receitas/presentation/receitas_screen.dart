@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/csv_download.dart';
+import 'receitas_pdf.dart';
 import '../../../features/auth/domain/auth_state.dart';
 import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
@@ -198,17 +199,32 @@ class _ReceitasScreenState extends ConsumerState<ReceitasScreen>
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
       mobileAction: IconButton(
-        onPressed: () => GamaSnackBar.error(context, 'Impressão em breve.'),
+        onPressed: _imprimir,
         icon: const Icon(Icons.print_outlined),
         color: Colors.white,
         tooltip: 'Imprimir',
       ),
       action: OutlinedButton.icon(
-        onPressed: () => GamaSnackBar.error(context, 'Impressão em breve.'),
+        onPressed: _imprimir,
         icon: const Icon(Icons.print_outlined, size: 16),
         label: const Text('Imprimir'),
       ),
     ));
+  }
+
+  Future<void> _imprimir() async {
+    final dashboard = ref
+        .read(receitasDashboardProvider((_dataInicio, _dataFim)))
+        .valueOrNull;
+    if (dashboard == null) {
+      if (mounted) GamaSnackBar.error(context, 'Aguarde o carregamento dos dados.');
+      return;
+    }
+    try {
+      await imprimirReceitas(dashboard, _dataInicio, _dataFim);
+    } catch (e) {
+      if (mounted) GamaSnackBar.error(context, 'Erro ao gerar PDF: $e');
+    }
   }
 
   @override
