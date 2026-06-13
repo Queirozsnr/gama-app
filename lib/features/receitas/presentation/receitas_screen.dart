@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/csv_download.dart';
 import '../../../features/auth/domain/auth_state.dart';
 import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
@@ -47,6 +48,53 @@ String _formaPagLabel(String? fp) {
     'Transferencia' => 'TRANSF.',
     _               => fp.toUpperCase(),
   };
+}
+
+String _csvNome(String prefixo, DateTime ini, DateTime fim) {
+  String d(DateTime dt) =>
+      '${dt.year}${dt.month.toString().padLeft(2, '0')}${dt.day.toString().padLeft(2, '0')}';
+  return '${prefixo}_${d(ini)}_${d(fim)}.csv';
+}
+
+String _bom() => '﻿';
+
+Future<void> _exportPagamentos(
+    List<PagamentoRecente> pagamentos, DateTime ini, DateTime fim) async {
+  final buf = StringBuffer()..write(_bom());
+  buf.writeln('Data/Hora;OS;Cliente;Forma de Pagamento;Valor');
+  for (final p in pagamentos) {
+    final d = p.dataHora;
+    final data =
+        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year} '
+        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    final valor = p.valor.toStringAsFixed(2).replaceAll('.', ',');
+    buf.writeln('$data;#${p.ordemServicoId};${p.clienteNome};${_formaPagLabel(p.formaPagamento)};$valor');
+  }
+  await downloadCsv(buf.toString(), _csvNome('pagamentos', ini, fim));
+}
+
+Future<void> _exportMecanicos(
+    List<ReceitaPorMecanico> mecanicos, DateTime ini, DateTime fim) async {
+  final buf = StringBuffer()..write(_bom());
+  buf.writeln('Mecânico;Total OS;Ticket Médio;Receita');
+  for (final m in mecanicos) {
+    final ticket = m.ticketMedio.toStringAsFixed(2).replaceAll('.', ',');
+    final receita = m.receita.toStringAsFixed(2).replaceAll('.', ',');
+    buf.writeln('${m.nome};${m.totalOs};$ticket;$receita');
+  }
+  await downloadCsv(buf.toString(), _csvNome('receita_mecanicos', ini, fim));
+}
+
+Future<void> _exportLucroOwner(
+    List<ReceitaPorMecanico> mecanicos, DateTime ini, DateTime fim) async {
+  final buf = StringBuffer()..write(_bom());
+  buf.writeln('Mecânico;Tipo;Comissão %;Total OS;Lucro Líquido');
+  for (final m in mecanicos) {
+    final comissao = m.porcentagem != null ? '${m.porcentagem}%' : '—';
+    final liquido = m.liquidoOwner.toStringAsFixed(2).replaceAll('.', ',');
+    buf.writeln('${m.nome};${m.tipoRemuneracao};$comissao;${m.totalOs};$liquido');
+  }
+  await downloadCsv(buf.toString(), _csvNome('lucro_mecanicos', ini, fim));
 }
 
 Color _formaPagColor(String? fp) => switch (fp) {
@@ -149,40 +197,16 @@ class _ReceitasScreenState extends ConsumerState<ReceitasScreen>
       pageTitle: 'Receitas',
       mobileStyle: MobileTopBarStyle.dark,
       mobileSubtitle: nome != null ? '• $nome' : null,
-      mobileAction: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            onPressed: () => GamaSnackBar.error(context, 'Exportação CSV em breve.'),
-            icon: const Icon(Icons.download_outlined),
-            color: Colors.white,
-            tooltip: 'Exportar CSV',
-          ),
-          IconButton(
-            onPressed: () => GamaSnackBar.error(context, 'Impressão em breve.'),
-            icon: const Icon(Icons.print_outlined),
-            color: Colors.white,
-            tooltip: 'Imprimir',
-          ),
-        ],
+      mobileAction: IconButton(
+        onPressed: () => GamaSnackBar.error(context, 'Impressão em breve.'),
+        icon: const Icon(Icons.print_outlined),
+        color: Colors.white,
+        tooltip: 'Imprimir',
       ),
-      action: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          OutlinedButton.icon(
-            onPressed: () =>
-                GamaSnackBar.error(context, 'Exportação CSV em breve.'),
-            icon: const Icon(Icons.download_outlined, size: 16),
-            label: const Text('Exportar CSV'),
-          ),
-          const SizedBox(width: 8),
-          OutlinedButton.icon(
-            onPressed: () =>
-                GamaSnackBar.error(context, 'Impressão em breve.'),
-            icon: const Icon(Icons.print_outlined, size: 16),
-            label: const Text('Imprimir'),
-          ),
-        ],
+      action: OutlinedButton.icon(
+        onPressed: () => GamaSnackBar.error(context, 'Impressão em breve.'),
+        icon: const Icon(Icons.print_outlined, size: 16),
+        label: const Text('Imprimir'),
       ),
     ));
   }
@@ -376,29 +400,34 @@ class _Body extends StatelessWidget {
         const SizedBox(height: 20),
         LayoutBuilder(builder: (context, constraints) {
           final w = constraints.maxWidth;
+          final pags = dashboard.pagamentosRecentes;
+          final mecs = dashboard.receitaPorMecanico;
+          final ini = dataInicio;
+          final fim = dataFim;
+
+          final pagCard = _PagamentosRecentesCard(
+            pagamentos: pags,
+            onExport: () => _exportPagamentos(pags, ini, fim),
+          );
+          final mecCard = _ReceitaMecanicoCard(
+            mecanicos: mecs,
+            onExport: () => _exportMecanicos(mecs, ini, fim),
+          );
+          final lucroCard = _LucroOwnerPorMecanicoCard(
+            mecanicos: mecs,
+            onExport: () => _exportLucroOwner(mecs, ini, fim),
+          );
 
           // ≥ 1000px — 3 colunas
           if (w >= 1000) {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  flex: 4,
-                  child: _PagamentosRecentesCard(
-                      pagamentos: dashboard.pagamentosRecentes),
-                ),
+                Expanded(flex: 4, child: pagCard),
                 const SizedBox(width: 16),
-                Expanded(
-                  flex: 3,
-                  child: _ReceitaMecanicoCard(
-                      mecanicos: dashboard.receitaPorMecanico),
-                ),
+                Expanded(flex: 3, child: mecCard),
                 const SizedBox(width: 16),
-                Expanded(
-                  flex: 3,
-                  child: _LucroOwnerPorMecanicoCard(
-                      mecanicos: dashboard.receitaPorMecanico),
-                ),
+                Expanded(flex: 3, child: lucroCard),
               ],
             );
           }
@@ -407,21 +436,14 @@ class _Body extends StatelessWidget {
           if (w >= 600) {
             return Column(
               children: [
-                _PagamentosRecentesCard(
-                    pagamentos: dashboard.pagamentosRecentes),
+                pagCard,
                 const SizedBox(height: 12),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: _ReceitaMecanicoCard(
-                          mecanicos: dashboard.receitaPorMecanico),
-                    ),
+                    Expanded(child: mecCard),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: _LucroOwnerPorMecanicoCard(
-                          mecanicos: dashboard.receitaPorMecanico),
-                    ),
+                    Expanded(child: lucroCard),
                   ],
                 ),
               ],
@@ -431,14 +453,11 @@ class _Body extends StatelessWidget {
           // < 600px — tudo empilhado
           return Column(
             children: [
-              _PagamentosRecentesCard(
-                  pagamentos: dashboard.pagamentosRecentes),
+              pagCard,
               const SizedBox(height: 12),
-              _ReceitaMecanicoCard(
-                  mecanicos: dashboard.receitaPorMecanico),
+              mecCard,
               const SizedBox(height: 12),
-              _LucroOwnerPorMecanicoCard(
-                  mecanicos: dashboard.receitaPorMecanico),
+              lucroCard,
             ],
           );
         }),
@@ -911,11 +930,34 @@ class _GridPainter extends CustomPainter {
   bool shouldRepaint(_GridPainter oldDelegate) => false;
 }
 
+// ── Export button ─────────────────────────────────────────────────────────────
+
+class _ExportButton extends StatelessWidget {
+  const _ExportButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Exportar CSV',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: const Padding(
+          padding: EdgeInsets.all(4),
+          child: Icon(Icons.download_outlined, size: 16, color: AppColors.ink3),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Recent payments card ──────────────────────────────────────────────────────
 
 class _PagamentosRecentesCard extends StatelessWidget {
-  const _PagamentosRecentesCard({required this.pagamentos});
+  const _PagamentosRecentesCard({required this.pagamentos, required this.onExport});
   final List<PagamentoRecente> pagamentos;
+  final VoidCallback onExport;
 
   @override
   Widget build(BuildContext context) {
@@ -952,9 +994,10 @@ class _PagamentosRecentesCard extends StatelessWidget {
                 ),
                 Text(
                   '${pagamentos.length} no período',
-                  style: const TextStyle(
-                      fontSize: 11, color: AppColors.ink3),
+                  style: const TextStyle(fontSize: 11, color: AppColors.ink3),
                 ),
+                const SizedBox(width: 4),
+                _ExportButton(onTap: onExport),
               ],
             ),
           ),
@@ -1069,8 +1112,9 @@ class _FormaBadge extends StatelessWidget {
 // ── Revenue by mechanic card ──────────────────────────────────────────────────
 
 class _ReceitaMecanicoCard extends StatelessWidget {
-  const _ReceitaMecanicoCard({required this.mecanicos});
+  const _ReceitaMecanicoCard({required this.mecanicos, required this.onExport});
   final List<ReceitaPorMecanico> mecanicos;
+  final VoidCallback onExport;
 
   @override
   Widget build(BuildContext context) {
@@ -1083,31 +1127,32 @@ class _ReceitaMecanicoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(18, 16, 18, 12),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
             child: Row(
               children: [
-                Icon(Icons.engineering_outlined,
-                    size: 16, color: AppColors.ink3),
-                SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Receita por mecânico',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
+                const Icon(Icons.engineering_outlined, size: 16, color: AppColors.ink3),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Receita por mecânico',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Quem está faturando mais',
-                      style:
-                          TextStyle(fontSize: 11, color: AppColors.ink3),
-                    ),
-                  ],
+                      Text(
+                        'Quem está faturando mais',
+                        style: TextStyle(fontSize: 11, color: AppColors.ink3),
+                      ),
+                    ],
+                  ),
                 ),
+                _ExportButton(onTap: onExport),
               ],
             ),
           ),
@@ -1215,8 +1260,9 @@ class _MecanicoRow extends StatelessWidget {
 // ── Lucro do dono por mecânico ────────────────────────────────────────────────
 
 class _LucroOwnerPorMecanicoCard extends StatelessWidget {
-  const _LucroOwnerPorMecanicoCard({required this.mecanicos});
+  const _LucroOwnerPorMecanicoCard({required this.mecanicos, required this.onExport});
   final List<ReceitaPorMecanico> mecanicos;
+  final VoidCallback onExport;
 
   String _initials(String nome) {
     final parts = nome.trim().split(' ');
@@ -1235,30 +1281,33 @@ class _LucroOwnerPorMecanicoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(18, 16, 18, 12),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
             child: Row(
               children: [
-                Icon(Icons.account_balance_wallet_outlined,
+                const Icon(Icons.account_balance_wallet_outlined,
                     size: 16, color: AppColors.ink3),
-                SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Meu lucro por mecânico',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Meu lucro por mecânico',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Receita líquida após deduzir a % de cada um',
-                      style: TextStyle(fontSize: 11, color: AppColors.ink3),
-                    ),
-                  ],
+                      Text(
+                        'Receita líquida após deduzir a % de cada um',
+                        style: TextStyle(fontSize: 11, color: AppColors.ink3),
+                      ),
+                    ],
+                  ),
                 ),
+                _ExportButton(onTap: onExport),
               ],
             ),
           ),
