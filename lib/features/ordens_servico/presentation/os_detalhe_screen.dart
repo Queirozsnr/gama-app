@@ -3240,7 +3240,27 @@ class _FotosVideosCardState extends ConsumerState<_FotosVideosCard> {
             ),
           ],
 
-          if (widget.midias.isEmpty) ...[
+          if (!podeFotos && widget.midias.isEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surface2,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.line),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.lock_outline, size: 14, color: AppColors.ink3),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Fotos e vídeos não estão disponíveis no seu plano.',
+                    style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink3),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (widget.midias.isEmpty) ...[
             const SizedBox(height: 10),
             Text('Nenhuma foto ou vídeo registrado.',
                 style: const TextStyle(
