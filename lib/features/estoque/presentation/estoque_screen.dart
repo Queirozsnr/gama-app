@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/section_card.dart';
+import '../../../core/plan/plan_limits_provider.dart';
+import '../../../shared/widgets/gama_snack_bar.dart';
 import '../../auth/presentation/auth_notifier.dart';
 import '../domain/estoque.dart';
 import 'estoque_notifier.dart';
@@ -110,7 +112,18 @@ class _EstoqueScreenState extends ConsumerState<EstoqueScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) => _searchController.dispose());
   }
 
-  void _abrirNovoProduto() => context.go('/estoque/produto/novo');
+  void _abrirNovoProduto() {
+    final limits = ref.read(planLimitsProvider).valueOrNull;
+    final totalSkus = ref.read(resumoEstoqueProvider).valueOrNull?.totalSkus ?? 0;
+    if (limits != null && limits.maxItensEstoque != null && totalSkus >= limits.maxItensEstoque!) {
+      GamaSnackBar.error(
+        context,
+        'Seu plano permite no máximo ${limits.maxItensEstoque} Produtos. Faça upgrade para adicionar mais produtos.',
+      );
+      return;
+    }
+    context.go('/estoque/produto/novo');
+  }
 
   void _aplicarFiltro({String? status, String? categoria, int? fornecedorId, String? busca}) {
     final notifier = ref.read(produtosNotifierProvider.notifier);
