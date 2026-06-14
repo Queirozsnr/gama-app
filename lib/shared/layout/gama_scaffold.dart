@@ -6,7 +6,7 @@ import 'dart:async';
 import '../../core/plan/plan_limit_notifier.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/update/update_dialog.dart';
-import '../../core/update/update_service.dart';
+import '../../core/update/update_notifier.dart';
 import '../../core/utils/jwt_decoder.dart';
 import '../../features/assinatura/presentation/assinatura_notifier.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
@@ -79,14 +79,9 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
   void initState() {
     super.initState();
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _checkUpdate());
-    }
-  }
-
-  Future<void> _checkUpdate() async {
-    final info = await UpdateService.checkForUpdate();
-    if (info != null && mounted) {
-      await showUpdateDialog(context, info);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(updateNotifierProvider.notifier).checkAndDownload();
+      });
     }
   }
 
@@ -105,6 +100,12 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
       if (msg == null) return;
       GamaSnackBar.error(context, msg);
       ref.read(planLimitNotifierProvider.notifier).clear();
+    });
+
+    ref.listen<UpdateDownloadState>(updateNotifierProvider, (_, state) {
+      if (state is UpdateReady && mounted) {
+        showUpdateDialog(context, state.info, apkPath: state.apkPath);
+      }
     });
 
     ref.listen(planoExpiradoNotifierProvider, (_, msg) {

@@ -3,19 +3,20 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'update_service.dart';
 
-Future<void> showUpdateDialog(BuildContext context, UpdateInfo info) {
+Future<void> showUpdateDialog(BuildContext context, UpdateInfo info, {String? apkPath}) {
   return showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => _UpdateDialog(info: info),
+    builder: (_) => _UpdateDialog(info: info, initialApkPath: apkPath),
   );
 }
 
 enum _UpdateState { idle, needsPermission, downloading, done, error }
 
 class _UpdateDialog extends StatefulWidget {
-  const _UpdateDialog({required this.info});
+  const _UpdateDialog({required this.info, this.initialApkPath});
   final UpdateInfo info;
+  final String? initialApkPath;
 
   @override
   State<_UpdateDialog> createState() => _UpdateDialogState();
@@ -32,7 +33,12 @@ class _UpdateDialogState extends State<_UpdateDialog> with WidgetsBindingObserve
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkCached();
+    if (widget.initialApkPath != null) {
+      _state = _UpdateState.done;
+      _apkPath = widget.initialApkPath;
+    } else {
+      _checkCached();
+    }
   }
 
   @override
