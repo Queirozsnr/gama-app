@@ -2,7 +2,7 @@ name: gama_app
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.10+11
+version: 1.0.11+12
 
 environment:
   sdk: ^3.11.5
@@ -51,16 +51,6 @@ dev_dependencies:
   json_serializable: ^6.7.1
   riverpod_generator: ^2.4.0
   flutter_launcher_icons: ^0.14.3
-  flutter_native_splash: ^2.4.3
-
-flutter_native_splash:
-  color: "#1A1714"
-  image: assets/icon/splash_logo.png
-  android_12:
-    image: assets/icon/splash_logo.png
-    color: "#1A1714"
-  web: false
-  ios: false
 
 flutter_launcher_icons:
   android: true
