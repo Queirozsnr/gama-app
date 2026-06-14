@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
 import '../../features/auth/domain/auth_state.dart';
 import 'gama_snack_bar.dart';
+import 'gama_logo.dart';
 
 const _kWhatsappNumber = '5592992790397'; // substitua pelo número real
 const _kSupportEmail = 'suporte@gama.com.br';
@@ -76,25 +77,7 @@ class _Header extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.accent,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Center(
-              child: Text(
-                'G',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
+          const GamaLogoMark(size: 44, radius: 10),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

@@ -32,7 +32,7 @@ class FcmService {
 
     await _localNotif.initialize(
       const InitializationSettings(
-        android: AndroidInitializationSettings('@drawable/ic_notification'),
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       ),
     );
 
@@ -62,7 +62,7 @@ class FcmService {
           _androidChannel.name,
           importance: Importance.high,
           priority: Priority.high,
-          icon: '@drawable/ic_notification',
+          icon: '@mipmap/ic_launcher',
           color: AppColors.accent,
         ),
       ),

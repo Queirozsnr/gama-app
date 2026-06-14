@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/gama_avatar.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
+import '../../../shared/widgets/gama_logo.dart';
 import '../domain/auth_state.dart';
 import 'auth_notifier.dart';
 
@@ -99,23 +100,7 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: isDesktop ? 36 : 32,
-            height: isDesktop ? 36 : 32,
-            decoration: BoxDecoration(
-              color: AppColors.accent,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              'G',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: isDesktop ? 18 : 16,
-              ),
-            ),
-          ),
+          GamaLogoMark(size: isDesktop ? 36 : 32, radius: 8),
           const SizedBox(width: 12),
           Text(
             '${count.toString().padLeft(2, '0')} · ${isDesktop ? 'SELECIONAR UNIDADE' : 'UNIDADE'}',
