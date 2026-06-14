@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "882087021909",
+    "project_id": "gama-fb35f",
+    "storage_bucket": "gama-fb35f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:882087021909:android:45dd21450965e2cb3073dc",
+        "android_client_info": {
+          "package_name": "com.gama.gama_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBiERwPVm9boDEHppX24c23ezJoEeb7FPc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

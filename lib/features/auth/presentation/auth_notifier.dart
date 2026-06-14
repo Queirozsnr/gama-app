@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../../core/utils/jwt_decoder.dart';
+import '../../notificacoes/presentation/notificacoes_notifier.dart';
 import '../data/auth_repository.dart';
 import '../domain/auth_state.dart';
 
@@ -66,6 +69,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         availableGroups: groups,
         availableOficinas: oficinas,
       ));
+      _registrarFcmToken();
     } on DioException catch (e) {
       final data = e.response?.data;
       if (data is Map && data['error'] != null) throw data['error'] as String;
@@ -143,8 +147,27 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    if (!kIsWeb) {
+      try {
+        final fcmToken = await FcmService.getToken();
+        if (fcmToken != null) {
+          await ref.read(notificacoesDataSourceProvider).revogarFcmToken(fcmToken);
+        }
+      } catch (_) {}
+      await FcmService.deleteToken();
+    }
     await ref.read(authRepositoryProvider).logout();
     state = AsyncData(AuthState.initial());
+  }
+
+  Future<void> _registrarFcmToken() async {
+    if (kIsWeb) return;
+    try {
+      final fcmToken = await FcmService.getToken();
+      if (fcmToken != null) {
+        await ref.read(notificacoesDataSourceProvider).registrarFcmToken(fcmToken);
+      }
+    } catch (_) {}
   }
 
   Future<List<GrupoItem>> _fetchGroups() async {

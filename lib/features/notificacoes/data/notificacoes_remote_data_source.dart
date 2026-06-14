@@ -18,4 +18,10 @@ class NotificacoesRemoteDataSource {
 
   Future<void> marcarTodasLidas() =>
       _dio.post<void>('/notificacoes/lidas');
+
+  Future<void> registrarFcmToken(String token) =>
+      _dio.post<void>('/notificacoes/fcm-token', data: {'token': token});
+
+  Future<void> revogarFcmToken(String token) =>
+      _dio.delete<void>('/notificacoes/fcm-token', data: {'token': token});
 }
