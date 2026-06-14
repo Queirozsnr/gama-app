@@ -161,7 +161,9 @@ class _MaisSheet extends ConsumerWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          Padding(
+          Flexible(
+            child: SingleChildScrollView(
+              child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: Column(
               children: [
@@ -194,6 +196,8 @@ class _MaisSheet extends ConsumerWidget {
                   ),
                 ),
               ],
+            ),
+          ),
             ),
           ),
         ],

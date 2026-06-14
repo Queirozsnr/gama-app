@@ -9,8 +9,8 @@ import 'core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (!kIsWeb) {
-    // google-services.json (Android) provê as opções automaticamente
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    // google-services.json provê as opções automaticamente no Android
     await Firebase.initializeApp();
     await FcmService.initialize();
   }

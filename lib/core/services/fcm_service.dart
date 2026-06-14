@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../theme/app_theme.dart';
 
 // Handler executado quando o app está fechado (precisa ser top-level)
 @pragma('vm:entry-point')
@@ -31,7 +32,7 @@ class FcmService {
 
     await _localNotif.initialize(
       const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        android: AndroidInitializationSettings('@drawable/ic_notification'),
       ),
     );
 
@@ -61,7 +62,8 @@ class FcmService {
           _androidChannel.name,
           importance: Importance.high,
           priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
+          icon: '@drawable/ic_notification',
+          color: AppColors.accent,
         ),
       ),
     );

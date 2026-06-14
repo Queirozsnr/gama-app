@@ -7,6 +7,7 @@ import '../../features/auth/domain/auth_state.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
 import '../utils/data_refresh.dart';
 import '../widgets/gama_avatar.dart';
+import '../widgets/gama_logo.dart';
 import '../widgets/gama_snack_bar.dart';
 
 class GamaSidebar extends ConsumerWidget {
@@ -191,23 +192,7 @@ class _Logo extends StatelessWidget {
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: onToggle,
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'G',
-                      style: TextStyle(fontFamily: 'Inter',
-                        color: Color(0xFF1A1714),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
+                  child: GamaLogoMark(size: 34, radius: 8),
                 ),
               ),
             )
@@ -217,21 +202,13 @@ class _Logo extends StatelessWidget {
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
                     onTap: onToggle,
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'G',
-                        style: TextStyle(fontFamily: 'Inter',
-                          color: Color(0xFF1A1714),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
-                        ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/icon/icon_windows.png',
+                        width: 34,
+                        height: 34,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),

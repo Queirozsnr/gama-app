@@ -49,15 +49,14 @@
     .gama-logo {
       width: 56px;
       height: 56px;
-      background: #FF7A1A;
       border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      font-weight: 800;
-      color: #1a1714;
-      letter-spacing: -0.5px;
+      overflow: hidden;
+    }
+
+    .gama-logo img {
+      width: 56px;
+      height: 56px;
+      display: block;
     }
 
     .gama-name {
@@ -83,7 +82,7 @@
 </head>
 <body>
   <div id="gama-loading">
-    <div class="gama-logo">G</div>
+    <div class="gama-logo"><img src="icons/Icon-192.png" alt="GAMA"></div>
     <div class="gama-name">GAMA</div>
     <div class="gama-spinner"></div>
   </div>

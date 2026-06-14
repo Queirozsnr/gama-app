@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/gama_logo.dart';
 import '../../../shared/widgets/gama_button.dart';
 import 'auth_notifier.dart';
 
@@ -171,23 +172,7 @@ class _BrandPanel extends StatelessWidget {
                 // Logo
                 Row(
                   children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'G',
-                        style: TextStyle(fontFamily: 'Inter', 
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF1A1714),
-                        ),
-                      ),
-                    ),
+                    const GamaLogoMark(size: 42, radius: 8),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,23 +368,7 @@ class _MobileLayout extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'G',
-                          style: TextStyle(fontFamily: 'Inter', 
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1A1714),
-                          ),
-                        ),
-                      ),
+                      const GamaLogoMark(size: 54, radius: 12),
                       const SizedBox(height: 16),
                       Text(
                         'GAMA',

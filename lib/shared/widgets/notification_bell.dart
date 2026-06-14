@@ -31,10 +31,14 @@ class _BellButtonState extends State<_BellButton> {
   final _layerLink = LayerLink();
   OverlayEntry? _overlay;
 
+  ProviderContainer get _container =>
+      ProviderScope.containerOf(context, listen: false);
+
   void _toggle() {
     if (_overlay != null) {
       _close();
     } else {
+      _container.invalidate(notificacoesNotifierProvider);
       _open();
     }
   }
