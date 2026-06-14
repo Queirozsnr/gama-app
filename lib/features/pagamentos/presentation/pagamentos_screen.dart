@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/file_download.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/filter_tab_bar.dart';
 import '../../../shared/widgets/gama_avatar.dart';
@@ -114,7 +117,7 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
       searchHint: isDesktop ? 'Buscar funcionário…' : null,
       onSearchChanged: isDesktop ? (v) => setState(() => _query = v.toLowerCase()) : null,
       action: OutlinedButton.icon(
-        onPressed: () => GamaSnackBar.info(context, 'Exportação será implementada em breve.'),
+        onPressed: _exportarFolha,
         icon: const Icon(Icons.download_outlined, size: 16),
         label: const Text('Exportar folha'),
       ),
@@ -170,6 +173,12 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
           .where((f) => _statusOf(f) == _StatusPag.pago)
           .toList();
     }
+    // Gerente sempre no topo
+    lista.sort((a, b) {
+      final aS = a.tipoRemuneracao == 'Socio' ? 0 : 1;
+      final bS = b.tipoRemuneracao == 'Socio' ? 0 : 1;
+      return aS.compareTo(bS);
+    });
     return lista;
   }
 
@@ -568,6 +577,47 @@ class _PagamentosScreenState extends ConsumerState<PagamentosScreen>
       ),
     ));
   }
+
+  Future<void> _exportarFolha() async {
+    final todos = ref.read(pagamentosNotifierProvider).valueOrNull;
+    if (todos == null || todos.isEmpty) {
+      GamaSnackBar.error(context, 'Nenhum dado para exportar.');
+      return;
+    }
+    final csv = _buildCsvFolha(todos);
+    // BOM (﻿) para o Excel reconhecer UTF-8 automaticamente
+    final bytes = Uint8List.fromList(utf8.encode('﻿$csv'));
+    final mes = _mesAno(DateTime.now()).toLowerCase().replaceAll('/', '_');
+    await downloadFile(bytes, 'folha_$mes.csv', mimeType: 'text/csv;charset=utf-8');
+  }
+
+  String _buildCsvFolha(List<FuncionarioAcumulado> todos) {
+    final buf = StringBuffer();
+    buf.writeln('Nome,Cargo,Tipo,Comissão,OS no período,Valor,Status,Último pagamento');
+    for (final f in todos.where((f) => f.tipoRemuneracao != 'Socio')) {
+      final status = switch (_statusOf(f)) {
+        _StatusPag.aPagar   => 'A pagar',
+        _StatusPag.pendente => 'Pendente',
+        _StatusPag.pago     => 'Pago',
+        _StatusPag.apuracao => 'Apuração',
+        _StatusPag.semDados => '-',
+      };
+      final comissao = f.porcentagem != null ? '${f.porcentagem}%' : '-';
+      final ultimoPag = f.ultimoPagamentoEm != null ? _fmtDia(f.ultimoPagamentoEm!) : '-';
+      final valor = f.tipoRemuneracao == 'Socio' ? 'Apuração' : _fmt(f.valorAcumulado);
+      buf.writeln([
+        '"${f.nome}"',
+        '"${cargoLabel(f.cargo)}"',
+        '"${tipoRemuneracaoLabel(f.tipoRemuneracao)}"',
+        comissao,
+        f.osAbertasCount,
+        '"$valor"',
+        status,
+        ultimoPag,
+      ].join(','));
+    }
+    return buf.toString();
+  }
 }
 
 // ─── filter status dropdown ────────────────────────────────────────────────
@@ -665,10 +715,18 @@ class _FuncionarioRow extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: selected ? AppColors.accentSoft.withValues(alpha: 0.4) : null,
+          color: selected
+              ? AppColors.accentSoft.withValues(alpha: 0.4)
+              : isGerente
+                  ? AppColors.infoSoft.withValues(alpha: 0.5)
+                  : null,
           border: Border(
             left: BorderSide(
-              color: selected ? AppColors.accent : Colors.transparent,
+              color: selected
+                  ? AppColors.accent
+                  : isGerente
+                      ? AppColors.info
+                      : Colors.transparent,
               width: 3,
             ),
           ),

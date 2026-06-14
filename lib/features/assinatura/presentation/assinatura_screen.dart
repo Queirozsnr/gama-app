@@ -1391,6 +1391,32 @@ class _MobileUsoHeader extends StatelessWidget {
               ),
             ],
           ),
+          if (uso.fotosGbMax != null) ...[
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => context.go(AppRoutes.midias),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.photo_library_outlined,
+                      size: 14, color: AppColors.accent),
+                  SizedBox(width: 6),
+                  Text(
+                    'Gerenciar fotos e vídeos',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_ios_rounded,
+                      size: 11, color: AppColors.accent),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           // Cancel / Reactivate button
           if (cancelando)

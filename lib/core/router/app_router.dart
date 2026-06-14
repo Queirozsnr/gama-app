@@ -135,6 +135,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             '/receitas',
             '/gerenciar-oficinas',
             '/configuracoes-oficina',
+            '/assinatura',
           ];
           if (restricted.any((r) => loc.startsWith(r))) return AppRoutes.home;
         }

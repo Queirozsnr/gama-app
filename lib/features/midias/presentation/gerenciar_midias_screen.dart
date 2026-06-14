@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/network/api_constants.dart';
 import '../../../core/router/app_router.dart';
+import '../../assinatura/presentation/assinatura_notifier.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/file_download.dart';
 import '../../../shared/state/top_bar_scope.dart';
@@ -250,6 +251,7 @@ class _GerenciarMidiasScreenState
         pageTitle: 'Fotos e Vídeos',
         desktopSubtitle:
             _total > 0 ? '$_total arquivo${_total == 1 ? '' : 's'}' : null,
+        leading: BackButton(onPressed: () => context.go(AppRoutes.assinatura)),
         mobileStyle: MobileTopBarStyle.light,
       ));
     }
@@ -381,6 +383,14 @@ class _GerenciarMidiasScreenState
 
   @override
   Widget build(BuildContext context) {
+    // Guard: plano sem mídias não acessa esta tela
+    ref.watch(assinaturaProvider).whenData((a) {
+      if (a.uso.fotosGbMax == null) {
+        WidgetsBinding.instance.addPostFrameCallback(
+            (_) { if (mounted) context.go(AppRoutes.assinatura); });
+      }
+    });
+
     final isDesktop = MediaQuery.sizeOf(context).width >= 800;
     final cols = isDesktop ? 5 : 2;
 

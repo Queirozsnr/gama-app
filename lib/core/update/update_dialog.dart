@@ -115,19 +115,19 @@ class _UpdateDialogState extends State<_UpdateDialog> with WidgetsBindingObserve
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF8E1),
+                color: AppColors.warnSoft,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFFFE082)),
+                border: Border.all(color: AppColors.warn.withValues(alpha: 0.35)),
               ),
               child: const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, size: 16, color: Color(0xFFF57F17)),
+                  Icon(Icons.lock_outline, size: 15, color: AppColors.warn),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Para instalar a atualização, permita que o GAMA instale apps externos.\n\nVá em Configurações → Instalar apps desconhecidos → GAMA e habilite a opção.',
-                      style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: Color(0xFF5D4037), height: 1.5),
+                      'O Android bloqueou a instalação. Abra as configurações e ative "Instalar apps desconhecidos" para o GAMA.',
+                      style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2, height: 1.5),
                     ),
                   ),
                 ],
