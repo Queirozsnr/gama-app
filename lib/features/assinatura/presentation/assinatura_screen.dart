@@ -32,6 +32,16 @@ String _fmtGb(double v) {
   return '${(v * 1024).toStringAsFixed(0)} MB';
 }
 
+String _textoVencimento(AssinaturaDetalhes d) {
+  final data = _fmtDate(d.proximaCobranca);
+  if (d.status == StatusAssinatura.cancelamentoAgendado) return 'Ativo até: $data';
+  if (d.emTeste) return d.vencida ? 'Teste encerrado em: $data' : 'Teste até: $data';
+  return d.vencida ? 'Venceu em: $data' : 'Renova em: $data';
+}
+
+bool _vencimentoEmAlerta(AssinaturaDetalhes d) =>
+    d.status == StatusAssinatura.cancelamentoAgendado || d.vencida;
+
 // ── planos estáticos ──────────────────────────────────────────────────────────
 
 class _PlanoOpcao {
@@ -176,7 +186,7 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
           _UsoPlanoGrid(uso: detalhes.uso),
           const SizedBox(height: 20),
           _MudarDePlanoSection(
-            planoAtual: detalhes.plano,
+            planoAtual: detalhes.emTeste ? null : detalhes.plano,
             cancelamentoAgendado: detalhes.status == StatusAssinatura.cancelamentoAgendado,
             ciclo: _ciclo,
             submitting: _submitting,
@@ -208,7 +218,7 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _MudarDePlanoSection(
-                  planoAtual: detalhes.plano,
+                  planoAtual: detalhes.emTeste ? null : detalhes.plano,
                   cancelamentoAgendado: detalhes.status == StatusAssinatura.cancelamentoAgendado,
                   ciclo: _ciclo,
                   submitting: _submitting,
@@ -280,6 +290,7 @@ class _PlanoAtualCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cancelando = detalhes.status == StatusAssinatura.cancelamentoAgendado;
+    final alerta = _vencimentoEmAlerta(detalhes);
     final cicloLabel = detalhes.ciclo == CicloCobranca.mensal
         ? 'Cobrança mensal'
         : 'Cobrança anual';
@@ -313,7 +324,7 @@ class _PlanoAtualCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      detalhes.plano.label,
+                      detalhes.nomeExibicao,
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 22,
@@ -322,26 +333,24 @@ class _PlanoAtualCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    _StatusBadge(status: detalhes.status),
+                    _StatusBadge(detalhes: detalhes),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
                     Icon(Icons.calendar_today_outlined,
-                        size: 13, color: AppColors.sidebarText),
+                        size: 13, color: alerta ? AppColors.danger : AppColors.sidebarText),
                     const SizedBox(width: 5),
                     Text(
-                      cancelando
-                          ? 'Ativo até: ${_fmtDate(detalhes.proximaCobranca)}'
-                          : 'Renova em: ${_fmtDate(detalhes.proximaCobranca)}',
+                      _textoVencimento(detalhes),
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
-                        color: cancelando ? AppColors.danger : AppColors.sidebarText,
+                        color: alerta ? AppColors.danger : AppColors.sidebarText,
                       ),
                     ),
-                    if (!cancelando) ...[
+                    if (!cancelando && !detalhes.emTeste) ...[
                       const SizedBox(width: 16),
                       Icon(Icons.refresh_outlined,
                           size: 13, color: AppColors.sidebarText),
@@ -360,9 +369,9 @@ class _PlanoAtualCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 24),
-          // right — price + actions
-          Column(
+          if (!detalhes.emTeste) const SizedBox(width: 24),
+          // right — price + actions (teste não tem preço nem o que cancelar)
+          if (!detalhes.emTeste) Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               RichText(
@@ -421,19 +430,29 @@ class _PlanoAtualCard extends StatelessWidget {
 }
 
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
+  const _StatusBadge({required this.detalhes});
 
-  final StatusAssinatura status;
+  final AssinaturaDetalhes detalhes;
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg) = switch (status) {
-      StatusAssinatura.ativa                => (AppColors.ok, AppColors.okSoft),
-      StatusAssinatura.trialing             => (AppColors.info, AppColors.infoSoft),
-      StatusAssinatura.suspensa             => (AppColors.warn, AppColors.warnSoft),
-      StatusAssinatura.cancelada            => (AppColors.danger, AppColors.dangerSoft),
-      StatusAssinatura.cancelamentoAgendado => (AppColors.danger, AppColors.dangerSoft),
-    };
+    final status = detalhes.status;
+    final expirou = detalhes.vencida &&
+        (status == StatusAssinatura.trialing || status == StatusAssinatura.ativa);
+    final label = !expirou
+        ? status.label
+        : status == StatusAssinatura.trialing
+            ? 'TESTE ENCERRADO'
+            : 'VENCIDA';
+    final (bg, fg) = expirou
+        ? (AppColors.danger, AppColors.dangerSoft)
+        : switch (status) {
+            StatusAssinatura.ativa                => (AppColors.ok, AppColors.okSoft),
+            StatusAssinatura.trialing             => (AppColors.info, AppColors.infoSoft),
+            StatusAssinatura.suspensa             => (AppColors.warn, AppColors.warnSoft),
+            StatusAssinatura.cancelada            => (AppColors.danger, AppColors.dangerSoft),
+            StatusAssinatura.cancelamentoAgendado => (AppColors.danger, AppColors.dangerSoft),
+          };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -443,7 +462,7 @@ class _StatusBadge extends StatelessWidget {
         border: Border.all(color: bg.withValues(alpha: 0.4)),
       ),
       child: Text(
-        status.label,
+        label,
         style: TextStyle(
           fontFamily: 'JetBrains Mono',
           fontSize: 9,
@@ -660,7 +679,7 @@ class _MudarDePlanoSection extends StatelessWidget {
     required this.onMudar,
   });
 
-  final NomePlano planoAtual;
+  final NomePlano? planoAtual;
   final bool cancelamentoAgendado;
   final CicloCobranca ciclo;
   final bool submitting;
@@ -685,6 +704,7 @@ class _MudarDePlanoSection extends StatelessWidget {
                     opcao: opcao,
                     isAtual: opcao.plano == planoAtual,
                     cancelamentoAgendado: cancelamentoAgendado,
+                    semPlanoAtual: planoAtual == null,
                     ciclo: ciclo,
                     submitting: submitting,
                     onMudar: () => onMudar(opcao.plano),
@@ -704,6 +724,7 @@ class _MudarDePlanoSection extends StatelessWidget {
                     opcao: _planosDisponiveis[i],
                     isAtual: _planosDisponiveis[i].plano == planoAtual,
                     cancelamentoAgendado: cancelamentoAgendado,
+                    semPlanoAtual: planoAtual == null,
                     ciclo: ciclo,
                     submitting: submitting,
                     onMudar: () => onMudar(_planosDisponiveis[i].plano),
@@ -792,6 +813,7 @@ class _PlanoCard extends StatelessWidget {
     required this.opcao,
     required this.isAtual,
     required this.cancelamentoAgendado,
+    required this.semPlanoAtual,
     required this.ciclo,
     required this.submitting,
     required this.onMudar,
@@ -800,6 +822,7 @@ class _PlanoCard extends StatelessWidget {
   final _PlanoOpcao opcao;
   final bool isAtual;
   final bool cancelamentoAgendado;
+  final bool semPlanoAtual;
   final CicloCobranca ciclo;
   final bool submitting;
   final VoidCallback onMudar;
@@ -1063,6 +1086,7 @@ class _PlanoCard extends StatelessWidget {
   }
 
   String _btnLabel(NomePlano p) {
+    if (semPlanoAtual) return 'Assinar ${opcao.label}';
     return switch (p) {
       NomePlano.solo    => 'Mudar para Solo',
       NomePlano.oficina => 'Mudar para Oficina',
@@ -1250,6 +1274,7 @@ class _MobileUsoHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final uso = detalhes.uso;
     final cancelando = detalhes.status == StatusAssinatura.cancelamentoAgendado;
+    final alerta = _vencimentoEmAlerta(detalhes);
 
     return Container(
       color: AppColors.sidebarBg,
@@ -1271,7 +1296,7 @@ class _MobileUsoHeader extends StatelessWidget {
           Row(
             children: [
               Text(
-                detalhes.plano.label,
+                detalhes.nomeExibicao,
                 style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 18,
@@ -1280,9 +1305,9 @@ class _MobileUsoHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              _StatusBadge(status: detalhes.status),
+              _StatusBadge(detalhes: detalhes),
               const Spacer(),
-              RichText(
+              if (!detalhes.emTeste) RichText(
                 text: TextSpan(
                   children: [
                     TextSpan(
@@ -1312,28 +1337,26 @@ class _MobileUsoHeader extends StatelessWidget {
           Row(
             children: [
               Icon(
-                cancelando
+                alerta
                     ? Icons.calendar_today_outlined
                     : Icons.autorenew_outlined,
                 size: 13,
-                color: cancelando
+                color: alerta
                     ? AppColors.danger
                     : AppColors.sidebarText.withValues(alpha: 0.7),
               ),
               const SizedBox(width: 5),
               Text(
-                cancelando
-                    ? 'Ativo até: ${_fmtDate(detalhes.proximaCobranca)}'
-                    : 'Renova em: ${_fmtDate(detalhes.proximaCobranca)}',
+                _textoVencimento(detalhes),
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
-                  color: cancelando
+                  color: alerta
                       ? AppColors.danger
                       : AppColors.sidebarText.withValues(alpha: 0.7),
                 ),
               ),
-              if (!cancelando) ...[
+              if (!cancelando && !detalhes.emTeste) ...[
                 const SizedBox(width: 12),
                 Icon(Icons.refresh_outlined,
                     size: 13,
@@ -1428,7 +1451,7 @@ class _MobileUsoHeader extends StatelessWidget {
                 color: AppColors.danger,
               ),
             )
-          else
+          else if (!detalhes.emTeste)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(

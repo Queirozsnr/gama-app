@@ -104,6 +104,11 @@ class AssinaturaDetalhes {
   final UsoPlano uso;
   final List<Fatura> faturas;
 
+  // O backend envia o Trial com plano "solo"; o status é o que o identifica.
+  bool get emTeste => status == StatusAssinatura.trialing;
+  bool get vencida => proximaCobranca.isBefore(DateTime.now());
+  String get nomeExibicao => emTeste ? 'Período de teste' : plano.label;
+
   factory AssinaturaDetalhes.fromJson(Map<String, dynamic> json) =>
       AssinaturaDetalhes(
         plano:          NomePlano.values.byName(json['plano'] as String),
