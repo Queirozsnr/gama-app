@@ -108,17 +108,17 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
       }
     });
 
-    ref.listen(planoExpiradoNotifierProvider, (_, msg) {
-      if (msg == null) return;
-      ref.read(planoExpiradoNotifierProvider.notifier).clear();
+    // O redirect fica no router; aqui só o aviso ao gestor, que continua no
+    // shell (em /assinatura) com os dados da assinatura recarregados.
+    ref.listen(bloqueioAssinaturaProvider, (anterior, atual) {
+      if (atual?.motivo != MotivoBloqueio.planoExpirado ||
+          anterior?.motivo == MotivoBloqueio.planoExpirado) {
+        return;
+      }
       ref.invalidate(assinaturaProvider);
       final token = ref.read(authNotifierProvider).value?.token;
-      final isGestor = token != null && JwtDecoder.isGestor(token);
-      if (isGestor) {
-        context.go('/assinatura');
-        GamaSnackBar.error(context, msg);
-      } else {
-        GamaSnackBar.error(context, 'Plano expirado. Entre em contato com o responsável.');
+      if (token != null && JwtDecoder.isGestor(token)) {
+        GamaSnackBar.error(context, atual!.mensagem);
       }
     });
 

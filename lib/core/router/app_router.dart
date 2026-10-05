@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/plan/plan_limit_notifier.dart';
 import '../../core/utils/jwt_decoder.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -29,6 +30,7 @@ import '../../features/oficinas/presentation/configuracoes_oficina_screen.dart';
 import '../../features/auth/presentation/trocar_senha_screen.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/assinatura/presentation/assinatura_screen.dart';
+import '../../features/assinatura/presentation/plano_expirado_screen.dart';
 import '../../features/midias/presentation/gerenciar_midias_screen.dart';
 import '../../shared/layout/gama_scaffold.dart';
 import '../../shared/state/top_bar_scope.dart';
@@ -57,7 +59,8 @@ abstract final class AppRoutes {
   static const selectOficina    = '/select-oficina';
   static const trocarSenha      = '/trocar-senha';
   static const assinatura        = '/assinatura';
-  static const midias            = '/midias';
+  static const planoExpirado     = '/plano-expirado';
+  static const midias           = '/midias';
   static const estoqueProdutoNovo    = '/estoque/produto/novo';
   static const estoqueProdutoDetalhe = '/estoque/produto/:id';
   static const estoqueProdutoEditar  = '/estoque/produto/:id/editar';
@@ -82,6 +85,7 @@ const _pageTitles = <String, String>{
 class _RouterNotifier extends ChangeNotifier {
   _RouterNotifier(Ref ref) {
     ref.listen(authNotifierProvider, (_, _) => notifyListeners());
+    ref.listen(bloqueioAssinaturaProvider, (_, _) => notifyListeners());
   }
 }
 
@@ -126,6 +130,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       if (!isAuthenticated && !isPendingGroup && !isPendingOficina && loc != AppRoutes.login) return AppRoutes.login;
 
+      // Grupo bloqueado pelo backend (402): o gestor com plano expirado só acessa
+      // a assinatura; os demais casos ficam na tela de bloqueio até liberar.
+      final bloqueio = ref.read(bloqueioAssinaturaProvider);
+      if (isAuthenticated && !isPendingPassword && bloqueio != null) {
+        final isGestor = JwtDecoder.isGestor(auth?.token ?? '');
+        final destino = bloqueio.motivo == MotivoBloqueio.planoExpirado && isGestor
+            ? AppRoutes.assinatura
+            : AppRoutes.planoExpirado;
+        return loc == destino ? null : destino;
+      }
+      if (loc == AppRoutes.planoExpirado) return AppRoutes.home;
+
       // Guards por role — bloqueio no router (camada de segurança real)
       if (isAuthenticated && !isPendingPassword) {
         final token = auth?.token ?? '';
@@ -149,6 +165,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.selectGroup,   pageBuilder: _fade((ctx, st) => const SelectGroupScreen())),
       GoRoute(path: AppRoutes.selectOficina, pageBuilder: _fade((ctx, st) => const SelectOficinaScreen())),
       GoRoute(path: AppRoutes.trocarSenha,   pageBuilder: _fade((ctx, st) => const TrocarSenhaScreen())),
+      GoRoute(path: AppRoutes.planoExpirado, pageBuilder: _fade((ctx, st) => const PlanoExpiradoScreen())),
       StatefulShellRoute(
         navigatorContainerBuilder: (context, shell, children) {
           final notifiers = BranchTopBarScope.of(context);

@@ -23,8 +23,13 @@ final dioClientProvider = Provider<Dio>((ref) {
     onRefreshFailed: () => ref.invalidate(authNotifierProvider),
     onPlanLimitReached: (msg) =>
         ref.read(planLimitNotifierProvider.notifier).set(msg),
-    onPlanExpired: (msg) =>
-        ref.read(planoExpiradoNotifierProvider.notifier).set(msg),
+    onGrupoBloqueado: (tipo, msg) =>
+        ref.read(bloqueioAssinaturaProvider.notifier).bloquear(
+              tipo == 'account_disabled'
+                  ? MotivoBloqueio.contaDesativada
+                  : MotivoBloqueio.planoExpirado,
+              msg,
+            ),
   ));
 
   if (kDebugMode) {
