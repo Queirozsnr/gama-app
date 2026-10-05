@@ -38,9 +38,13 @@ class NotificacoesNotifier extends AsyncNotifier<List<Notificacao>> {
 
     final storage = ref.read(tokenStorageProvider);
 
+    // No web o BASE_URL é relativo (/api). O signalr_netcore troca "http" por "ws"
+    // no início da URL para abrir o WebSocket, então ela precisa ser absoluta.
+    final baseUrl = Uri.base.resolve(kBaseUrl).toString();
+
     _hub = HubConnectionBuilder()
         .withUrl(
-          '$kBaseUrl/hubs/notificacoes',
+          '$baseUrl/hubs/notificacoes',
           options: HttpConnectionOptions(
             // Lê o token atual a cada (re)conexão — cobre renovação e reconexão pós-background
             accessTokenFactory: () async => await storage.read() ?? '',
