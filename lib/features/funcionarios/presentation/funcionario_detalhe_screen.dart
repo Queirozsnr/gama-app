@@ -63,16 +63,19 @@ class _FuncionarioDetalheScreenState
                   icon: const Icon(Icons.edit_outlined, size: 16),
                   label: const Text('Editar'),
                 ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () => _resetarSenha(f),
-                  icon: const Icon(Icons.lock_reset_outlined, size: 16),
-                  label: const Text('Resetar senha'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.danger,
-                    side: BorderSide(color: AppColors.danger.withValues(alpha: 0.5)),
+                // Resetar senha só faz sentido para quem tem acesso ao sistema.
+                if (f.acessoAoSistema) ...[
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => _resetarSenha(f),
+                    icon: const Icon(Icons.lock_reset_outlined, size: 16),
+                    label: const Text('Resetar senha'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.danger,
+                      side: BorderSide(color: AppColors.danger.withValues(alpha: 0.5)),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
     ));
@@ -92,11 +95,12 @@ class _FuncionarioDetalheScreenState
               title: const Text('Editar funcionário'),
               onTap: () { Navigator.pop(sheetCtx); _editar(f); },
             ),
-            ListTile(
-              leading: const Icon(Icons.lock_reset_outlined),
-              title: const Text('Resetar senha'),
-              onTap: () { Navigator.pop(sheetCtx); _resetarSenha(f); },
-            ),
+            if (f.acessoAoSistema)
+              ListTile(
+                leading: const Icon(Icons.lock_reset_outlined),
+                title: const Text('Resetar senha'),
+                onTap: () { Navigator.pop(sheetCtx); _resetarSenha(f); },
+              ),
           ],
         ),
       ),
@@ -283,7 +287,7 @@ class _ProfileHeader extends StatelessWidget {
                 const SizedBox(height: 5),
                 Row(
                   children: [
-                    _InfoTag(Icons.email_outlined, funcionario.email),
+                    _InfoTag(Icons.email_outlined, funcionario.email ?? 'Sem e-mail'),
                     if (funcionario.telefone != null) ...[
                       const SizedBox(width: 16),
                       _InfoTag(Icons.phone_outlined, funcionario.telefone!),
@@ -434,7 +438,8 @@ class _DadosPessoaisCard extends StatelessWidget {
         child: Column(
           children: [
             _FieldRow(label: 'NOME COMPLETO', value: funcionario.nome),
-            _FieldRow(label: 'E-MAIL', value: funcionario.email),
+            _FieldRow(label: 'E-MAIL', value: funcionario.email ?? '—'),
+            _FieldRow(label: 'ACESSO AO SISTEMA', value: funcionario.acessoAoSistema ? 'Habilitado' : 'Desabilitado'),
             if (funcionario.telefone != null)
               _FieldRow(label: 'TELEFONE', value: funcionario.telefone!),
             _FieldRow(label: 'CARGO', value: label),
@@ -1052,7 +1057,8 @@ class _MobilePerfilContent extends StatelessWidget {
               child: Column(
                 children: [
                   _MobileFieldRow(label: 'NOME COMPLETO', value: funcionario.nome),
-                  _MobileFieldRow(label: 'E-MAIL', value: funcionario.email),
+                  _MobileFieldRow(label: 'E-MAIL', value: funcionario.email ?? '—'),
+                  _MobileFieldRow(label: 'ACESSO AO SISTEMA', value: funcionario.acessoAoSistema ? 'Habilitado' : 'Desabilitado'),
                   if (funcionario.telefone != null)
                     _MobileFieldRow(label: 'TELEFONE', value: funcionario.telefone!),
                   _MobileFieldRow(label: 'CARGO', value: label),

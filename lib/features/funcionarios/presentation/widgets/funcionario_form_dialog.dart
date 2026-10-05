@@ -47,6 +47,7 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
   List<OficinaModel> _oficinas = [];
   bool _loadingOficinas = true;
   bool _loading = false;
+  late bool _acesso;
 
   bool get _editando => widget.funcionario != null;
 
@@ -58,6 +59,7 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
     _email = TextEditingController(text: f?.email ?? '');
     _telefone = TextEditingController(text: formatPhone(f?.telefone));
     _cargo = f?.cargo;
+    _acesso = f?.acessoAoSistema ?? true;
     _tipoRemuneracao = f?.tipoRemuneracao;
     _valor = TextEditingController(
       text: f == null ? '' : (_tipoRemuneracao == 'Fixo' ? f.salario?.toString() : f.porcentagem?.toString()) ?? '',
@@ -111,17 +113,16 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
         if (tipoFinal == 'Porcentagem') 'porcentagem': valorNum,
         if (_telefone.text.trim().isNotEmpty) 'telefone': _telefone.text.trim(),
         'oficinaIds': _oficinasSelected.toList(),
+        'nome': _nome.text.trim(),
+        if (_email.text.trim().isNotEmpty) 'email': _email.text.trim(),
+        'acessoAoSistema': _acesso,
       };
 
       final notifier = ref.read(funcionariosNotifierProvider.notifier);
       if (_editando) {
         await notifier.atualizar(widget.funcionario!.id, data);
       } else {
-        await notifier.criar({
-          'nome': _nome.text.trim(),
-          'email': _email.text.trim(),
-          ...data,
-        });
+        await notifier.criar(data);
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -168,20 +169,12 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (!_editando) ...[
-                          _campo(_nome, 'Nome *', obrigatorio: true),
-                          const SizedBox(height: 12),
-                          _campo(_email, 'E-mail *', teclado: TextInputType.emailAddress,
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) return 'Campo obrigatório';
-                                final ok = RegExp(r'^[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}$').hasMatch(v.trim());
-                                return ok ? null : 'E-mail inválido';
-                              }),
-                          const SizedBox(height: 12),
-                        ],
+                        _secao('Dados do funcionário'),
+                        _campo(_nome, 'Nome *', obrigatorio: true),
+                        const SizedBox(height: 12),
                         _campo(_telefone, 'Telefone', teclado: TextInputType.phone,
                             formatters: [PhoneInputFormatter()]),
-                        const SizedBox(height: 12),
+                        _secao('Cargo e remuneração'),
                         GamaSearchableSelect<String>(
                           label: 'Cargo *',
                           selectedValue: _cargo,
@@ -218,9 +211,7 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                             ),
                           ],
                         ],
-                        const SizedBox(height: 16),
-                        const Text('Oficinas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                        const SizedBox(height: 8),
+                        _secao('Oficinas'),
                         if (_loadingOficinas)
                           const Center(child: CircularProgressIndicator())
                         else if (_oficinas.isEmpty)
@@ -244,6 +235,25 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                               )).toList(),
                             ),
                           ),
+                        _secao('Acesso ao sistema'),
+                        _acessoSwitch(),
+                        const SizedBox(height: 12),
+                        _campo(_email, _acesso ? 'E-mail *' : 'E-mail (opcional)',
+                            teclado: TextInputType.emailAddress,
+                            validator: (v) {
+                              final valor = v?.trim() ?? '';
+                              if (valor.isEmpty) return _acesso ? 'Obrigatório para acessar o sistema' : null;
+                              final ok = RegExp(r'^[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}$').hasMatch(valor);
+                              return ok ? null : 'E-mail inválido';
+                            }),
+                        // A senha inicial só aparece quando a conta vai ser liberada agora.
+                        if (_acesso && !(widget.funcionario?.acessoAoSistema ?? false)) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Senha inicial: gama123. No primeiro acesso o funcionário cria a própria senha.',
+                            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -258,6 +268,58 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _secao(String titulo) => Padding(
+        padding: const EdgeInsets.only(top: 20, bottom: 10),
+        child: Text(
+          titulo.toUpperCase(),
+          style: const TextStyle(
+            fontFamily: 'JetBrains Mono',
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.8,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+
+  Widget _acessoSwitch() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _acesso ? 'Conta habilitada' : 'Conta desabilitada',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _acesso
+                      ? 'Pode entrar no GAMA e ocupa uma vaga de usuário do plano.'
+                      : 'Não entra no GAMA e não ocupa vaga do plano. Continua disponível em OS e pagamentos.',
+                  style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Switch(
+            value: _acesso,
+            activeTrackColor: AppColors.primary,
+            onChanged: (v) => setState(() => _acesso = v),
+          ),
+        ],
       ),
     );
   }

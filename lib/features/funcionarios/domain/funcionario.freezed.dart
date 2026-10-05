@@ -24,13 +24,14 @@ mixin _$Funcionario {
   int get id => throw _privateConstructorUsedError;
   int get userId => throw _privateConstructorUsedError;
   String get nome => throw _privateConstructorUsedError;
-  String get email => throw _privateConstructorUsedError;
+  String? get email => throw _privateConstructorUsedError;
   String get cargo => throw _privateConstructorUsedError;
   String get tipoRemuneracao => throw _privateConstructorUsedError;
   double? get salario => throw _privateConstructorUsedError;
   double? get porcentagem => throw _privateConstructorUsedError;
   String? get telefone => throw _privateConstructorUsedError;
   bool get ativo => throw _privateConstructorUsedError;
+  bool get acessoAoSistema => throw _privateConstructorUsedError;
   DateTime get criadoEm => throw _privateConstructorUsedError;
   List<OficinaRef> get oficinas => throw _privateConstructorUsedError;
 
@@ -55,13 +56,14 @@ abstract class $FuncionarioCopyWith<$Res> {
     int id,
     int userId,
     String nome,
-    String email,
+    String? email,
     String cargo,
     String tipoRemuneracao,
     double? salario,
     double? porcentagem,
     String? telefone,
     bool ativo,
+    bool acessoAoSistema,
     DateTime criadoEm,
     List<OficinaRef> oficinas,
   });
@@ -85,13 +87,14 @@ class _$FuncionarioCopyWithImpl<$Res, $Val extends Funcionario>
     Object? id = null,
     Object? userId = null,
     Object? nome = null,
-    Object? email = null,
+    Object? email = freezed,
     Object? cargo = null,
     Object? tipoRemuneracao = null,
     Object? salario = freezed,
     Object? porcentagem = freezed,
     Object? telefone = freezed,
     Object? ativo = null,
+    Object? acessoAoSistema = null,
     Object? criadoEm = null,
     Object? oficinas = null,
   }) {
@@ -109,10 +112,10 @@ class _$FuncionarioCopyWithImpl<$Res, $Val extends Funcionario>
                 ? _value.nome
                 : nome // ignore: cast_nullable_to_non_nullable
                       as String,
-            email: null == email
+            email: freezed == email
                 ? _value.email
                 : email // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as String?,
             cargo: null == cargo
                 ? _value.cargo
                 : cargo // ignore: cast_nullable_to_non_nullable
@@ -136,6 +139,10 @@ class _$FuncionarioCopyWithImpl<$Res, $Val extends Funcionario>
             ativo: null == ativo
                 ? _value.ativo
                 : ativo // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            acessoAoSistema: null == acessoAoSistema
+                ? _value.acessoAoSistema
+                : acessoAoSistema // ignore: cast_nullable_to_non_nullable
                       as bool,
             criadoEm: null == criadoEm
                 ? _value.criadoEm
@@ -164,13 +171,14 @@ abstract class _$$FuncionarioImplCopyWith<$Res>
     int id,
     int userId,
     String nome,
-    String email,
+    String? email,
     String cargo,
     String tipoRemuneracao,
     double? salario,
     double? porcentagem,
     String? telefone,
     bool ativo,
+    bool acessoAoSistema,
     DateTime criadoEm,
     List<OficinaRef> oficinas,
   });
@@ -193,13 +201,14 @@ class __$$FuncionarioImplCopyWithImpl<$Res>
     Object? id = null,
     Object? userId = null,
     Object? nome = null,
-    Object? email = null,
+    Object? email = freezed,
     Object? cargo = null,
     Object? tipoRemuneracao = null,
     Object? salario = freezed,
     Object? porcentagem = freezed,
     Object? telefone = freezed,
     Object? ativo = null,
+    Object? acessoAoSistema = null,
     Object? criadoEm = null,
     Object? oficinas = null,
   }) {
@@ -217,10 +226,10 @@ class __$$FuncionarioImplCopyWithImpl<$Res>
             ? _value.nome
             : nome // ignore: cast_nullable_to_non_nullable
                   as String,
-        email: null == email
+        email: freezed == email
             ? _value.email
             : email // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         cargo: null == cargo
             ? _value.cargo
             : cargo // ignore: cast_nullable_to_non_nullable
@@ -245,6 +254,10 @@ class __$$FuncionarioImplCopyWithImpl<$Res>
             ? _value.ativo
             : ativo // ignore: cast_nullable_to_non_nullable
                   as bool,
+        acessoAoSistema: null == acessoAoSistema
+            ? _value.acessoAoSistema
+            : acessoAoSistema // ignore: cast_nullable_to_non_nullable
+                  as bool,
         criadoEm: null == criadoEm
             ? _value.criadoEm
             : criadoEm // ignore: cast_nullable_to_non_nullable
@@ -265,13 +278,14 @@ class _$FuncionarioImpl implements _Funcionario {
     required this.id,
     required this.userId,
     required this.nome,
-    required this.email,
+    this.email,
     required this.cargo,
     required this.tipoRemuneracao,
     this.salario,
     this.porcentagem,
     this.telefone,
     required this.ativo,
+    this.acessoAoSistema = true,
     required this.criadoEm,
     final List<OficinaRef> oficinas = const [],
   }) : _oficinas = oficinas;
@@ -286,7 +300,7 @@ class _$FuncionarioImpl implements _Funcionario {
   @override
   final String nome;
   @override
-  final String email;
+  final String? email;
   @override
   final String cargo;
   @override
@@ -300,6 +314,9 @@ class _$FuncionarioImpl implements _Funcionario {
   @override
   final bool ativo;
   @override
+  @JsonKey()
+  final bool acessoAoSistema;
+  @override
   final DateTime criadoEm;
   final List<OficinaRef> _oficinas;
   @override
@@ -312,7 +329,7 @@ class _$FuncionarioImpl implements _Funcionario {
 
   @override
   String toString() {
-    return 'Funcionario(id: $id, userId: $userId, nome: $nome, email: $email, cargo: $cargo, tipoRemuneracao: $tipoRemuneracao, salario: $salario, porcentagem: $porcentagem, telefone: $telefone, ativo: $ativo, criadoEm: $criadoEm, oficinas: $oficinas)';
+    return 'Funcionario(id: $id, userId: $userId, nome: $nome, email: $email, cargo: $cargo, tipoRemuneracao: $tipoRemuneracao, salario: $salario, porcentagem: $porcentagem, telefone: $telefone, ativo: $ativo, acessoAoSistema: $acessoAoSistema, criadoEm: $criadoEm, oficinas: $oficinas)';
   }
 
   @override
@@ -333,6 +350,8 @@ class _$FuncionarioImpl implements _Funcionario {
             (identical(other.telefone, telefone) ||
                 other.telefone == telefone) &&
             (identical(other.ativo, ativo) || other.ativo == ativo) &&
+            (identical(other.acessoAoSistema, acessoAoSistema) ||
+                other.acessoAoSistema == acessoAoSistema) &&
             (identical(other.criadoEm, criadoEm) ||
                 other.criadoEm == criadoEm) &&
             const DeepCollectionEquality().equals(other._oficinas, _oficinas));
@@ -352,6 +371,7 @@ class _$FuncionarioImpl implements _Funcionario {
     porcentagem,
     telefone,
     ativo,
+    acessoAoSistema,
     criadoEm,
     const DeepCollectionEquality().hash(_oficinas),
   );
@@ -375,13 +395,14 @@ abstract class _Funcionario implements Funcionario {
     required final int id,
     required final int userId,
     required final String nome,
-    required final String email,
+    final String? email,
     required final String cargo,
     required final String tipoRemuneracao,
     final double? salario,
     final double? porcentagem,
     final String? telefone,
     required final bool ativo,
+    final bool acessoAoSistema,
     required final DateTime criadoEm,
     final List<OficinaRef> oficinas,
   }) = _$FuncionarioImpl;
@@ -396,7 +417,7 @@ abstract class _Funcionario implements Funcionario {
   @override
   String get nome;
   @override
-  String get email;
+  String? get email;
   @override
   String get cargo;
   @override
@@ -409,6 +430,8 @@ abstract class _Funcionario implements Funcionario {
   String? get telefone;
   @override
   bool get ativo;
+  @override
+  bool get acessoAoSistema;
   @override
   DateTime get criadoEm;
   @override

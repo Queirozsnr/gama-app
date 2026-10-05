@@ -237,7 +237,10 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
                     title: f.nome,
                     subtitle: cargoLabel(f.cargo).toUpperCase(),
                     details: [
-                      GamaListDetail(icon: Icons.email_outlined, text: f.email),
+                      if (f.email != null)
+                        GamaListDetail(icon: Icons.email_outlined, text: f.email!),
+                      if (!f.acessoAoSistema)
+                        const GamaListDetail(icon: Icons.lock_outline, text: 'Sem acesso ao sistema'),
                       if (f.telefone != null)
                         GamaListDetail(icon: Icons.phone_outlined, text: f.telefone!),
                     ],
