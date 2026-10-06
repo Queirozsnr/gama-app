@@ -781,7 +781,7 @@ class _OsNovaScreenState extends ConsumerState<OsNovaScreen>
       ]),
       const SizedBox(height: 12),
       GamaSearchableSelect<String>(
-        label: 'Forma de pagamento',
+        label: 'Forma de pagamento prevista',
         selectedValue: _formaPagamento,
         optionsBuilder: (q) async => _formasPagamento
             .where((f) => (_formasPagamentoLabels[f] ?? f).toLowerCase().contains(q.toLowerCase()))

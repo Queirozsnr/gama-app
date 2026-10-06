@@ -123,7 +123,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
   }
 
   Future<void> _alterarStatusDireto(OrdemServicoDetalhe os, String novoStatus) async {
-    if (novoStatus == 'Entregue' && os.formaPagamento == null) {
+    if (novoStatus == 'Entregue' && !os.pago) {
       GamaSnackBar.error(context, 'Registre o pagamento antes de marcar como Entregue.');
       _mobileTabController.animateTo(1);
       return;
@@ -234,7 +234,7 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
       ),
     );
     if (escolhido == null || !mounted) return;
-    if (escolhido == 'Entregue' && os.formaPagamento == null) {
+    if (escolhido == 'Entregue' && !os.pago) {
       GamaSnackBar.error(context, 'Registre o pagamento antes de marcar como Entregue.');
       _mobileTabController.animateTo(1);
       return;
@@ -279,12 +279,12 @@ class _OsDetalheScreenState extends ConsumerState<OsDetalheScreen>
     final total = os.total - os.totalDescontos;
     final forma = await showDialog<String>(
       context: context,
-      builder: (_) => _PagamentoFormDialog(total: total),
+      builder: (_) => _PagamentoFormDialog(total: total, formaInicial: os.formaPagamento),
     );
     if (forma == null || !mounted) return;
     setState(() => _actionLoading = true);
     try {
-      await ref.read(ordensServicoRemoteDataSourceProvider).atualizar(os.id, {'formaPagamento': forma});
+      await ref.read(ordensServicoRemoteDataSourceProvider).registrarPagamento(os.id, forma);
       ref.invalidate(osDetalheProvider(widget.osId));
       ref.invalidate(ordensServicoNotifierProvider);
       if (mounted) GamaSnackBar.success(context, 'Pagamento registrado: ${_formasPagamentoLabels[forma] ?? forma}.');
@@ -1251,7 +1251,11 @@ class _PecasTab extends StatelessWidget {
               ],
               _TotalRow('Total', os.total - os.totalDescontos, bold: true),
               const SizedBox(height: 14),
-              if (os.formaPagamento == null && os.status == 'Concluida' && podeEditar)
+              if (!os.pago && os.formaPagamento != null) ...[
+                _FormaPrevista(forma: os.formaPagamento!),
+                const SizedBox(height: 8),
+              ],
+              if (!os.pago && podeEditar)
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
@@ -1276,7 +1280,10 @@ class _PecasTab extends StatelessWidget {
                     ),
                   ),
                 )
-              else if (os.formaPagamento != null)
+              else if (!os.pago && os.formaPagamento == null)
+                const Text('PAGAMENTO PENDENTE',
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.ink3, letterSpacing: 0.5))
+              else if (os.pago)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1290,7 +1297,7 @@ class _PecasTab extends StatelessWidget {
                       const Icon(Icons.check_circle, size: 14, color: AppColors.ok),
                       const SizedBox(width: 6),
                       Text(
-                        'Pago · ${_formasPagamentoLabels[os.formaPagamento] ?? os.formaPagamento!}',
+                        'Pago · ${_formasPagamentoLabels[os.formaPagamento] ?? os.formaPagamento ?? ''} · ${_fmt(os.pagoEm!)}',
                         style: const TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ok),
                       ),
                     ],
@@ -1789,7 +1796,7 @@ class _ResumoFinanceiroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = os.total - os.totalDescontos;
-    final pagamentoPendente = os.formaPagamento == null && os.status == 'Concluida';
+    final pagamentoPendente = !os.pago;
 
     return _Section(
       child: Column(
@@ -1839,6 +1846,10 @@ class _ResumoFinanceiroCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          if (pagamentoPendente && os.formaPagamento != null) ...[
+            _FormaPrevista(forma: os.formaPagamento!),
+            const SizedBox(height: 8),
+          ],
           if (pagamentoPendente && podeEditar)
             MouseRegion(
               cursor: SystemMouseCursors.click,
@@ -1864,10 +1875,10 @@ class _ResumoFinanceiroCard extends StatelessWidget {
                 ),
               ),
             )
-          else if (pagamentoPendente)
+          else if (pagamentoPendente && os.formaPagamento == null)
             const Text('PAGAMENTO PENDENTE',
                 style: TextStyle(fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.ink3, letterSpacing: 0.5))
-          else if (os.formaPagamento != null)
+          else if (os.pago)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1881,7 +1892,7 @@ class _ResumoFinanceiroCard extends StatelessWidget {
                   const Icon(Icons.check_circle, size: 14, color: AppColors.ok),
                   const SizedBox(width: 6),
                   Text(
-                    'Pago · ${_formasPagamentoLabels[os.formaPagamento] ?? os.formaPagamento!}',
+                    'Pago · ${_formasPagamentoLabels[os.formaPagamento] ?? os.formaPagamento ?? ''} · ${_fmt(os.pagoEm!)}',
                     style: const TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ok),
                   ),
                 ],
@@ -2830,11 +2841,12 @@ class _EditarConclusaoDialogState extends State<_EditarConclusaoDialog> {
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
                 initialValue: _formaPagamento,
-                decoration: _dec('Forma de pagamento'),
+                // Depois de pago, a forma é a do pagamento registrado (a API ignora mudanças aqui).
+                decoration: _dec(widget.os.pago ? 'Forma de pagamento (pago)' : 'Forma de pagamento prevista'),
                 items: _formasPagamentoLabels.entries
                     .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
                     .toList(),
-                onChanged: (v) => setState(() => _formaPagamento = v),
+                onChanged: widget.os.pago ? null : (v) => setState(() => _formaPagamento = v),
               ),
               const SizedBox(height: 10),
               TextField(
@@ -3492,16 +3504,37 @@ const _formasPagamentoIcones = <(String, IconData)>[
   ('Outro',         Icons.more_horiz),
 ];
 
+/// Forma escolhida no cadastro da OS, ainda sem pagamento registrado.
+class _FormaPrevista extends StatelessWidget {
+  const _FormaPrevista({required this.forma});
+  final String forma;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(Icons.schedule, size: 14, color: AppColors.warn),
+        const SizedBox(width: 6),
+        Text(
+          'Pagamento pendente · ${_formasPagamentoLabels[forma] ?? forma} previsto',
+          style: const TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.warn),
+        ),
+      ],
+    );
+  }
+}
+
 class _PagamentoFormDialog extends StatefulWidget {
-  const _PagamentoFormDialog({required this.total});
+  const _PagamentoFormDialog({required this.total, this.formaInicial});
   final double total;
+  final String? formaInicial;
 
   @override
   State<_PagamentoFormDialog> createState() => _PagamentoFormDialogState();
 }
 
 class _PagamentoFormDialogState extends State<_PagamentoFormDialog> {
-  String? _selecionado;
+  late String? _selecionado = widget.formaInicial;
 
   @override
   Widget build(BuildContext context) {

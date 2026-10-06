@@ -15,6 +15,7 @@ class OrdemServicoDetalhe {
     this.veiculoCor,
     required this.status,
     this.formaPagamento,
+    this.pagoEm,
     this.observacoes,
     required this.dataEntrada,
     this.previsaoEntrega,
@@ -40,6 +41,9 @@ class OrdemServicoDetalhe {
   final String? veiculoCor;
   final String status;
   final String? formaPagamento;
+  /// Só preenchido quando o pagamento foi registrado; a forma sozinha é só a prevista.
+  final DateTime? pagoEm;
+  bool get pago => pagoEm != null;
   final String? observacoes;
   final DateTime dataEntrada;
   final DateTime? previsaoEntrega;
@@ -66,6 +70,7 @@ class OrdemServicoDetalhe {
         veiculoCor: json['veiculoCor'] as String?,
         status: json['status'] as String,
         formaPagamento: json['formaPagamento'] as String?,
+        pagoEm: json['pagoEm'] != null ? DateTime.parse(json['pagoEm'] as String).toLocal() : null,
         observacoes: json['observacoes'] as String?,
         dataEntrada: DateTime.parse(json['dataEntrada'] as String).toLocal(),
         previsaoEntrega: json['previsaoEntrega'] != null

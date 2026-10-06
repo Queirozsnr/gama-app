@@ -62,6 +62,10 @@ class OrdensServicoRemoteDataSource {
     await _dio.put('/ordens-servico/$id', data: data);
   }
 
+  Future<void> registrarPagamento(int id, String formaPagamento) async {
+    await _dio.post('/ordens-servico/$id/pagamento', data: {'formaPagamento': formaPagamento});
+  }
+
   Future<void> alterarStatus(int id, String status) async {
     await _dio.patch('/ordens-servico/$id/status', data: {'status': status});
   }
