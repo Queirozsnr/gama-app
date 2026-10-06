@@ -227,10 +227,7 @@ class _UpdateDialogState extends State<_UpdateDialog> with WidgetsBindingObserve
           ),
         ] else if (_state == _UpdateState.done) ...[
           FilledButton.icon(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              if (_apkPath != null) await UpdateService.install(_apkPath!);
-            },
+            onPressed: _instalar,
             icon: const Icon(Icons.install_mobile_outlined, size: 16),
             label: const Text('Instalar'),
             style: _accentStyle,
@@ -256,6 +253,26 @@ class _UpdateDialogState extends State<_UpdateDialog> with WidgetsBindingObserve
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       );
+
+  // O diálogo costuma abrir já com o APK baixado em segundo plano, então a
+  // permissão de instalar também precisa ser checada aqui, não só no download.
+  Future<void> _instalar() async {
+    if (_apkPath == null) return;
+    if (!await UpdateService.hasInstallPermission()) {
+      if (mounted) setState(() => _state = _UpdateState.needsPermission);
+      return;
+    }
+    final erro = await UpdateService.install(_apkPath!);
+    if (!mounted) return;
+    if (erro == null) {
+      Navigator.of(context).pop();
+    } else {
+      setState(() {
+        _state = _UpdateState.error;
+        _errorMsg = 'Não foi possível abrir o instalador: $erro';
+      });
+    }
+  }
 
   Future<void> _iniciarDownload() async {
     final hasPermission = await UpdateService.hasInstallPermission();

@@ -1,83 +1,38 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'update_service.dart';
 
-sealed class UpdateDownloadState {
-  const UpdateDownloadState();
+sealed class UpdateCheckState {
+  const UpdateCheckState();
 }
 
-class UpdateIdle extends UpdateDownloadState {
+class UpdateIdle extends UpdateCheckState {
   const UpdateIdle();
 }
 
-class UpdateDownloading extends UpdateDownloadState {
-  const UpdateDownloading(this.info, this.progress);
+/// Há versão nova. [apkPath] vem preenchido se o APK já foi baixado antes.
+class UpdateDisponivel extends UpdateCheckState {
+  const UpdateDisponivel(this.info, this.apkPath);
   final UpdateInfo info;
-  final double progress;
+  final String? apkPath;
 }
 
-class UpdateReady extends UpdateDownloadState {
-  const UpdateReady(this.info, this.apkPath);
-  final UpdateInfo info;
-  final String apkPath;
-}
-
-class UpdateFailed extends UpdateDownloadState {
-  const UpdateFailed();
-}
-
-class UpdateNotifier extends StateNotifier<UpdateDownloadState> {
+/// Só verifica se há versão nova. O download (~70 MB) fica a cargo do diálogo,
+/// que mostra o progresso e deixa a pessoa escolher quando baixar.
+class UpdateNotifier extends StateNotifier<UpdateCheckState> {
   UpdateNotifier() : super(const UpdateIdle());
 
-  CancelToken? _cancelToken;
-
-  Future<void> checkAndDownload() async {
-    if (state is UpdateDownloading || state is UpdateReady) return;
+  Future<void> verificar() async {
+    if (state is UpdateDisponivel) return;
 
     final info = await UpdateService.checkForUpdate();
     if (info == null) return;
 
-    // Se já tem cache, vai direto para ready
     final cached = await UpdateService.cachedApk(info.version);
-    if (cached != null) {
-      state = UpdateReady(info, cached);
-      return;
-    }
-
-    _cancelToken = CancelToken();
-    state = UpdateDownloading(info, 0);
-
-    try {
-      final path = await UpdateService.download(
-        info,
-        onProgress: (p) {
-          if (state is UpdateDownloading) {
-            state = UpdateDownloading(info, p);
-          }
-        },
-        cancelToken: _cancelToken,
-      );
-      state = UpdateReady(info, path);
-    } on DioException catch (e) {
-      if (e.type != DioExceptionType.cancel) state = const UpdateFailed();
-    } catch (_) {
-      state = const UpdateFailed();
-    }
-  }
-
-  void cancel() {
-    _cancelToken?.cancel();
-    state = const UpdateIdle();
-  }
-
-  @override
-  void dispose() {
-    _cancelToken?.cancel();
-    super.dispose();
+    state = UpdateDisponivel(info, cached);
   }
 }
 
 final updateNotifierProvider =
-    StateNotifierProvider<UpdateNotifier, UpdateDownloadState>(
+    StateNotifierProvider<UpdateNotifier, UpdateCheckState>(
   (_) => UpdateNotifier(),
 );

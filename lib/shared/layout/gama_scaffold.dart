@@ -82,7 +82,7 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
     // Na Play Store quem atualiza é a loja (a política proíbe o app se atualizar sozinho).
     if (!kIsWeb && !kBuildLoja && defaultTargetPlatform == TargetPlatform.android) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(updateNotifierProvider.notifier).checkAndDownload();
+        ref.read(updateNotifierProvider.notifier).verificar();
       });
     }
   }
@@ -104,8 +104,9 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
       ref.read(planLimitNotifierProvider.notifier).clear();
     });
 
-    ref.listen<UpdateDownloadState>(updateNotifierProvider, (_, state) {
-      if (state is UpdateReady && mounted) {
+    // Avisa assim que houver versão nova; o diálogo baixa mostrando o progresso.
+    ref.listen<UpdateCheckState>(updateNotifierProvider, (_, state) {
+      if (state is UpdateDisponivel && mounted) {
         showUpdateDialog(context, state.info, apkPath: state.apkPath);
       }
     });

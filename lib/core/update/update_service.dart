@@ -99,8 +99,11 @@ class UpdateService {
     await openAppSettings();
   }
 
-  static Future<void> install(String apkPath) async {
-    await OpenFile.open(apkPath, type: 'application/vnd.android.package-archive');
+  /// Abre o instalador do Android. Devolve null se abriu, ou o motivo da falha
+  /// (ex.: sem permissão de "Instalar apps desconhecidos").
+  static Future<String?> install(String apkPath) async {
+    final result = await OpenFile.open(apkPath, type: 'application/vnd.android.package-archive');
+    return result.type == ResultType.done ? null : result.message;
   }
 
   static bool _isNewer(String remote, String current) {
