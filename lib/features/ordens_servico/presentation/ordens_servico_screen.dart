@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/config/loja.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -148,7 +149,7 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
     if (resumo != null && resumo.limiteAtingido) {
       GamaSnackBar.error(
         context,
-        'Limite de ${resumo.limiteOsPorMes} OS por mês atingido. Faça upgrade do plano.',
+        semChamadaDeCompra('Limite de ${resumo.limiteOsPorMes} OS por mês atingido. Faça upgrade do plano.'),
       );
       return;
     }

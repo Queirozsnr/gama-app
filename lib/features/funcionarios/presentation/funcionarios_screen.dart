@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/config/loja.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
@@ -98,7 +99,7 @@ class _FuncionariosScreenState extends ConsumerState<FuncionariosScreen>
         if (mounted) {
           GamaSnackBar.error(
             context,
-            'Seu plano não permite adicionar mais funcionários. Faça upgrade para continuar.',
+            semChamadaDeCompra('Seu plano não permite adicionar mais funcionários. Faça upgrade para continuar.'),
           );
         }
         return;

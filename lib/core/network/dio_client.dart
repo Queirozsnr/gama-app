@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/presentation/auth_notifier.dart';
+import '../config/loja.dart';
 import '../plan/plan_limit_notifier.dart';
 import 'api_constants.dart';
 import 'auth_interceptor.dart';
@@ -22,7 +23,7 @@ final dioClientProvider = Provider<Dio>((ref) {
     kBaseUrl,
     onRefreshFailed: () => ref.invalidate(authNotifierProvider),
     onPlanLimitReached: (msg) =>
-        ref.read(planLimitNotifierProvider.notifier).set(msg),
+        ref.read(planLimitNotifierProvider.notifier).set(semChamadaDeCompra(msg)),
     onGrupoBloqueado: (tipo, msg) =>
         ref.read(bloqueioAssinaturaProvider.notifier).bloquear(
               tipo == 'account_disabled'

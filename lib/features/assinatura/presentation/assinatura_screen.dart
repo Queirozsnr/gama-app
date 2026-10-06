@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/config/loja.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
@@ -185,6 +186,8 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
           const SizedBox(height: 20),
           _UsoPlanoGrid(uso: detalhes.uso),
           const SizedBox(height: 20),
+          // Nas lojas o app não vende plano: só mostra a assinatura e as faturas.
+          if (!kBuildLoja) ...[
           _MudarDePlanoSection(
             planoAtual: detalhes.emTeste ? null : detalhes.plano,
             cancelamentoAgendado: detalhes.status == StatusAssinatura.cancelamentoAgendado,
@@ -194,6 +197,10 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
             onMudar: _confirmarMudancaPlano,
           ),
           const SizedBox(height: 20),
+          ] else if (podeMencionarCompraExterna) ...[
+            const _PlanosForaDoAppAviso(),
+            const SizedBox(height: 20),
+          ],
           _HistoricoFaturasSection(faturas: detalhes.faturas),
           const SizedBox(height: 24),
         ],
@@ -217,6 +224,7 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (!kBuildLoja) ...[
                 _MudarDePlanoSection(
                   planoAtual: detalhes.emTeste ? null : detalhes.plano,
                   cancelamentoAgendado: detalhes.status == StatusAssinatura.cancelamentoAgendado,
@@ -226,6 +234,10 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
                   onMudar: _confirmarMudancaPlano,
                 ),
                 const SizedBox(height: 16),
+                ] else if (podeMencionarCompraExterna) ...[
+                  const _PlanosForaDoAppAviso(),
+                  const SizedBox(height: 16),
+                ],
                 _HistoricoFaturasSection(faturas: detalhes.faturas),
                 const SizedBox(height: 24),
               ],
@@ -272,6 +284,32 @@ class _AssinaturaScreenState extends ConsumerState<AssinaturaScreen>
       plano: novoPlano,
       preco: preco,
       ciclo: _ciclo,
+    );
+  }
+}
+
+// ── _PlanosForaDoAppAviso ─────────────────────────────────────────────────────
+
+/// Build da Play Store: a política permite informar onde comprar, mas sem link.
+class _PlanosForaDoAppAviso extends StatelessWidget {
+  const _PlanosForaDoAppAviso();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SectionCard(
+      padding: EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, size: 18, color: AppColors.ink2),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Para conhecer os planos ou mudar de plano, acesse o GAMA pelo navegador.',
+              style: TextStyle(fontSize: 13, color: AppColors.ink2),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

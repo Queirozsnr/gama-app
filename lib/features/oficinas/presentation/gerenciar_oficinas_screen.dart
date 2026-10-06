@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/config/loja.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/plan/plan_limits_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -150,7 +151,7 @@ class _Content extends StatelessWidget {
                 label: 'Nova oficina',
                 icon: Icons.add,
                 isFullWidth: false,
-                onPressed: canAdd ? onAdd : () => GamaSnackBar.error(context, 'Seu plano não permite adicionar mais oficinas. Faça upgrade para continuar.'),
+                onPressed: canAdd ? onAdd : () => GamaSnackBar.error(context, semChamadaDeCompra('Seu plano não permite adicionar mais oficinas. Faça upgrade para continuar.')),
               ),
             ],
           ),

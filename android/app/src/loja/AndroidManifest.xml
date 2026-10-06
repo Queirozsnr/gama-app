@@ -1,0 +1,7 @@
+<!-- Overlay do build das lojas (dart-define LOJA=true), ligado no build.gradle.kts.
+     A Play Store não permite o app se atualizar por fora dela, então sai a permissão
+     usada pelo atualizador próprio do APK. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
+</manifest>

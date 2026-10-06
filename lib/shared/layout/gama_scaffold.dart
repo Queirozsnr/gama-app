@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
+import '../../core/config/loja.dart';
 import '../../core/plan/plan_limit_notifier.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/update/update_dialog.dart';
@@ -78,7 +79,8 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
   @override
   void initState() {
     super.initState();
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    // Na Play Store quem atualiza é a loja (a política proíbe o app se atualizar sozinho).
+    if (!kIsWeb && !kBuildLoja && defaultTargetPlatform == TargetPlatform.android) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(updateNotifierProvider.notifier).checkAndDownload();
       });

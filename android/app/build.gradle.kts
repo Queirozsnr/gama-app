@@ -6,6 +6,7 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+import java.util.Base64
 import java.util.Properties
 
 val keyPropertiesFile = rootProject.file("key.properties")
@@ -13,6 +14,13 @@ val keyProperties = Properties()
 if (keyPropertiesFile.exists()) {
     keyProperties.load(keyPropertiesFile.inputStream())
 }
+
+// O Flutter repassa os --dart-define em base64 na propriedade "dart-defines".
+// Com LOJA=true (build da Play Store) entra o manifest de src/loja.
+val buildLoja = (project.findProperty("dart-defines") as String?)
+    ?.split(",")
+    ?.any { String(Base64.getDecoder().decode(it)) == "LOJA=true" }
+    ?: false
 
 android {
     namespace = "com.gama.gama_app"
@@ -50,6 +58,10 @@ android {
         release {
             signingConfig = signingConfigs.getByName("release")
         }
+    }
+
+    if (buildLoja) {
+        sourceSets.getByName("release").manifest.srcFile("src/loja/AndroidManifest.xml")
     }
 }
 
