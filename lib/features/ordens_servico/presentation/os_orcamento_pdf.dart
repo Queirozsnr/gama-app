@@ -6,6 +6,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../../core/network/api_constants.dart';
+import '../../../shared/utils/formatters.dart';
+import '../../funcionarios/domain/remuneracao.dart';
 import '../../oficinas/domain/oficina_model.dart';
 import '../domain/item_os.dart';
 import '../domain/ordem_servico_detalhe.dart';
@@ -32,7 +34,8 @@ Future<Uint8List> _buildPdf(
   OficinaModel? oficina, {
   required bool isRecibo,
 }) async {
-  final isPago = os.status == 'Entregue';
+  final isPago = os.pago;
+  final fontMono = await PdfGoogleFonts.jetBrainsMonoBold();
   final fontRegular = await PdfGoogleFonts.interRegular();
   final fontBold = await PdfGoogleFonts.interBold();
   final fontItalic = await PdfGoogleFonts.interItalic();
@@ -75,7 +78,7 @@ Future<Uint8List> _buildPdf(
       pw.SizedBox(height: 10),
       _sectionHeader('Informações básicas', color),
       pw.SizedBox(height: 6),
-      _basicInfoGrid(os),
+      _basicInfoGrid(os, fontMono),
       pw.SizedBox(height: 10),
       if (servicos.isNotEmpty) ...[
         _sectionHeader('Serviços', color),
@@ -98,7 +101,7 @@ Future<Uint8List> _buildPdf(
         pw.SizedBox(height: 10),
       ],
       pw.SizedBox(height: 28),
-      _signatures(os.clienteNome, color),
+      _signatures(os, color),
       pw.SizedBox(height: 20),
       _thankYou(),
     ],
@@ -114,7 +117,8 @@ Future<Uint8List> _buildRecibo(
   OrdemServicoDetalhe os,
   OficinaModel? oficina,
 ) async {
-  final isPago = os.status == 'Entregue';
+  final isPago = os.pago;
+  final fontMono = await PdfGoogleFonts.jetBrainsMonoBold();
   final fontRegular = await PdfGoogleFonts.interRegular();
   final fontBold = await PdfGoogleFonts.interBold();
   final fontItalic = await PdfGoogleFonts.interItalic();
@@ -150,7 +154,7 @@ Future<Uint8List> _buildRecibo(
     build: (ctx) => [
       _reciboTitle(os, color),
       pw.SizedBox(height: 18),
-      _reciboClienteBox(os),
+      _reciboClienteBox(os, fontMono),
       pw.SizedBox(height: 14),
       _reciboValorBox(os, color, isPago),
       pw.SizedBox(height: 18),
@@ -162,7 +166,7 @@ Future<Uint8List> _buildRecibo(
         _pagoBadge(),
         pw.SizedBox(height: 24),
       ],
-      _signatures(os.clienteNome, color),
+      _signatures(os, color),
       pw.SizedBox(height: 18),
       _thankYou(),
     ],
@@ -207,7 +211,7 @@ pw.Widget _reciboTitle(OrdemServicoDetalhe os, PdfColor color) {
   );
 }
 
-pw.Widget _reciboClienteBox(OrdemServicoDetalhe os) {
+pw.Widget _reciboClienteBox(OrdemServicoDetalhe os, pw.Font fontMono) {
   return pw.Container(
     width: double.infinity,
     padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -242,22 +246,16 @@ pw.Widget _reciboClienteBox(OrdemServicoDetalhe os) {
           ),
         ],
         pw.SizedBox(height: 6),
-        pw.RichText(
-          text: pw.TextSpan(children: [
-            pw.TextSpan(
-              text: 'Veículo:  ',
-              style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
-            ),
-            pw.TextSpan(
-              text: os.veiculoDescricao,
-              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
-            ),
-            if (os.veiculoPlaca != null)
-              pw.TextSpan(
-                text: '    Placa: ${os.veiculoPlaca}',
-                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
-              ),
-          ]),
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            pw.Text('Veículo:  ', style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+            pw.Text(os.veiculoDescricao, style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+            if (os.veiculoPlaca != null) ...[
+              pw.SizedBox(width: 12),
+              _placa(os.veiculoPlaca!, fontMono),
+            ],
+          ],
         ),
       ],
     ),
@@ -401,10 +399,10 @@ pw.Widget _reciboItens(OrdemServicoDetalhe os, PdfColor color) {
 pw.Widget _reciboInfoPagamento(OrdemServicoDetalhe os) {
   final items = <(String, String)>[];
   if (os.formaPagamento != null) {
-    items.add(('Forma de pagamento', os.formaPagamento!));
+    items.add(('Forma de pagamento', _formaLabel(os.formaPagamento!)));
   }
-  if (os.dataConclusao != null) {
-    items.add(('Data de pagamento', _fmtDate(os.dataConclusao)));
+  if (os.pagoEm != null) {
+    items.add(('Data de pagamento', _fmtDate(os.pagoEm)));
   } else {
     items.add(('Data de emissão', _fmtDate(DateTime.now())));
   }
@@ -702,13 +700,14 @@ pw.Widget _sectionHeader(String text, PdfColor color) {
 
 // ─── Basic info grid ──────────────────────────────────────────────────────────
 
-pw.Widget _basicInfoGrid(OrdemServicoDetalhe os) {
-  final pairs = <(String, String)>[
-    ('Data de entrada', _fmtDate(os.dataEntrada)),
-    ('Veículo', os.veiculoDescricao),
+pw.Widget _basicInfoGrid(OrdemServicoDetalhe os, pw.Font fontMono) {
+  final pairs = <(String, pw.Widget)>[
+    ('Data de entrada', _infoValue(_fmtDate(os.dataEntrada))),
+    ('Veículo', _infoValue(os.veiculoDescricao)),
     if (os.previsaoEntrega != null)
-      ('Previsão de entrega', _fmtDate(os.previsaoEntrega)),
-    if (os.veiculoPlaca != null) ('Placa', os.veiculoPlaca!),
+      ('Previsão de entrega', _infoValue(_fmtDate(os.previsaoEntrega))),
+    if (os.veiculoPlaca != null)
+      ('Placa', pw.Padding(padding: const pw.EdgeInsets.only(top: 2), child: _placa(os.veiculoPlaca!, fontMono))),
   ];
 
   // two-column layout
@@ -734,7 +733,24 @@ pw.Widget _basicInfoGrid(OrdemServicoDetalhe os) {
   );
 }
 
-pw.Widget _infoCell(String label, String value) {
+pw.Widget _infoValue(String value) => pw.Text(value, style: pw.TextStyle(fontSize: 8.5));
+
+/// Placa como no app: mono, maiúscula, com a máscara (ABC-1234 / ABC-1D23) e borda.
+pw.Widget _placa(String placa, pw.Font fontMono) {
+  return pw.Container(
+    padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: pw.BoxDecoration(
+      border: pw.Border.all(color: PdfColors.grey800, width: 1),
+      borderRadius: pw.BorderRadius.circular(3),
+    ),
+    child: pw.Text(
+      formatPlaca(placa),
+      style: pw.TextStyle(font: fontMono, fontSize: 9, letterSpacing: 1.2),
+    ),
+  );
+}
+
+pw.Widget _infoCell(String label, pw.Widget value) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
@@ -746,7 +762,7 @@ pw.Widget _infoCell(String label, String value) {
           color: PdfColors.grey700,
         ),
       ),
-      pw.Text(value, style: pw.TextStyle(fontSize: 8.5)),
+      value,
     ],
   );
 }
@@ -875,6 +891,16 @@ pw.Widget _totals(OrdemServicoDetalhe os, PdfColor color, {bool isPago = false})
 
 // ─── Payment / Observations ───────────────────────────────────────────────────
 
+String _formaLabel(String forma) => const {
+      'Dinheiro': 'Dinheiro',
+      'Pix': 'Pix',
+      'CartaoDebito': 'Cartão de débito',
+      'CartaoCredito': 'Cartão de crédito',
+      'Transferencia': 'Transferência',
+      'Outro': 'Outro',
+    }[forma] ??
+    forma;
+
 pw.Widget _paymentContent(OrdemServicoDetalhe os, {bool isRecibo = false}) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -887,7 +913,7 @@ pw.Widget _paymentContent(OrdemServicoDetalhe os, {bool isRecibo = false}) {
               style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold),
             ),
             pw.TextSpan(
-              text: os.formaPagamento!,
+              text: _formaLabel(os.formaPagamento!),
               style: pw.TextStyle(fontSize: 8.5),
             ),
           ]),
@@ -918,20 +944,54 @@ pw.Widget _paymentContent(OrdemServicoDetalhe os, {bool isRecibo = false}) {
 
 // ─── Signatures ───────────────────────────────────────────────────────────────
 
-pw.Widget _signatures(String clienteNome, PdfColor color) {
+pw.Widget _signatures(OrdemServicoDetalhe os, PdfColor color) {
+  // Com pagamento registrado, quem registrou "assina" pela oficina.
+  final carimbo = os.pago && os.pagoPorNome != null ? _carimboAssinatura(os) : null;
   return pw.Row(
     mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+    crossAxisAlignment: pw.CrossAxisAlignment.end,
     children: [
-      _sigLine('Responsável pela oficina', color),
-      _sigLine(clienteNome, color),
+      _sigLine('Responsável pela oficina', color, acima: carimbo),
+      _sigLine(os.clienteNome, color),
     ],
   );
 }
 
-pw.Widget _sigLine(String label, PdfColor color) {
+/// Assinatura eletrônica simples: nome, cargo e data/hora do registro do pagamento.
+pw.Widget _carimboAssinatura(OrdemServicoDetalhe os) {
+  final p = os.pagoEm!;
+  final hora = '${p.hour.toString().padLeft(2, '0')}:${p.minute.toString().padLeft(2, '0')}';
+  final cargo = os.pagoPorCargo != null ? ' · ${cargoLabel(os.pagoPorCargo!)}' : '';
+  return pw.Container(
+    width: 180,
+    padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+    decoration: pw.BoxDecoration(
+      border: pw.Border.all(color: PdfColors.green700, width: 0.8),
+      borderRadius: pw.BorderRadius.circular(3),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'Assinado eletronicamente',
+          style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: PdfColors.green800),
+        ),
+        pw.SizedBox(height: 2),
+        pw.Text('${os.pagoPorNome}$cargo', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+        pw.Text(
+          '${_fmtDate(p)} às $hora · via GAMA',
+          style: pw.TextStyle(fontSize: 7, color: PdfColors.grey700),
+        ),
+      ],
+    ),
+  );
+}
+
+pw.Widget _sigLine(String label, PdfColor color, {pw.Widget? acima}) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.center,
     children: [
+      if (acima != null) ...[acima, pw.SizedBox(height: 4)],
       pw.Container(width: 180, height: 0.5, color: PdfColors.grey600),
       pw.SizedBox(height: 4),
       pw.Text(

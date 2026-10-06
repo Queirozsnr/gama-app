@@ -16,6 +16,8 @@ class OrdemServicoDetalhe {
     required this.status,
     this.formaPagamento,
     this.pagoEm,
+    this.pagoPorNome,
+    this.pagoPorCargo,
     this.observacoes,
     required this.dataEntrada,
     this.previsaoEntrega,
@@ -44,6 +46,9 @@ class OrdemServicoDetalhe {
   /// Só preenchido quando o pagamento foi registrado; a forma sozinha é só a prevista.
   final DateTime? pagoEm;
   bool get pago => pagoEm != null;
+  /// Quem registrou o pagamento: assina o recibo pela oficina.
+  final String? pagoPorNome;
+  final String? pagoPorCargo;
   final String? observacoes;
   final DateTime dataEntrada;
   final DateTime? previsaoEntrega;
@@ -71,13 +76,15 @@ class OrdemServicoDetalhe {
         status: json['status'] as String,
         formaPagamento: json['formaPagamento'] as String?,
         pagoEm: json['pagoEm'] != null ? DateTime.parse(json['pagoEm'] as String).toLocal() : null,
+        pagoPorNome: json['pagoPorNome'] as String?,
+        pagoPorCargo: json['pagoPorCargo'] as String?,
         observacoes: json['observacoes'] as String?,
         dataEntrada: DateTime.parse(json['dataEntrada'] as String).toLocal(),
         previsaoEntrega: json['previsaoEntrega'] != null
             ? DateTime.parse(json['previsaoEntrega'] as String)
             : null,
         dataConclusao: json['dataConclusao'] != null
-            ? DateTime.parse(json['dataConclusao'] as String)
+            ? DateTime.parse(json['dataConclusao'] as String).toLocal()
             : null,
         criadoPorNome: json['criadoPorNome'] as String,
         mecanicos: (json['mecanicos'] as List)

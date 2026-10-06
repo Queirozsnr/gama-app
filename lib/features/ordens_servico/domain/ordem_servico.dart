@@ -61,7 +61,7 @@ class OrdemServico {
             ? DateTime.parse(json['previsaoEntrega'] as String)
             : null,
         dataConclusao: json['dataConclusao'] != null
-            ? DateTime.parse(json['dataConclusao'] as String)
+            ? DateTime.parse(json['dataConclusao'] as String).toLocal()
             : null,
         totalMecanicos: json['totalMecanicos'] as int,
         totalServicos: (json['totalServicos'] as num).toDouble(),
