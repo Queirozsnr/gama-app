@@ -9,7 +9,7 @@ import 'gama_snack_bar.dart';
 import 'gama_logo.dart';
 
 const _kWhatsappNumber = '5592992790397'; // substitua pelo número real
-const _kSupportEmail = 'suporte@gama.com.br';
+const kEmailSuporte = 'suporte@gama.com.br';
 
 /// Abre o modal de suporte sobre a tela atual.
 void showSuporteModal(BuildContext context) {
@@ -411,7 +411,7 @@ class _EmailSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    _kSupportEmail,
+                    kEmailSuporte,
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
@@ -439,7 +439,7 @@ class _EmailSection extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Clipboard.setData(
-                        const ClipboardData(text: _kSupportEmail));
+                        const ClipboardData(text: kEmailSuporte));
                     GamaSnackBar.success(context, 'E-mail copiado');
                   },
                   icon: const Icon(Icons.copy_outlined, size: 14),
@@ -486,7 +486,7 @@ class _EmailSection extends StatelessWidget {
   }
 
   void _sendEmail() {
-    final uri = Uri(scheme: 'mailto', path: _kSupportEmail);
+    final uri = Uri(scheme: 'mailto', path: kEmailSuporte);
     launchUrl(uri);
   }
 }

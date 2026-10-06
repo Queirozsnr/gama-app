@@ -82,7 +82,7 @@ class GamaBottomNav extends ConsumerWidget {
   }
 
   void _showMais(BuildContext context, bool adminMode, bool isGestor, bool podeGerenciarOficinas) {
-    const restricted = {'/funcionarios', '/receitas', '/configuracoes-oficina'};
+    const restricted = {'/funcionarios', '/receitas'};
     final base = isGestor
         ? _maisRoutes
         : _maisRoutes.where((i) => !restricted.contains(i.route)).toList();

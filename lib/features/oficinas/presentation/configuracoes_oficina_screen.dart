@@ -5,6 +5,8 @@ import '../../../shared/utils/formatters.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/jwt_decoder.dart';
+import '../../conta/presentation/conta_section.dart';
 import '../../../features/auth/domain/auth_state.dart';
 import '../../../features/auth/presentation/auth_notifier.dart';
 import '../../../shared/state/top_bar_scope.dart';
@@ -18,8 +20,18 @@ class ConfiguracoesOficinaScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(oficinasNotifierProvider);
     final auth = ref.read(authNotifierProvider).valueOrNull;
+    // Quem não é gestor só tem a seção Conta (excluir a própria conta).
+    if (!JwtDecoder.isGestor(auth?.token ?? '')) {
+      return const TopBarSlotProvider(
+        slot: TopBarSlot(pageTitle: 'Configurações', mobileStyle: MobileTopBarStyle.dark),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(28),
+          child: ContaSection(),
+        ),
+      );
+    }
+    final state = ref.watch(oficinasNotifierProvider);
     final oficinas = auth?.availableOficinas ?? [];
     final nome = oficinas.cast<OficinaItem?>().firstWhere(
       (o) => o!.id == auth?.oficinaId,
@@ -102,6 +114,8 @@ class _ConfigScreenState extends State<_ConfigScreen> {
             const SizedBox(height: 24),
           ],
           _ConfigForm(key: ValueKey(_selectedId), oficina: _oficina),
+          const SizedBox(height: 28),
+          const ContaSection(),
         ],
       ),
     );

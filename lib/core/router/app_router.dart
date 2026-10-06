@@ -31,6 +31,7 @@ import '../../features/auth/presentation/trocar_senha_screen.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/assinatura/presentation/assinatura_screen.dart';
 import '../../features/assinatura/presentation/plano_expirado_screen.dart';
+import '../../features/conta/presentation/excluir_conta_info_screen.dart';
 import '../../features/midias/presentation/gerenciar_midias_screen.dart';
 import '../../shared/layout/gama_scaffold.dart';
 import '../../shared/state/top_bar_scope.dart';
@@ -60,6 +61,7 @@ abstract final class AppRoutes {
   static const trocarSenha      = '/trocar-senha';
   static const assinatura        = '/assinatura';
   static const planoExpirado     = '/plano-expirado';
+  static const excluirConta      = '/excluir-conta';
   static const midias           = '/midias';
   static const estoqueProdutoNovo    = '/estoque/produto/novo';
   static const estoqueProdutoDetalhe = '/estoque/produto/:id';
@@ -108,6 +110,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final authAsync = ref.read(authNotifierProvider);
       final loc = state.matchedLocation;
 
+      // Página pública de exclusão de conta (link exigido pela Play Store): abre sem login.
+      if (loc == AppRoutes.excluirConta) return null;
+
       if (authAsync.isLoading) {
         if (loc == AppRoutes.splash) return null;
         final encoded = Uri.encodeComponent(state.uri.toString());
@@ -150,7 +155,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             '/funcionarios',
             '/receitas',
             '/gerenciar-oficinas',
-            '/configuracoes-oficina',
             '/assinatura',
           ];
           if (restricted.any((r) => loc.startsWith(r))) return AppRoutes.home;
@@ -166,6 +170,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.selectOficina, pageBuilder: _fade((ctx, st) => const SelectOficinaScreen())),
       GoRoute(path: AppRoutes.trocarSenha,   pageBuilder: _fade((ctx, st) => const TrocarSenhaScreen())),
       GoRoute(path: AppRoutes.planoExpirado, pageBuilder: _fade((ctx, st) => const PlanoExpiradoScreen())),
+      GoRoute(path: AppRoutes.excluirConta,  pageBuilder: _fade((ctx, st) => const ExcluirContaInfoScreen())),
       StatefulShellRoute(
         navigatorContainerBuilder: (context, shell, children) {
           final notifiers = BranchTopBarScope.of(context);

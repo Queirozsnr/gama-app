@@ -139,20 +139,19 @@ class GamaSidebar extends ConsumerWidget {
               ],
             ),
           ),
-          if (isGestor) ...[
-            Container(
-              height: 1,
-              color: AppColors.sidebarLine,
+          // Para todos: quem não é gestor vê só a seção Conta (excluir a própria conta).
+          Container(
+            height: 1,
+            color: AppColors.sidebarLine,
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 10, vertical: 8),
+            child: _SidebarNavItem(
+              item: const _NavItem('Configurações', Icons.settings_outlined, '/configuracoes-oficina'),
+              isActive: currentRoute.startsWith('/configuracoes-oficina'),
+              collapsed: collapsed,
             ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 10, vertical: 8),
-              child: _SidebarNavItem(
-                item: const _NavItem('Configurações', Icons.settings_outlined, '/configuracoes-oficina'),
-                isActive: currentRoute.startsWith('/configuracoes-oficina'),
-                collapsed: collapsed,
-              ),
-            ),
-          ],
+          ),
           Container(height: 1, color: AppColors.sidebarLine),
           _UserProfile(
             initials: userInitials,
