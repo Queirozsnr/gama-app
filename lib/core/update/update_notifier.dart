@@ -27,7 +27,7 @@ class UpdateNotifier extends StateNotifier<UpdateCheckState> {
     final info = await UpdateService.checkForUpdate();
     if (info == null) return;
 
-    final cached = await UpdateService.cachedApk(info.version);
+    final cached = await UpdateService.cachedApk(info);
     state = UpdateDisponivel(info, cached);
   }
 }

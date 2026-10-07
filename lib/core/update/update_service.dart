@@ -12,11 +12,15 @@ class UpdateInfo {
     required this.version,
     required this.downloadUrl,
     required this.releaseNotes,
+    required this.tamanho,
   });
 
   final String version;
   final String downloadUrl;
   final String releaseNotes;
+
+  /// Tamanho do APK no GitHub, em bytes: é o que garante que o arquivo baixado está inteiro.
+  final int tamanho;
 }
 
 class UpdateService {
@@ -52,6 +56,7 @@ class UpdateService {
         version: remoteVersion,
         downloadUrl: apkAsset['browser_download_url'] as String,
         releaseNotes: notes,
+        tamanho: apkAsset['size'] as int,
       );
     } catch (_) {
       return null;
@@ -63,11 +68,15 @@ class UpdateService {
     return '${dir.path}/gama_update_$version.apk';
   }
 
-  /// Retorna o caminho se o APK desta versão já foi baixado.
-  static Future<String?> cachedApk(String version) async {
-    final path = await _apkPath(version);
-    final file = File(path);
-    return (await file.exists()) ? path : null;
+  /// Retorna o caminho se o APK desta versão já foi baixado por inteiro.
+  /// Um arquivo com outro tamanho (download cortado em versões antigas do app)
+  /// é apagado para ser baixado de novo.
+  static Future<String?> cachedApk(UpdateInfo info) async {
+    final file = File(await _apkPath(info.version));
+    if (!await file.exists()) return null;
+    if (await file.length() == info.tamanho) return file.path;
+    await file.delete();
+    return null;
   }
 
   static Future<String> download(
@@ -76,17 +85,27 @@ class UpdateService {
     CancelToken? cancelToken,
   }) async {
     final path = await _apkPath(info.version);
+    // Baixa num .part e só renomeia no fim: se o Android encerrar o app no meio
+    // (ex.: ao liberar a permissão de instalar), não sobra um APK pela metade
+    // com cara de pronto.
+    final parcial = '$path.part';
 
     final dio = Dio();
     await dio.download(
       info.downloadUrl,
-      path,
+      parcial,
       cancelToken: cancelToken,
       onReceiveProgress: (received, total) {
         if (total > 0) onProgress(received / total);
       },
     );
 
+    final arquivo = File(parcial);
+    if (await arquivo.length() != info.tamanho) {
+      await arquivo.delete();
+      throw const FileSystemException('Download incompleto. Tente novamente.');
+    }
+    await arquivo.rename(path);
     return path;
   }
 
@@ -95,8 +114,11 @@ class UpdateService {
     return Permission.requestInstallPackages.isGranted;
   }
 
-  static Future<void> openInstallSettings() async {
-    await openAppSettings();
+  /// Abre direto a tela "Instalar apps desconhecidos" do GAMA (não a página
+  /// geral do app), onde a pessoa só precisa ligar a chave.
+  static Future<bool> pedirPermissaoInstalacao() async {
+    if (!Platform.isAndroid) return true;
+    return (await Permission.requestInstallPackages.request()).isGranted;
   }
 
   /// Abre o instalador do Android. Devolve null se abriu, ou o motivo da falha

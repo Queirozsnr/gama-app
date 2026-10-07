@@ -28,6 +28,7 @@ class _UpdateDialogState extends State<_UpdateDialog> with WidgetsBindingObserve
   String? _apkPath;
   String? _errorMsg;
   CancelToken? _cancelToken;
+  bool _iniciando = false;
 
   @override
   void initState() {
@@ -55,7 +56,7 @@ class _UpdateDialogState extends State<_UpdateDialog> with WidgetsBindingObserve
   }
 
   Future<void> _checkCached() async {
-    final cached = await UpdateService.cachedApk(widget.info.version);
+    final cached = await UpdateService.cachedApk(widget.info);
     if (cached != null && mounted) {
       setState(() { _state = _UpdateState.done; _apkPath = cached; });
     }
@@ -132,7 +133,7 @@ class _UpdateDialogState extends State<_UpdateDialog> with WidgetsBindingObserve
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'O Android bloqueou a instalação. Abra as configurações e ative "Instalar apps desconhecidos" para o GAMA.',
+                      'O Android precisa da sua permissão para instalar a atualização. Toque em "Permitir instalação" e ligue a opção para o GAMA.',
                       style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2, height: 1.5),
                     ),
                   ),
@@ -214,10 +215,10 @@ class _UpdateDialogState extends State<_UpdateDialog> with WidgetsBindingObserve
           ),
           FilledButton.icon(
             onPressed: () async {
-              await UpdateService.openInstallSettings();
+              if (await UpdateService.pedirPermissaoInstalacao() && mounted) _iniciarDownload();
             },
-            icon: const Icon(Icons.settings_outlined, size: 16),
-            label: const Text('Abrir configurações'),
+            icon: const Icon(Icons.lock_open_outlined, size: 16),
+            label: const Text('Permitir instalação'),
             style: _accentStyle,
           ),
         ] else if (_state == _UpdateState.downloading) ...[
@@ -274,7 +275,18 @@ class _UpdateDialogState extends State<_UpdateDialog> with WidgetsBindingObserve
     }
   }
 
+  // Pode ser chamado pelo botão e pela volta da tela de permissão ao mesmo tempo.
   Future<void> _iniciarDownload() async {
+    if (_iniciando || _state == _UpdateState.downloading) return;
+    _iniciando = true;
+    try {
+      await _baixar();
+    } finally {
+      _iniciando = false;
+    }
+  }
+
+  Future<void> _baixar() async {
     final hasPermission = await UpdateService.hasInstallPermission();
     if (!mounted) return;
 
@@ -284,7 +296,7 @@ class _UpdateDialogState extends State<_UpdateDialog> with WidgetsBindingObserve
     }
 
     // Checa cache antes de baixar
-    final cached = await UpdateService.cachedApk(widget.info.version);
+    final cached = await UpdateService.cachedApk(widget.info);
     if (cached != null && mounted) {
       setState(() { _state = _UpdateState.done; _apkPath = cached; });
       return;
