@@ -1,12 +1,17 @@
+import '../../../core/state/recarregavel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/veiculos_remote_data_source.dart';
 import '../domain/veiculo.dart';
 
-class VeiculosNotifier extends AutoDisposeAsyncNotifier<List<Veiculo>> {
+class VeiculosNotifier extends AutoDisposeAsyncNotifier<List<Veiculo>>
+    with RecarregavelEmSegundoPlano<List<Veiculo>> {
   String? _ultimaBusca;
 
   @override
   Future<List<Veiculo>> build() => _carregar();
+
+  @override
+  Future<List<Veiculo>> buscarComFiltrosAtuais() => _carregar(busca: _ultimaBusca);
 
   Future<List<Veiculo>> _carregar({String? busca, int? clienteId}) {
     return ref.read(veiculosRemoteDataSourceProvider).listar(busca: busca, clienteId: clienteId);

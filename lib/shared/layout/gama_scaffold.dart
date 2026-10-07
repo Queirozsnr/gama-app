@@ -16,6 +16,7 @@ import '../widgets/gama_snack_bar.dart';
 import 'gama_bottom_nav.dart';
 import 'gama_sidebar.dart';
 import 'gama_top_bar.dart';
+import 'recarregar_abas.dart';
 
 // Number of shell branches — must match the StatefulShellRoute in app_router.
 const _kBranchCount = 5;
@@ -36,7 +37,7 @@ class GamaScaffold extends ConsumerStatefulWidget {
   ConsumerState<GamaScaffold> createState() => _GamaScaffoldState();
 }
 
-class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
+class _GamaScaffoldState extends ConsumerState<GamaScaffold> with WidgetsBindingObserver {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   bool? _sidebarCollapsed; // null = segue breakpoint automático
 
@@ -60,6 +61,11 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
     final newIdx = widget.navigationShell.currentIndex;
     final oldIdx = old.navigationShell.currentIndex;
     if (newIdx != oldIdx) {
+      // A aba estava viva com os dados de quando saímos dela. Depois do frame:
+      // didUpdateWidget roda durante o build, quando não se pode mexer em providers.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) recarregarAba(ref, newIdx);
+      });
       if (_poppingBranch) {
         _poppingBranch = false;
       } else {
@@ -77,8 +83,17 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Voltando ao app (celular desbloqueado, outra aba do navegador...).
+    if (state == AppLifecycleState.resumed) {
+      recarregarAba(ref, widget.navigationShell.currentIndex);
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Na Play Store quem atualiza é a loja (a política proíbe o app se atualizar sozinho).
     if (!kIsWeb && !kBuildLoja && defaultTargetPlatform == TargetPlatform.android) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -89,6 +104,7 @@ class _GamaScaffoldState extends ConsumerState<GamaScaffold> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _assinaturaRefreshTimer?.cancel();
     for (final n in _branchNotifiers) {
       n.dispose();

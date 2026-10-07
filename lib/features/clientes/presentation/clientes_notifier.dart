@@ -1,8 +1,12 @@
+import '../../../core/state/recarregavel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/clientes_remote_data_source.dart';
 import '../domain/cliente.dart';
 
-class ClientesNotifier extends AutoDisposeAsyncNotifier<List<Cliente>> {
+class ClientesNotifier extends AutoDisposeAsyncNotifier<List<Cliente>>
+    with RecarregavelEmSegundoPlano<List<Cliente>> {
+  String? _ultimaBusca;
+
   @override
   Future<List<Cliente>> build() => _fetch();
 
@@ -11,9 +15,13 @@ class ClientesNotifier extends AutoDisposeAsyncNotifier<List<Cliente>> {
   }
 
   Future<void> buscar(String? termo) async {
+    _ultimaBusca = termo?.isEmpty == true ? null : termo;
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetch(busca: termo?.isEmpty == true ? null : termo));
+    state = await AsyncValue.guard(() => _fetch(busca: _ultimaBusca));
   }
+
+  @override
+  Future<List<Cliente>> buscarComFiltrosAtuais() => _fetch(busca: _ultimaBusca);
 
   Future<int> criar({
     required String nome,

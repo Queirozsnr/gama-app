@@ -1,3 +1,4 @@
+import '../../../core/state/recarregavel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/estoque_remote_data_source.dart';
 import '../domain/estoque.dart';
@@ -41,7 +42,8 @@ class ProdutoFiltro {
 
 const _sentinel = Object();
 
-class ProdutosNotifier extends AutoDisposeAsyncNotifier<List<ProdutoListagem>> {
+class ProdutosNotifier extends AutoDisposeAsyncNotifier<List<ProdutoListagem>>
+    with RecarregavelEmSegundoPlano<List<ProdutoListagem>> {
   var _filtro = const ProdutoFiltro();
 
   ProdutoFiltro get filtro => _filtro;
@@ -56,6 +58,9 @@ class ProdutosNotifier extends AutoDisposeAsyncNotifier<List<ProdutoListagem>> {
             fornecedorId: _filtro.fornecedorId,
             status: _filtro.status,
           );
+
+  @override
+  Future<List<ProdutoListagem>> buscarComFiltrosAtuais() => _fetch();
 
   Future<void> aplicarFiltro(ProdutoFiltro filtro) async {
     _filtro = filtro;

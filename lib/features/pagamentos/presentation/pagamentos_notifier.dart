@@ -1,10 +1,16 @@
+import '../../../core/state/recarregavel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/pagamentos_remote_data_source.dart';
 import '../domain/pagamento.dart';
 
-class PagamentosNotifier extends AutoDisposeAsyncNotifier<List<FuncionarioAcumulado>> {
+class PagamentosNotifier extends AutoDisposeAsyncNotifier<List<FuncionarioAcumulado>>
+    with RecarregavelEmSegundoPlano<List<FuncionarioAcumulado>> {
   @override
   Future<List<FuncionarioAcumulado>> build() =>
+      ref.read(pagamentosRemoteDataSourceProvider).listarFuncionarios();
+
+  @override
+  Future<List<FuncionarioAcumulado>> buscarComFiltrosAtuais() =>
       ref.read(pagamentosRemoteDataSourceProvider).listarFuncionarios();
 
   Future<void> refresh() => update((_) => ref.read(pagamentosRemoteDataSourceProvider).listarFuncionarios());

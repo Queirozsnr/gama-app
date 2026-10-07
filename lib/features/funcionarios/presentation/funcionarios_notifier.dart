@@ -1,8 +1,12 @@
+import '../../../core/state/recarregavel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/funcionarios_remote_data_source.dart';
 import '../domain/funcionario.dart';
 
-class FuncionariosNotifier extends AutoDisposeAsyncNotifier<List<Funcionario>> {
+class FuncionariosNotifier extends AutoDisposeAsyncNotifier<List<Funcionario>>
+    with RecarregavelEmSegundoPlano<List<Funcionario>> {
+  String? _ultimaBusca;
+
   @override
   Future<List<Funcionario>> build() => _fetch();
 
@@ -11,9 +15,13 @@ class FuncionariosNotifier extends AutoDisposeAsyncNotifier<List<Funcionario>> {
   }
 
   Future<void> buscar(String? termo) async {
+    _ultimaBusca = termo?.isEmpty == true ? null : termo;
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetch(busca: termo?.isEmpty == true ? null : termo));
+    state = await AsyncValue.guard(() => _fetch(busca: _ultimaBusca));
   }
+
+  @override
+  Future<List<Funcionario>> buscarComFiltrosAtuais() => _fetch(busca: _ultimaBusca);
 
   Future<void> criar(Map<String, dynamic> data) async {
     await ref.read(funcionariosRemoteDataSourceProvider).criar(data);

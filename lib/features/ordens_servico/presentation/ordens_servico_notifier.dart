@@ -1,3 +1,4 @@
+import '../../../core/state/recarregavel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/ordens_servico_remote_data_source.dart';
 import '../domain/ordem_servico.dart';
@@ -37,7 +38,8 @@ class OsListState {
 
 // ── OrdensServicoNotifier ─────────────────────────────────────────────────────
 
-class OrdensServicoNotifier extends AutoDisposeAsyncNotifier<OsListState> {
+class OrdensServicoNotifier extends AutoDisposeAsyncNotifier<OsListState>
+    with RecarregavelEmSegundoPlano<OsListState> {
   static const _pageSize = 30;
 
   String? _filtroStatus;
@@ -45,6 +47,21 @@ class OrdensServicoNotifier extends AutoDisposeAsyncNotifier<OsListState> {
 
   @override
   Future<OsListState> build() => _fetchPage(1);
+
+  /// Recarrega tudo o que já estava na tela numa requisição só.
+  @override
+  Future<OsListState> buscarComFiltrosAtuais() async {
+    final paginas = state.valueOrNull?.page ?? 1;
+    final (inicio, fim) = _datas(_periodo);
+    final result = await ref.read(ordensServicoRemoteDataSourceProvider).listar(
+          status: _filtroStatus,
+          dataInicio: inicio,
+          dataFim: fim,
+          page: 1,
+          pageSize: _pageSize * paginas,
+        );
+    return OsListState(items: result.items, page: paginas, hasMore: result.hasMore);
+  }
 
   Future<OsListState> _fetchPage(int page) async {
     final (inicio, fim) = _datas(_periodo);
