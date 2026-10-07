@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/chips/status_chip.dart';
 import '../../../shared/state/top_bar_scope.dart';
 import '../../../shared/widgets/gama_avatar.dart';
 import '../../../shared/widgets/gama_confirm_dialog.dart';
@@ -419,21 +420,21 @@ class _KpiBar extends StatelessWidget {
           _KpiCard(
             label: 'TOTAL GASTO',
             value: _fmtBrl(detalhe.totalGasto),
-            sub: 'em todas as OS',
+            sub: 'em OS pagas',
           ),
           _KpiDivider(),
           _KpiCard(
             label: 'OS CONCLUÍDAS',
             value: '${detalhe.osConcluidas}',
             sub: detalhe.osEmAndamento > 0
-                ? '+ ${detalhe.osEmAndamento} em andamento'
-                : 'nenhuma em andamento',
+                ? '+ ${detalhe.osEmAndamento} em aberto'
+                : 'nenhuma em aberto',
           ),
           _KpiDivider(),
           _KpiCard(
             label: 'TICKET MÉDIO',
             value: _fmtBrl(detalhe.ticketMedio),
-            sub: 'por OS',
+            sub: 'por OS paga',
           ),
           _KpiDivider(),
           _KpiCard(
@@ -702,6 +703,9 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Só "NA OFICINA" significa algo; fora da oficina não mostra selo
+    // (o antigo "EM DIA" parecia falar de revisão, mas era só "sem OS ativa").
+    if (status != VeiculoStatus.naOficina) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -829,7 +833,7 @@ class _OsHistoricoSection extends StatelessWidget {
     return _Section(
       icon: Icons.receipt_long_outlined,
       title: 'Histórico de OS',
-      subtitle: '$osConcluidas concluídas · $osEmAndamento em andamento',
+      subtitle: '$osConcluidas concluídas · $osEmAndamento em aberto',
       action: TextButton(
         onPressed: onVerTodas,
         child: const Text('Ver todas  ›'),
@@ -871,10 +875,10 @@ class _OsTableHeader extends StatelessWidget {
       child: Row(
         children: [
           const SizedBox(width: 32, child: _HeaderCell('OS')),
-          const SizedBox(width: 96, child: _HeaderCell('STATUS')),
+          const SizedBox(width: 124, child: _HeaderCell('STATUS')),
           const Expanded(child: _HeaderCell('SERVIÇO · VEÍCULO')),
           if (!narrow) const SizedBox(width: 80, child: _HeaderCell('MECÂNICO')),
-          const SizedBox(width: 72, child: _HeaderCell('VALOR')),
+          const SizedBox(width: 112, child: _HeaderCell('VALOR')),
           const SizedBox(width: 40, child: _HeaderCell('DATA')),
         ],
       ),
@@ -906,7 +910,7 @@ class _OsHistoricoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = _OsStatusInfo.fromString(os.status);
+    final status = OsStatus.fromString(os.status);
 
     return GestureDetector(
       onTap: onTap,
@@ -930,8 +934,8 @@ class _OsHistoricoRow extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 96,
-            child: _OsStatusChip(status: status),
+            width: 124,
+            child: Align(alignment: Alignment.centerLeft, child: StatusChip(status: status)),
           ),
           Expanded(
             child: Column(
@@ -977,9 +981,12 @@ class _OsHistoricoRow extends StatelessWidget {
               ),
             ),
           SizedBox(
-            width: 72,
-            child: Text(
-              _fmtBrl(os.total),
+            width: 112,
+            child: Text.rich(
+              TextSpan(text: _fmtBrl(os.total), children: [
+                if (os.pago)
+                  const TextSpan(text: '  pago', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.ok)),
+              ]),
               style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -1005,63 +1012,6 @@ class _OsHistoricoRow extends StatelessWidget {
     final intPart = parts[0].replaceAllMapped(
         RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]}.');
     return 'R\$ $intPart,${parts[1]}';
-  }
-}
-
-class _OsStatusInfo {
-  const _OsStatusInfo({required this.label, required this.color, required this.bgColor});
-  final String label;
-  final Color color;
-  final Color bgColor;
-
-  static _OsStatusInfo fromString(String s) {
-    return switch (s.toLowerCase().replaceAll(' ', '').replaceAll('_', '')) {
-      'emandamento' || 'aberta'   => const _OsStatusInfo(label: 'EM ANDAMENTO', color: AppColors.info,    bgColor: AppColors.infoSoft),
-      'pronto'                    => const _OsStatusInfo(label: 'PRONTO',       color: AppColors.ok,      bgColor: AppColors.okSoft),
-      'concluida' || 'concluída'  => const _OsStatusInfo(label: 'CONCLUÍDA',    color: AppColors.ok,      bgColor: AppColors.okSoft),
-      'entregue'                  => const _OsStatusInfo(label: 'ENTREGUE',     color: AppColors.ink3,    bgColor: AppColors.bg),
-      'aguardando' || 'pendente'  => const _OsStatusInfo(label: 'AGUARDANDO',   color: AppColors.warn,    bgColor: AppColors.warnSoft),
-      _                           => const _OsStatusInfo(label: 'ABERTA',       color: AppColors.ink3,    bgColor: AppColors.bg),
-    };
-  }
-}
-
-class _OsStatusChip extends StatelessWidget {
-  const _OsStatusChip({required this.status});
-  final _OsStatusInfo status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: status.bgColor,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: status.color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 5),
-          Text(
-            status.label,
-            style: TextStyle(fontFamily: 'Inter', 
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: status.color,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -1301,47 +1251,6 @@ class _Sidebar extends StatelessWidget {
             ),
           ),
         ),
-        if (detalhe.preferencias != null) ...[
-          const SizedBox(height: 12),
-          _SidebarCard(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.tune_outlined,
-                          size: 16, color: AppColors.ink3),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Preferências',
-                        style: TextStyle(fontFamily: 'Inter', 
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _PrefRow(
-                    label: 'Forma de pagamento',
-                    value: detalhe.preferencias!.formaPagamento ?? '—',
-                  ),
-                  _PrefRow(
-                    label: 'Canal preferido',
-                    value: detalhe.preferencias!.canalPreferido ?? '—',
-                  ),
-                  _PrefRow(
-                    label: 'Recebe lembretes',
-                    value: detalhe.preferencias!.recebeLembretes ? 'Sim' : 'Não',
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -1393,38 +1302,6 @@ class _ContactRow extends StatelessWidget {
               style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink2),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PrefRow extends StatelessWidget {
-  const _PrefRow({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.ink3),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(fontFamily: 'Inter', 
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink,
             ),
           ),
         ],
@@ -2237,7 +2114,7 @@ class _MobileOsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = _OsStatusInfo.fromString(os.status);
+    final status = OsStatus.fromString(os.status);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -2262,7 +2139,7 @@ class _MobileOsCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                _OsStatusChip(status: status),
+                StatusChip(status: status),
                 const Spacer(),
                 Text(
                   '${os.data.day.toString().padLeft(2, '0')}/${os.data.month.toString().padLeft(2, '0')}',
@@ -2301,8 +2178,11 @@ class _MobileOsCard extends StatelessWidget {
                   )
                 else
                   const Spacer(),
-                Text(
-                  _fmtBrl(os.total),
+                Text.rich(
+                  TextSpan(text: _fmtBrl(os.total), children: [
+                    if (os.pago)
+                      const TextSpan(text: '  pago', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.ok)),
+                  ]),
                   style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 13,
                     fontWeight: FontWeight.w700,

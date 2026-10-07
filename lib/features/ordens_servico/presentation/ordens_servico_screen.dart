@@ -63,6 +63,7 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
   String? _filtroStatus = _kSemEntregue;
   String? _filtroMecanico;
   String? _filtroCliente;
+  String? _veiculoLabel;
   String _ordenarCampo = 'prazo';
   bool _ordenarAsc = true;
   final _buscaCtrl = TextEditingController();
@@ -94,6 +95,24 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _syncSlot();
+    _syncFiltroVeiculo();
+  }
+
+  /// "Ver todas" da ficha do veículo abre /ordens-servico?veiculoId=X&veiculo=...
+  /// Abrir a lista pelo menu (sem o parâmetro) volta para todas as OS.
+  void _syncFiltroVeiculo() {
+    final params = GoRouterState.of(context).uri.queryParameters;
+    final veiculoId = int.tryParse(params['veiculoId'] ?? '');
+    final notifier = ref.read(ordensServicoNotifierProvider.notifier);
+    if (veiculoId == notifier.filtroVeiculoId) return;
+    _veiculoLabel = veiculoId == null ? null : (params['veiculo'] ?? 'Veículo #$veiculoId');
+    // O histórico do veículo inclui as entregues.
+    if (veiculoId != null) _filtroStatus = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(ordensServicoNotifierProvider.notifier)
+          .filtrarVeiculo(veiculoId, todosStatus: veiculoId != null);
+    });
   }
 
   void _syncSlot() {
@@ -273,6 +292,7 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
         children: [
           _PeriodBar(periodo: _periodo, onChanged: _setPeriodo),
           filtersBar,
+          if (_veiculoLabel != null) _FiltroVeiculoChip(label: _veiculoLabel!),
           Expanded(
             child: osAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -324,6 +344,7 @@ class _OrdensServicoScreenState extends ConsumerState<OrdensServicoScreen>
               _MobileDarkStats(periodo: _periodo, dateRange: dateRange),
               _PeriodBar(periodo: _periodo, onChanged: _setPeriodo),
               filtersBar,
+              if (_veiculoLabel != null) _FiltroVeiculoChip(label: _veiculoLabel!),
               Expanded(
                 child: osAsync.when(
                   loading: () =>
@@ -1539,3 +1560,29 @@ class _ErrorState extends StatelessWidget {
 
 String _fmtDate(DateTime dt) =>
     '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+
+/// Filtro vindo da ficha do veículo. Fechar volta para a lista completa.
+class _FiltroVeiculoChip extends StatelessWidget {
+  const _FiltroVeiculoChip({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: InputChip(
+          avatar: const Icon(Icons.directions_car_outlined, size: 16, color: AppColors.accentDark),
+          label: Text('Veículo: $label',
+              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.accentDark)),
+          backgroundColor: AppColors.accentSoft,
+          side: BorderSide.none,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          deleteIconColor: AppColors.accentDark,
+          onDeleted: () => context.go('/ordens-servico'),
+        ),
+      ),
+    );
+  }
+}

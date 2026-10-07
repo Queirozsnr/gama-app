@@ -1976,13 +1976,8 @@ class _HistoricoOsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = os.dataEntrada;
     final date = '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-    final (bg, fg) = switch (os.status) {
-      'Entregue'    => (AppColors.okSoft, AppColors.ok),
-      'Cancelada'   => (AppColors.dangerSoft, AppColors.danger),
-      'EmAndamento' => (AppColors.infoSoft, AppColors.info),
-      'Aguardando'  => (AppColors.warnSoft, AppColors.warn),
-      _             => (AppColors.surface2, AppColors.ink2),
-    };
+    final status = OsStatus.fromString(os.status);
+    final (bg, fg) = (status.bgColor, status.textColor);
     return InkWell(
       onTap: onTap,
       hoverColor: AppColors.surface2,
@@ -2033,13 +2028,8 @@ class _HistoricoOsMobileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = os.dataEntrada;
     final date = '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-    final (dotColor, label) = switch (os.status) {
-      'Entregue'    => (AppColors.ok,     'PRONTO'),
-      'Cancelada'   => (AppColors.danger, 'CANCELADA'),
-      'EmAndamento' => (AppColors.info,   'EM ANDAMENTO'),
-      'Aguardando'  => (AppColors.warn,   'AGUARDANDO'),
-      _             => (AppColors.ink2,   os.status.toUpperCase()),
-    };
+    final status = OsStatus.fromString(os.status);
+    final (dotColor, label) = (status.dotColor, status.label);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(

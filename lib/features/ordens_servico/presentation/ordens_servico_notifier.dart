@@ -43,7 +43,10 @@ class OrdensServicoNotifier extends AutoDisposeAsyncNotifier<OsListState>
   static const _pageSize = 30;
 
   String? _filtroStatus;
+  int? _filtroVeiculoId;
   OsPeriodo _periodo = OsPeriodo.tudo;
+
+  int? get filtroVeiculoId => _filtroVeiculoId;
 
   @override
   Future<OsListState> build() => _fetchPage(1);
@@ -55,6 +58,7 @@ class OrdensServicoNotifier extends AutoDisposeAsyncNotifier<OsListState>
     final (inicio, fim) = _datas(_periodo);
     final result = await ref.read(ordensServicoRemoteDataSourceProvider).listar(
           status: _filtroStatus,
+          veiculoId: _filtroVeiculoId,
           dataInicio: inicio,
           dataFim: fim,
           page: 1,
@@ -67,6 +71,7 @@ class OrdensServicoNotifier extends AutoDisposeAsyncNotifier<OsListState>
     final (inicio, fim) = _datas(_periodo);
     final result = await ref.read(ordensServicoRemoteDataSourceProvider).listar(
           status: _filtroStatus,
+          veiculoId: _filtroVeiculoId,
           dataInicio: inicio,
           dataFim: fim,
           page: page,
@@ -89,6 +94,7 @@ class OrdensServicoNotifier extends AutoDisposeAsyncNotifier<OsListState>
       final (inicio, fim) = _datas(_periodo);
       final result = await ref.read(ordensServicoRemoteDataSourceProvider).listar(
             status: _filtroStatus,
+            veiculoId: _filtroVeiculoId,
             dataInicio: inicio,
             dataFim: fim,
             page: current.page + 1,
@@ -120,6 +126,16 @@ class OrdensServicoNotifier extends AutoDisposeAsyncNotifier<OsListState>
 
   Future<void> filtrar(String? status) async {
     _filtroStatus = status;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _fetchPage(1));
+  }
+
+  /// Vindo de "Ver todas" na ficha do veículo; null volta para todas as OS.
+  /// [todosStatus]: o histórico de um veículo inclui as entregues.
+  Future<void> filtrarVeiculo(int? veiculoId, {bool todosStatus = false}) async {
+    if (veiculoId == _filtroVeiculoId) return;
+    _filtroVeiculoId = veiculoId;
+    if (todosStatus) _filtroStatus = null;
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => _fetchPage(1));
   }

@@ -175,6 +175,7 @@ class OsResumoCliente {
     this.mecanicoNome,
     required this.total,
     required this.data,
+    this.pago = false,
   });
 
   final int id;
@@ -185,6 +186,7 @@ class OsResumoCliente {
   final String? mecanicoNome;
   final double total;
   final DateTime data;
+  final bool pago;
 
   factory OsResumoCliente.fromJson(Map<String, dynamic> json) => OsResumoCliente(
         id: json['id'] as int,
@@ -194,7 +196,9 @@ class OsResumoCliente {
         veiculoDescricao: json['veiculoDescricao'] as String?,
         mecanicoNome: json['mecanicoNome'] as String?,
         total: (json['total'] as num).toDouble(),
-        data: DateTime.parse(json['data'] as String),
+        // Gravada em UTC no servidor: sem o toLocal a data vira o dia seguinte à noite.
+        data: DateTime.parse(json['data'] as String).toLocal(),
+        pago: json['pago'] as bool? ?? false,
       );
 }
 

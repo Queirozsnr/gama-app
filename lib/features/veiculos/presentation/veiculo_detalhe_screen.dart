@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/state/top_bar_scope.dart';
+import '../../../shared/utils/formatters.dart';
+import '../../../shared/widgets/chips/status_chip.dart';
 import '../../../shared/widgets/gama_confirm_dialog.dart';
 import '../../../shared/widgets/gama_snack_bar.dart';
 import '../../ordens_servico/data/ordens_servico_remote_data_source.dart';
@@ -314,15 +316,14 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
 
   Widget _buildDesktopBody(Veiculo v, AsyncValue<List<OrdemServico>> osAsync) {
     final osList = osAsync.valueOrNull ?? [];
+    // Gasto = o que o cliente de fato pagou (OS com pagamento registrado).
     final totalGasto = osList
-        .where((os) => os.status != 'Cancelada')
+        .where((os) => os.pago)
         .fold(0.0, (sum, os) => sum + os.total);
-    final osAbertas = osList
-        .where((os) => !['Entregue', 'Cancelada'].contains(os.status))
-        .length;
+    final osAbertas = osList.where((os) => os.status != 'Entregue').length;
     final gastoPorAno = <int, double>{};
-    for (final os in osList.where((os) => os.status != 'Cancelada')) {
-      final ano = os.dataEntrada.year;
+    for (final os in osList.where((os) => os.pago)) {
+      final ano = os.pagoEm!.year;
       gastoPorAno[ano] = (gastoPorAno[ano] ?? 0) + os.total;
     }
 
@@ -341,7 +342,7 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
                   children: [
                     _buildIdentidade(v),
                     const SizedBox(height: 16),
-                    _buildHistoricoOs(osList),
+                    _buildHistoricoOs(v, osList),
                   ],
                 ),
               ),
@@ -372,12 +373,10 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
   Widget _buildMobileBody(Veiculo v, AsyncValue<List<OrdemServico>> osAsync) {
     final osList = osAsync.valueOrNull ?? [];
     final totalGasto = osList
-        .where((os) => os.status != 'Cancelada')
+        .where((os) => os.pago)
         .fold(0.0, (sum, os) => sum + os.total);
-    final osVida =
-        osList.where((os) => os.status != 'Cancelada').length;
-    final naOficina =
-        osList.any((os) => !['Entregue', 'Cancelada'].contains(os.status));
+    final osVida = osList.length;
+    final naOficina = osList.any((os) => os.status != 'Entregue');
 
     return Column(
       children: [
@@ -640,7 +639,7 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
                       color: AppColors.ink2,
                       letterSpacing: 0.5)),
               GestureDetector(
-                onTap: () => context.go(AppRoutes.ordensServico),
+                onTap: () => _verTodasOs(v),
                 child: const Text('Ver todas',
                     style: TextStyle(
                         fontSize: 13,
@@ -707,10 +706,9 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
 
   Widget _buildKpiRow(Veiculo v, double totalGasto, int osAbertas,
       List<OrdemServico> osList) {
-    final osCount =
-        osList.where((os) => os.status != 'Cancelada').length;
+    final osPagas = osList.where((os) => os.pago).length;
     final primeiraAberta = osList
-        .where((os) => !['Entregue', 'Cancelada'].contains(os.status))
+        .where((os) => os.status != 'Entregue')
         .map((os) => '#${os.id}')
         .take(1)
         .join('');
@@ -731,7 +729,7 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
               child: _KpiCard(
             label: 'TOTAL GASTO',
             value: _formatCurrency(totalGasto),
-            sublabel: 'em $osCount OS',
+            sublabel: 'em $osPagas OS paga${osPagas == 1 ? '' : 's'}',
           )),
           const SizedBox(width: 12),
           Expanded(
@@ -803,7 +801,15 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
     );
   }
 
-  Widget _buildHistoricoOs(List<OrdemServico> osList) {
+  void _verTodasOs(Veiculo v) {
+    final placa = v.placa == null ? '' : ' · ${formatPlaca(v.placa)}';
+    context.go(Uri(path: AppRoutes.ordensServico, queryParameters: {
+      'veiculoId': '${v.id}',
+      'veiculo': '${v.marcaNome} ${v.modeloNome}$placa',
+    }).toString());
+  }
+
+  Widget _buildHistoricoOs(Veiculo v, List<OrdemServico> osList) {
     final sorted = [...osList]
       ..sort((a, b) => b.dataEntrada.compareTo(a.dataEntrada));
 
@@ -825,7 +831,7 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w600)),
                 TextButton(
-                  onPressed: () => context.go(AppRoutes.ordensServico),
+                  onPressed: () => _verTodasOs(v),
                   child: const Text('Ver todas'),
                 ),
               ],
@@ -853,7 +859,7 @@ class _VeiculoDetalheScreenState extends ConsumerState<VeiculoDetalheScreen>
                   Expanded(
                       child: Text('SERVIÇO', style: _kHeaderStyle)),
                   SizedBox(
-                      width: 88,
+                      width: 120,
                       child: Text('STATUS', style: _kHeaderStyle)),
                   SizedBox(
                       width: 88,
@@ -1158,13 +1164,6 @@ class _OsRow extends StatelessWidget {
     final d = os.dataEntrada;
     final date =
         '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-    final (bg, fg) = switch (os.status) {
-      'Entregue'    => (AppColors.okSoft, AppColors.ok),
-      'Cancelada'   => (AppColors.dangerSoft, AppColors.danger),
-      'EmAndamento' => (AppColors.infoSoft, AppColors.info),
-      'Aguardando'  => (AppColors.warnSoft, AppColors.warn),
-      _             => (AppColors.surface2, AppColors.ink2),
-    };
 
     return Material(
       color: Colors.transparent,
@@ -1197,19 +1196,10 @@ class _OsRow extends StatelessWidget {
                 ),
               ),
               SizedBox(
-                width: 88,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 6, vertical: 3),
-                  decoration: BoxDecoration(
-                      color: bg,
-                      borderRadius: BorderRadius.circular(4)),
-                  child: Text(os.status,
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: fg),
-                      overflow: TextOverflow.ellipsis),
+                width: 120,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: StatusChip(status: OsStatus.fromString(os.status)),
                 ),
               ),
               SizedBox(
@@ -1297,13 +1287,8 @@ class _MobileOsCard extends StatelessWidget {
     final d = os.dataEntrada;
     final date =
         '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-    final (dotColor, label) = switch (os.status) {
-      'Entregue'    => (AppColors.ok, 'PRONTO'),
-      'Cancelada'   => (AppColors.danger, 'CANCELADA'),
-      'EmAndamento' => (AppColors.info, 'EM ANDAMENTO'),
-      'Aguardando'  => (AppColors.warn, 'AGUARDANDO'),
-      _             => (AppColors.ink2, os.status.toUpperCase()),
-    };
+    final status = OsStatus.fromString(os.status);
+    final (dotColor, label) = (status.dotColor, status.label);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
