@@ -212,6 +212,13 @@ class _FuncionarioFormDialogState extends ConsumerState<FuncionarioFormDialog> {
                           ],
                         ],
                         _secao('Oficinas'),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            'Sem nenhuma marcada, o funcionário acessa todas as oficinas do grupo.',
+                            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                          ),
+                        ),
                         if (_loadingOficinas)
                           const Center(child: CircularProgressIndicator())
                         else if (_oficinas.isEmpty)

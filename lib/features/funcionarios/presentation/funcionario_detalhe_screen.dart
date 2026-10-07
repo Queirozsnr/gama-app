@@ -466,12 +466,12 @@ class _OficinasCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _Card(
       icon: Icons.store_outlined,
-      title: 'Oficinas · ${oficinas.length}',
+      title: 'Oficinas · ${oficinas.isEmpty ? 'todas' : oficinas.length}',
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: oficinas.isEmpty
             ? Text(
-                'Nenhuma oficina atribuída.',
+                'Acesso a todas as oficinas do grupo.',
                 style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 13,
                     color: AppColors.ink3,
@@ -889,7 +889,7 @@ class _MobileKpiStrip extends StatelessWidget {
           _MobileKpiDivider(),
           _MobileKpiCell(
             label: 'OFICINAS',
-            value: '${funcionario.oficinas.length}',
+            value: funcionario.oficinas.isEmpty ? 'Todas' : '${funcionario.oficinas.length}',
           ),
         ],
       ),
@@ -1189,7 +1189,7 @@ class _MobileOficinasContent extends StatelessWidget {
                   const Icon(Icons.store_outlined, size: 16, color: AppColors.ink3),
                   const SizedBox(width: 8),
                   Text(
-                    'Oficinas · ${oficinas.length}',
+                    'Oficinas · ${oficinas.isEmpty ? 'todas' : oficinas.length}',
                     style: TextStyle(fontFamily: 'Inter', 
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -1204,7 +1204,7 @@ class _MobileOficinasContent extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: oficinas.isEmpty
                   ? Text(
-                      'Nenhuma oficina atribuída.',
+                      'Acesso a todas as oficinas do grupo.',
                       style: TextStyle(fontFamily: 'Inter', 
                         fontSize: 13,
                         color: AppColors.ink3,
